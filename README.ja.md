@@ -83,6 +83,10 @@ MTDynamicMTML及びMTNonDynamicMTMLタグを解釈した後、結果に残って
 
 ## テンプレート・タグ
 
++ [テンプレートタグリファレンス | MovableType.jp](http://www.movabletype.jp/documentation/appendices/tags/).
+
+### DynamicMTMLによって提供されるテンプレート・タグ
+
 ---------------------------------------
 
 **MTDynamicMTML(ブロックタグ)**

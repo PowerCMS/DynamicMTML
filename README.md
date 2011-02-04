@@ -95,6 +95,10 @@ Once MTDynamicMTML and MTNonDynamicMTML tags were processed, the other MTML tags
 
 ## Template Tags
 
++ [Movable Type Template Tag Reference](http://www.movabletype.org/documentation/appendices/tags/).
+
+### Template tags provided by DynamicMTML
+
 ---------------------------------------
 
 **MTDynamicMTML (Block Tag)**
@@ -1070,7 +1074,7 @@ Generates a string for mt\_entry\_atom\_id.
 
 ---------------------------------------
 
-$app->can\_edit\_entry($entry);**
+**$app->can\_edit\_entry($entry);**
 
 Returns 1 when current user have permission to edit the entry.
 
