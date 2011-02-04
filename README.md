@@ -71,8 +71,9 @@ If the static file already exists, and its mime\_type is text/foo or application
 
 You can use callbacks from the plug-in during this process.
 
+![DynamicMTML Overview](https://github.com/alfasado/DynamicMTML/raw/master/addons/DynamicMTML.pack/dynamicmtml.en.png)
 
-### Fail-safe for the database connection error
+## Fail-safe for the database connection error
 
 Callback plugin can handle DB connection error in several ways. Such as:
 
@@ -92,7 +93,7 @@ During this fail-over, You can use the following MTML tag.
 Once MTDynamicMTML and MTNonDynamicMTML tags were processed, the other MTML tags will be remove. See also callback plugin examples(init\_request, mt\_init\_exception).
 
 
-### Template Tags
+## Template Tags
 
 ---------------------------------------
 
@@ -273,13 +274,13 @@ If referral website is Google, Bing, MSN, Yahoo! or Goo (or search this site \*p
 
 **MTCommentOut(Block Tag)**
 
-Output '<!--' & contents & '-->'. If you specify "invisible" attribute, it does not output anything. Same as MTIgnore.
+Output '<!\-\-' & contents & '\-\->'. If you specify "invisible" attribute, it does not output anything. Same as MTIgnore.
 
 ---------------------------------------
 
 **MTCommentStrip(Block Tag)**
 
-Strip '<!--' and '-->' when publish. By using MTCommentOut and MTCommentStrip tags, you can edit the template with Dreamweaver with a dummy HTML. You can strip the dummy HTML on the server with these tags.
+Strip '<!\-\-' and '\-\->' when publish. By using MTCommentOut and MTCommentStrip tags, you can edit the template with Dreamweaver with a dummy HTML. You can strip the dummy HTML on the server with these tags.
 
 ---------------------------------------
 
@@ -369,7 +370,7 @@ Output translated phrase based on the current user's language preference.
 
 ---------------------------------------
 
-**highlightingsearchword (Attribute)**
+**highlightingsearchword(Attribute)**
 
 If the referral website is Google, bing, MSN, Yahoo! or goo(or search this site \*parameter is 'query' or 'search'), strong tag with attribute class argument.
 
@@ -405,7 +406,7 @@ Convert string to int.
 
 ---------------------------------------
 
-##Template Tag examples##
+### Template Tag examples
 
 ---------------------------------------
 
@@ -534,7 +535,7 @@ Convert string to int.
 
 ---------------------------------------
 
-##Class DynamicMTML
+## Class DynamicMTML
 
     $mt_dir = '/path/to/mt/';
     require_once ( $mt_dir . 'php/mt.php' );
@@ -556,7 +557,7 @@ Convert string to int.
     ...
 
 
-###Get class in plugin
+### Get class in plugin
 
 In DynamicMTML environment, 
 
@@ -565,7 +566,9 @@ In DynamicMTML environment,
     $app = $ctx->stash('bootstrapper')
 
 
-####MT::App compatible methods
+### MT::App compatible methods
+
+---------------------------------------
 
 **$app->login();**
 
@@ -746,7 +749,7 @@ Return result of build template file $path(array $params set to 'var').
 
 ---------------------------------------
 
-##MT::WeblogPublisher compatible methods##
+### MT::WeblogPublisher compatible methods
 
 Templates to build using dynamic publishing engine and output static file. In this case, $param['build\_type'] build\_type template can be specified in an array.
 When the build\_type is 1 or 2, output static file. When the build\_type is 3, updates mt\_fileinfo record(if the file exists, renamed file with a .static file extension). When the build\_type is 4, use publishing queue.
@@ -854,9 +857,11 @@ Rebuild archive by MT::FileInfo object.By build\_type, output static file or use
 
 ---------------------------------------
 
-##MT::FileMgr compatible methods##
+### MT::FileMgr compatible methods
 
-**$app->put($src,$dest[,$type ]);**
+---------------------------------------
+
+**$app->put($src,$dest[,$type]);**
 
 Puts the contents of the file $src in the path $dest. $src can be URL or the path to a local file, $dest must be a path to a file.
 $type is optional and defines whether the put is for an uploaded file or for an output HTML file; this tells the what mode to write the files in, what umask settings to use, etc. The two values for $type are 'upload' and 'output', 'output' is the default.
@@ -865,7 +870,7 @@ On error, returns FALSE.
 
 ---------------------------------------
 
-**$app->put\_data($data,$dest[,$type ])**
+**$app->put\_data($data,$dest[,$type])**
 
 Puts the block of data $data in the path $dest. $dest should be a path to a file.
 $type is optional and defines whether the put is for an uploaded file or for an output HTML file; this tells the what mode to write the files in, what umask settings to use, etc. The two values for $type are 'upload' and 'output', 'output' is the default.
@@ -902,7 +907,7 @@ Delete the $file. If successful delete, or if $file does not exist or is a symbo
 
 ---------------------------------------
 
-##The other Methods of Class DynamicMTML##
+### The other Methods of Class DynamicMTML
 
 ---------------------------------------
 
@@ -1049,7 +1054,7 @@ Alias for $app->stash().
 **$app->save\_entry($entry[,$params]);**
 
 Save the entry object. The default value of blog has not been given a few settings, current date if no date specified in the relevant column, and each set of current user of the author unless otherwise specified.
-$params['categories']\(number(id), object, or array of them),$params['tags']\(string(name), object, or array of them) stored as if the related object is specified after saving the entry, and the related mt\_fileinfo mt\_trackback table is created or updated.
+$params['categories']\(number(id), object, or array of them\),$params['tags']\(string(name), object, or array of them\) stored as if the related object is specified after saving the entry, and the related mt\_fileinfo mt\_trackback table is created or updated.
 
 ---------------------------------------
 
@@ -1350,7 +1355,7 @@ After the build, $content is build result. Get &$content and $content = 'Foo', c
 
 ---------------------------------------
 
-##Class MTPlugin
+## Class MTPlugin
 
 Class MTPlugin is an extension of the Class DynamicMTML.
 Can be managed in one file. Template tag, callbacks, plugin settings and more. 
@@ -1395,7 +1400,7 @@ It also provides an interface that allows easy access to the plugin configuratio
     ?>
 
 
-##MT::Plugin(MT::PluginData) compatible methods
+### MT::Plugin(MT::PluginData) compatible methods
 
 ---------------------------------------
 
@@ -1436,7 +1441,7 @@ store a set of key-value pairs for each plugin.
 
 ---------------------------------------
 
-##dynamicmtml.util.php
+## dynamicmtml.util.php
 
     require_once('dynamicmtml.util.php');
     $res = some_function($param1,$param2);
@@ -1576,7 +1581,7 @@ Your Plugin directory is /PluginName, put files and directories that.
 - /PluginName/php/publishers/ (Installing the programs for static rebuild by archive types.)
 
 
-##Description of config.php
+## Description of config.php
 
 Define Plugin Class extends MTPlugin Class(Class name is the name of the directory).
 var $registry, settings to specify an array. And do callbacks, add template tags. Method that corresponds to each value in the array.
@@ -1686,7 +1691,7 @@ config\_settings value specified for the absence of mt-config.cgi described, plu
         return 1 it does not save the plugin setting.
 
 
-##Callbacks(Default Callbacks)
+## Callbacks(Default Callbacks)
 
 ---------------------------------------
 
@@ -1779,7 +1784,7 @@ Called at the end of .mtview.php when MT::get\_instance failed.
 
 ---------------------------------------
 
-##Callbacks(Rebuild Callbacks)
+## Callbacks(Rebuild Callbacks)
 
 Whether called upon to generate static $app->stash ('build\_type') can be determined by. During the reconstruction of compatible methods WeblogPublisher, build\_type the 'rebuild\_static' or 'publish\_queue' (for reconstruction of the queue) is.
 
@@ -1803,7 +1808,7 @@ BuildPage callbacks are invoked just after a page has been built, but before the
 
 ---------------------------------------
 
-##Callback Plugin Examples
+### Callback Plugin Examples
 
 ---------------------------------------
 
@@ -1883,6 +1888,8 @@ BuildPage callbacks are invoked just after a page has been built, but before the
     }
     ?>
 
+---------------------------------------
+
 **mt\_init\_exception(Retry get\_instance using mt-alt-config.cgi.)**
 
 */plugins/PluginName/php/callbacks/pluginname\_mt\_init\_exception.php*
@@ -1925,6 +1932,7 @@ BuildPage callbacks are invoked just after a page has been built, but before the
 ---------------------------------------
 
 **post\_init(Required login. Basic Auth using MT.)**
+
 */plugins/PluginName/php/callbacks/pluginname\_post\_init.php*
 
     <?php
@@ -2074,6 +2082,7 @@ See also => pluginname\_post\_init.php
 ---------------------------------------
 
 **build\_page(Convert to thumbnail for keitai browser.)**
+
 */plugins/PluginName/php/callbacks/pluginname\_build\_page.php*
 
     <?php
@@ -2256,7 +2265,7 @@ See also => pluginname\_post\_init.php
     ?>
 
 
-##About language file
+## About language file
 
 If Japanese(ja), in /plugins/PluginName/php/l10n/l10n\_ja.php
 
@@ -2273,7 +2282,7 @@ If Japanese(ja), in /plugins/PluginName/php/l10n/l10n\_ja.php
 This table is loaded at initialization, MTTrans tag or $app->translate() returns the result of the language translation of the user.
 
 
-##Rebuild archves
+## Rebuild archves
 
 Put /plugins/PluginName/php/publishers/, by installing a program for rebuilding the archive below $app->rebuild\_archives you can rebuild the archive file contains a static publishing.
 See also $app->rebuild\_archives.
