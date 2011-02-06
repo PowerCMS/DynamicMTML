@@ -1,6 +1,5 @@
 # DynamicMTMLドキュメント
 
-
 ## はじめに
 
 DynamicMTML は mod\_rewrite を利用してコンテンツへのリクエストを Dynamic Site Bootstrapper(.mtview.php) に処理させることで、静的ファイルに記述された MTML をダイナミックパブリッシングエンジンを用いて動的ビルドすることの出来る Movable Type の拡張です。また、PHPを利用して Movable Type を拡張するための様々なライブラリやコールバック、プラグインによる拡張のしくみを追加します。
