@@ -1,0 +1,674 @@
+<?php
+# DynamicMTML (C) 2010-2011 Alfasado Inc.
+# This program is distributed under the terms of the
+# GNU General Public License, version 2.
+
+    global $mt;
+    global $ctx;
+    $ctx =& $mt->context();
+    global $args;
+    $app = $ctx->stash( 'bootstrapper' );
+    $blog      =  $app->blog;
+    $blog_id   =  $blog->id;
+    $user      =  $app->user();
+    $mode      =  $app->mode();
+    $vars      =& $this->__stash[ 'vars' ];
+    $entry     =  NULL;
+    $entries   =  NULL;
+    $original  =  NULL;
+    $permalink =  NULL;
+    $archives  =  array( 'Index', 'Category', 'Monthly' );
+    if ( preg_match( '/_entries$/', $mode ) ) {
+        $ids = $_POST[ 'ids' ];
+        if ( $ids ) {
+            if (! $app->validate_magic() ) {
+                return $ctx->error( $app->translate( 'Permission denied.' ) );
+            }
+            $terms = array( 'blog_id' => $blog_id, 'id' => $ids );
+            $entries = $app->load( 'Entry', $terms );
+            $do;
+            if ( $entries ) {
+                foreach ( $entries as $entry ) {
+                    if (! $app->can_edit_entry( $entry ) ) {
+                        return $ctx->error( $app->translate( 'Permission denied.' ) );
+                    }
+                    $original = $app->___clone( 'Entry', $entry );
+                    $app->stash( 'entry', $entry );
+                    $app->stash( 'obj', $entry );
+                    $app->stash( 'original', $original );
+                    if ( $mode == 'delete_entries' ) {
+                        if (! $app->run_callbacks( 'cms_delete_permission_filter.entry', $mt, $ctx ) ) {
+                            return $ctx->error( $app->translate( 'Permission denied.' ) );
+                        }
+                        $app->delete_entry( $entry );
+                        $app->stash( 'entry', $entry );
+                        $app->stash( 'obj', $entry );
+                        $app->run_callbacks( 'cms_post_delete.entry', $mt, $ctx );
+                        $do = 1;
+                    } else {
+                        $status_change;
+                        if ( $mode == 'publish_entries' ) {
+                            if ( $entry->status != 2 ) {
+                                $entry->status = 2;
+                                $status_change = 1;
+                            }
+                        } elseif ( $mode == 'set_draft_entries' ) {
+                            if ( $entry->status != 1 ) {
+                                $entry->status = 1;
+                                $status_change = 1;
+                            }
+                        }
+                        if ( $status_change ) {
+                            $app->run_callbacks( 'cms_pre_save.entry', $mt, $ctx );
+                            $app->save_entry( $entry );
+                            $app->stash( 'entry', $entry );
+                            $app->stash( 'obj', $entry );
+                            $app->run_callbacks( 'cms_post_save.entry', $mt, $ctx );
+                            $do = 1;
+                        }
+                    }
+                }
+            }
+            if (! $do ) {
+                $mode = 'not_' . $mode;
+            } else {
+                $app->rebuild_archives( array( 'recipe' => $archives, 'updated' => 1 ) );
+            }
+            $app->redirect( $app->request . "?$mode=1" );
+        }
+    }
+    if ( $id = $app->param( 'id' ) ) {
+        $id = intval( $id );
+        if ( $id ) {
+            $terms = array( 'blog_id' => $blog_id, 'id' => $id );
+            $entry = $app->load( 'Entry', $terms, array( 'limit' => 1 ) );
+            if (! isset ( $entry ) ) {
+                return $ctx->error( $app->translate( 'Entry was not found.' ) );
+            } elseif ( $entry->blog_id != $blog_id ) {
+                return $ctx->error( $app->translate( 'Invalid request.' ) );
+            }
+            if (! $app->can_edit_entry( $entry ) ) {
+                return $ctx->error( $app->translate( 'Permission denied.' ) );
+            }
+            $original = $app->___clone( 'Entry', $entry );
+        }
+    }
+    if ( $mode == 'login' ) {
+        $app->login();
+    } elseif ( $mode == 'logout' ) {
+        $app->logout();
+    } elseif ( $mode == 'view' ) {
+        if ( isset( $entry ) ) {
+            $column_values = $app->column_values( $entry );
+            foreach ( $column_values as $key => $val ) {
+                $key = preg_replace( '/^entry_/', '', $key );
+                $vars[ $key ] = $val;
+            }
+            if ( $entry->status == 2 ) {
+                $permalink = $app->get_permalink( $entry );
+                $vars[ 'permalink' ] = $permalink;
+            }
+            $tags = $app->fetch_tags( $entry, array( 'include_private' => 1 ) );
+            $tag_str = array();
+            if ( $tags ) {
+                foreach ( $tags as $tag ) {
+                    array_push( $tag_str, $tag->name );
+                }
+                $vars[ 'tags' ] = join( ', ', $tag_str );
+            }
+            $primary = $entry->placement( TRUE );
+            if ( $primary ) {
+                $vars[ 'primary_category_id' ] = $primary[ 0 ]->category_id;
+            }
+            $placements = $entry->placement();
+            $entry_categories = array();
+            if ( $placements ) {
+                foreach ( $placements as $placement ) {
+                    array_push( $entry_categories, array( 'entry_category_id' => $placement->category_id ) );
+                }
+                $vars[ 'entry_categories' ] = $entry_categories;
+            }
+        }
+    } elseif ( $mode == 'delete' ) {
+        if ( isset( $entry ) ) {
+            if (! $app->validate_magic() ) {
+                return $ctx->error( $app->translate( 'Permission denied.' ) );
+            }
+            $app->stash( 'entry', $entry );
+            $app->stash( 'obj', $entry );
+            $app->stash( 'original', $original );
+            if (! $app->run_callbacks( 'cms_delete_permission_filter.entry', $mt, $ctx ) ) {
+                return $ctx->error( $app->translate( 'Permission denied.' ) );
+            }
+            $app->delete_entry( $entry );
+            $app->run_callbacks( 'cms_post_delete.entry', $mt, $ctx );
+            $app->redirect( $app->request . '?saved_deleted=1' );
+        }
+    } elseif ( $mode == 'save' ) {
+        $post  = FALSE;
+        $title = NULL;
+        if ( isset( $user ) ) {
+            if ( $app->can_do( $ctx, 'publish_post' ) ) {
+                if ( $app->validate_magic() ) {
+                    $title = $app->param( 'title' );
+                    if ( $title ) {
+                        $post = TRUE;
+                    }
+                }
+            }
+        }
+        if ( $post == TRUE ) {
+            $text = $app->param( 'text' );
+            $status = $app->param( 'status' );
+            $status = intval( $status );
+            if (! $status ) {
+                $status = 1;
+            }
+            $original = $entry;
+            if (! isset( $entry ) ) {
+                $entry = $app->model( 'Entry' );
+            }
+            $entry->title = $title;
+            $entry->text = $text;
+            if ( $app->can_do( $ctx, 'publish_post' ) ) {
+                $entry->status = $status;
+            } else {
+                $entry->status = 1;
+            }
+            $app->stash( 'entry', $entry );
+            $app->stash( 'obj', $entry );
+            $app->stash( 'original', $original );
+            $app->run_callbacks( 'cms_pre_save.entry', $mt, $ctx );
+            $app->save_entry( $entry, array( 'rebuild' => 0 ) );
+            $tags = $app->param( 'tags' );
+            if ( isset( $tags ) ) {
+                $app->set_tags( $entry, $tags );
+            }
+            $category_array = array();
+            $primary_category_id = $app->param( 'primary_category_id' );
+            if ( $primary_category_id ) {
+                if ( is_numeric( $primary_category_id ) ) {
+                    array_push( $category_array, $primary_category_id );
+                }
+            }
+            $category_ids = $_POST[ 'category_id' ];
+            if ( $category_ids ) {
+                foreach ( $category_ids as $category_id ) {
+                    if ( is_numeric( $category_id ) ) {
+                       array_push( $category_array, $category_id );
+                    }
+                }
+            }
+            $app->set_entry_categories( $entry, $category_array );
+            $app->stash( 'entry', $entry );
+            $app->stash( 'obj', $entry );
+            $app->stash( 'original', $original );
+            $app->run_callbacks( 'cms_post_save.entry', $mt, $ctx );
+            $app->rebuild_entry( array( 'entry' => $entry,
+                                        'BuildDependencies' => 1,
+                                        'recipe' => array( 'Index', 'Category', 'Monthly' ),
+                                        'build_type' => array( 1, 3, 4 ) ) );
+            $return_url = $app->request . '?__mode=view&_type=entry&id=' . $entry->id;
+            if ( $id ) {
+                $app->redirect( $return_url . '&saved_changes=1' );
+            } else {
+                $app->redirect( $return_url . '&saved=1' );
+            }
+        }
+    }
+    if ( $app->param( 'saved_deleted' ) ) {
+        $vars[ 'status_msg' ] = $app->translate( 'The entry has been deleted from the database.' );
+    } elseif ( $app->param( 'saved_changes' ) ) {
+        $vars[ 'status_msg' ] = $app->translate( 'Your changes have been saved.' );
+    } elseif ( $app->param( 'saved' ) ) {
+        $vars[ 'status_msg' ] = $app->translate( 'This entry has been saved.' );
+    } elseif ( $app->param( 'publish_entries' ) ) {
+        $vars[ 'status_msg' ] = $app->translate( 'You have successfully published the checked entries.' );
+    } elseif ( $app->param( 'set_draft_entries' ) ) {
+        $vars[ 'status_msg' ] = $app->translate( 'You have successfully set to draft the checked entries.' );
+    } elseif ( $app->param( 'delete_entries' ) ) {
+        $vars[ 'status_msg' ] = $app->translate( 'You have successfully deleted the checked entries.' );
+    } elseif ( $app->param( 'not_publish_entries' ) || $app->param( 'not_set_draft_entries' ) ) {
+        $vars[ 'status_msg' ] = $app->translate( 'There is no entry to change the status.' );
+    }
+    if ( $vars[ 'status_msg' ] ) {
+        if ( $permalink ) {
+            $view_link .= "<a href=\"$permalink\" target=\"_blank\">";
+            $view_link .= $app->translate( 'View [_1]', $app->translate( 'Entry' ) );
+            $view_link .= "</a>";
+            $vars[ 'status_msg' ] .= $view_link;
+        }
+    }
+?>
+<mt:dynamicmtml trimwhitespace="1">
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="Content-Style-Type" content="text/css" />
+        <meta http-equiv="Content-Script-Type" content="text/javascript" />
+        <link rel="icon" href="<$mt:StaticWebPath$>images/favicon.ico" type="image/ico" />
+        <style type="text/css">
+        <!--
+            #container { width:760px; margin:auto; }
+            .title { width:260px; }
+            .status,.view { text-align:center; width:28px; }
+            .cb { text-align:center; width:12px; }
+            #header { text-align:right; margin-bottom:-20px; }
+            #post input { width:756px; height:30px; font-size:140%; }
+            #post textarea { margin-top:10px; width:756px; height:140px; font-size:140%; }
+            #search { margin-top:10px; }
+            #search input { width:170px; height:30px; font-size:140%; }
+            #post { text-align:center; }
+            #post div { margin-bottom:7px; }
+            button { height:36px; font-size:130%; }
+            img { border:none; }
+            .action-bar { padding:5px; }
+            .action-bar button { height:28px; font-size:110%; }
+            #login span { font-size:130%; }
+            #login input { height:30px; width: 160px; font-size:140%; }
+            h1 { border-bottom:1px solid gray; }
+            #entries { margin-left:0px; padding-left:0px; width:100%; font-size:90%; }
+            #entries td { padding:7px; background-color:#eee; color:#444; }
+            #entries th { padding:7px; background-color:#efe; color:#444; }
+            .entries_meta { width:100%; }
+            .entries_meta td { padding:8px; color:#444; }
+            .right { text-align:right; }
+            .status_msg { padding:14px; text-align:center; margin-bottom:10px; background-color:#efe; color:#444; }
+            #category-list { text-align:left; border:1px solid #aaa; width:100%; font-size:140%; height:130px; overflow:auto; }
+            #category-list ul { list-style-type:none; margin:4px; padding:0px }
+            #category-list li { list-style-type:none; margin-left:0px; padding-left:14px; }
+            #category-list input { width:20px; height:21px; font-size:130%; }
+            #category-list label { vertical-align:middle; }
+        -->
+        </style>
+        <script type="text/javascript">
+            var tebleSelect = false;
+            function DisableButton( b ) {
+                if (! document.getElementById( 'title' ).value ) {
+                    document.getElementById( 'publish_button' ).disabled = false;
+                    document.getElementById( 'draft_button' ).disabled = false;
+                    alert( '<$mt:Trans phrase="Title cannot be blank.">' );
+                    return false;
+                }
+                <mt:IfUserHasPermission permission="publish_post">
+                if ( b.id == 'publish_button' ) {
+                    document.getElementById( 'status' ).value = '2';
+                }
+                </mt:IfUserHasPermission>
+                b.disabled = true;
+                // b.innerHTML = '....';
+                b.form.submit();
+            }
+            function change_primary( obj, id ) {
+                cb = document.getElementById( 'cb_category_' + id );
+                cb.checked = obj.checked;
+            }
+            function change_category( obj, id ) {
+                var input = document.getElementsByTagName( 'input' );
+                if (! obj.checked ) {
+                    rb = document.getElementById( 'rb_category_' + id );
+                    var changed;
+                    if ( rb.checked ) {
+                        for ( var i = 0; i < input.length; i++ ) {
+                            if ( input[ i ].className == 'cb_category_id' ) {
+                                if ( input[ i ].checked ) {
+                                    match_id = input[ i ].id;
+                                    rb_id = match_id.replace( 'cb_category_', 'rb_category_' );
+                                    rb = document.getElementById( rb_id );
+                                    rb.checked = true;
+                                    changed = 1;
+                                }
+                            }
+                        }
+                    }
+                    if (! changed ) {
+                        rb = document.getElementById( 'rb_category_' + id );
+                        rb.checked = false;
+                    }
+                } else {
+                    var primary;
+                    for ( var i = 0; i < input.length; i++ ) {
+                        if ( input[ i ].className == 'rb_category_id' ) {
+                            if ( input[ i ].checked ) {
+                                primary = 1;
+                            }
+                        }
+                    }
+                    if (! primary ) {
+                        rb = document.getElementById( 'rb_category_' + id );
+                        rb.checked = true;
+                    }
+                }
+            }
+            function table_select( cb ) {
+                var cbs = document.getElementsByTagName( 'input' );
+                for ( var i = 0; i < cbs.length; i++ ) {
+                    if ( cbs[ i ].className == 'select' ) {
+                        cbs[ i ].checked = cb.checked;
+                    }
+                }
+            }
+            function check_select( target ) {
+                var cbs = document.getElementsByTagName( 'input' );
+                for ( var i = 0; i < cbs.length; i++ ) {
+                    if ( cbs[ i ].className == 'select' ) {
+                        if ( cbs[ i ].checked ) {
+                            tebleSelect = true;
+                            break;
+                        }
+                    }
+                }
+                if (! tebleSelect ) {
+                    alert( <$mt:Trans phrase="'You did not select any Entry to ' + target + '.'"$> );
+                } else {
+                    if ( target == '<$mt:Trans phrase="Publish"$>' ) {
+                        alert( '<$mt:Trans phrase="Are you sure you want to publish selected entries?"$>' );
+                    }
+                    if ( target == '<$mt:Trans phrase="Draft"$>' ) {
+                        alert( '<$mt:Trans phrase="Are you sure you want to set draft selected entries?"$>' );
+                    }
+                    if ( target == '<$mt:Trans phrase="Delete"$>' ) {
+                        alert( '<$mt:Trans phrase="Are you sure you want to remove selected entries?"$>' );
+                    }
+                }
+            }
+            function setActionMode( mode ) {
+                document.getElementById( 'listing-action-mode' ).value = mode;
+            }
+            function checkSelected() {
+                return tebleSelect;
+            }
+        </script>
+        <title><$mt:BlogName escape="html"$></title>
+    </head>
+    <body id="home">
+        <div id="container">
+        <mt:IfLogin>
+            <mt:SetVarBlock name="action-bar-inner">
+                <button type="submit" onclick="setActionMode( 'publish_entries' );check_select( '<$mt:Trans phrase="Publish"$>' );"><$mt:Trans phrase="Publish"$></button>
+                <button type="submit" onclick="setActionMode( 'set_draft_entries' );check_select( '<$mt:Trans phrase="Draft"$>' );"><$mt:Trans phrase="Set Draft"$></button>
+                <button type="submit" onclick="setActionMode( 'delete_entries' );check_select( '<$mt:Trans phrase="Delete"$>' );"><$mt:Trans phrase="Delete"$></button>
+            </mt:SetVarBlock>
+            <$mt:Query key="target" escape="html" setvar="target"$>
+            <$mt:Query key="operator" escape="html" setvar="operator"$>
+            <$mt:Query key="offset" intval="1" setvar="offset"$>
+            <mt:Unless name="offset"><$mt:setvar name="offset" value="0"></mt:Unless>
+            <$mt:Query key="limit" intval="1" setvar="limit"$>
+            <mt:unless name="limit"><$mt:setvar name="limit" value="20"$><$mt:setvar name="limitauto" value="1"$></mt:unless>
+            <$mt:Query key="query" escape="html" setvar="query"$>
+            <$mt:AuthorID setvar="author_id"$>
+            <$mt:Query key="category_id" intval="1" setvar="category_id"$>
+            <$mt:Query key="tag" escape="html" setvar="tag"$>
+            <mt:IfUserHasPermission permission="publish_post">
+                <mt:setvar name="can_view" value="1">
+                <mt:setvar name="role" value="Contributor">
+                <mt:IfUserHasPermission permission="edit_all_posts">
+                    <mt:setvar name="role" value="Editor">
+                </mt:IfUserHasPermission>
+            </mt:IfUserHasPermission>
+            <div id="header">
+                <$mt:AuthorDisplayName escape="html" setvar="author_displayname"$>
+                <$mt:Trans phrase="Hi, [_1]" params="$author_displayname"$> <a href="<$mt:CurrentArchiveURL escape="html"$>?__mode=logout"><$mt:Trans phrase="Sign out"></a>
+                <mt:if name="can_view">
+                <div id="search">
+                    <form action="<$mt:CurrentArchiveURL escape="html"$>" method="get">
+                        <input type="text" name="query" value="<mt:unless name="operator"><$mt:var name="query"$></mt:unless>" />
+                        <button type="submit"><$mt:Trans phrase="Search"$></button>
+                    </form>
+                </div>
+                </mt:if>
+            </div>
+        </mt:IfLogin>
+        <h1><a href="<$mt:CurrentArchiveURL escape="html"$>"><$mt:BlogName escape="html"$></a></h1>
+        <mt:if name="status_msg">
+        <div id="status_msg" class="status_msg">
+            <$mt:var name="status_msg"$>
+        </div>
+        </mt:if>
+        <form action="<$mt:CurrentArchiveURL escape="html"$>" method="post">
+        <mt:IfLogin>
+            <div id="post">
+                <div class="field-wrapper"><input type="text" id="title" name="title" value="<$mt:var name="title" escape="html"$>" /></div>
+                <div class="field-wrapper"><textarea name="text"><$mt:var name="text" escape="html"$></textarea></div>
+                <div class="field-wrapper"><input type="text" id="tags" name="tags" value="<$mt:var name="tags" escape="html"$>" /></div>
+                <div class="field-wrapper">
+                    <div id="category-list">
+                    <mt:TopLevelCategories>
+                    <mt:SubCatIsFirst><ul></mt:SubCatIsFirst>
+                    <$mt:CategoryID setvar="this_category_id"$>
+                    <li><input type="radio" class="rb_category_id" id="rb_category_<$mt:CategoryID$>" onchange="change_primary( this,<$mt:CategoryID$> );" name="primary_category_id"<mt:if name="primary_category_id" eq="$this_category_id"> checked="checked"</mt:if> value="<$mt:CategoryID$>" />
+                    <label><input type="checkbox" class="cb_category_id" id="cb_category_<$mt:CategoryID$>" onchange="change_category( this,<$mt:CategoryID$> );" <mt:loop name="entry_categories"><mt:if name="entry_category_id" eq="$this_category_id">checked="checked" </mt:if></mt:loop>name="category_id[]" value="<$mt:CategoryID$>"><$mt:CategoryLabel$></label>
+                    <$mt:SubCatsRecurse$>
+                    </li>
+                    <mt:SubCatIsLast></ul></mt:SubCatIsLast>
+                    </mt:TopLevelCategories>
+                    </div>
+                </div>
+                <div class="field-wrapper">
+                    <button type="submit" id="draft_button" onclick="return DisableButton(this);"><$mt:Trans phrase="Save Draft"$></button>
+                    <mt:if name="id">
+                        <button type="submit" id="publish_button" onclick="return DisableButton(this);"><$mt:Trans phrase="Save Changes"$></button>
+                    <mt:else>
+                        <button type="submit" id="publish_button" onclick="return DisableButton(this);"><$mt:Trans phrase="Publish Now"$></button>
+                    </mt:else>
+                    </mt:if>
+                </div>
+                <input type="hidden" name="magic_token" value="<$mt:var name="magic_token"$>" />
+                <input type="hidden" name="status" value="1" id="status" />
+                <input type="hidden" name="__mode" value="save" />
+                <mt:if name="id"><input type="hidden" name="id" value="<$mt:var name="id"$>" /></mt:if>
+                <input type="hidden" name="_type" value="entry" />
+                <script tyle="text/javascript">
+                    document.getElementById( 'title' ).focus();
+                </script>
+            </div>
+        <mt:Else>
+            <div id="login">
+                <label><span><$mt:Trans phrase="Username"$> : </span><input type="text" name="username" value="" /></label>
+                <label><span><$mt:Trans phrase="Password"$> : </span><input type="password" name="password" value="" /></label>
+                <button type="submit"><$mt:Trans phrase="Sign in"$></button>
+            </div>
+            <input type="hidden" name="__mode" value="login" />
+            <input type="hidden" name="return_url" value="<$mt:CurrentArchiveURL escape="html"$>" />
+        </mt:Else>
+        </mt:IfLogin>
+        </form>
+        <mt:if name="can_view">
+        <mt:SetVarBlock name="entries_table">
+            <mt:SearchEntries tag="$tag" category_id="$category_id" operator="$operator" target="$target" query="$query" lastn="$limit" offset="$offset" sort_by="id" count="1" status="*">
+            <mt:if name="__first__">
+                <table id="entries"><$mt:var name="__entries_count__" setvar="max"$>
+                <tr>
+                    <th class="cb"><input type="checkbox" onchange="table_select( this )" name="id-head" value="all" class="head" /></th>
+                    <th class="status">
+                        <img src="<$mt:StaticWebPath$>images/status_icons/invert-flag.gif" width="9" height="9" alt="<$mt:Trans phrase="Status"$>" />
+                    </th>
+                    <th class="title"><$mt:Trans phrase="Title"$></th>
+                    <th class="category"><$mt:Trans phrase="Category"$></th>
+                    <th class="tags"><$mt:Trans phrase="Tags"$></th>
+                    <th class="user"><$mt:Trans phrase="User"$></th>
+                    <th class="created"><$mt:Trans phrase="Created"$></th>
+                    <!--<th class="action"><$mt:Trans phrase="Action"$></th>-->
+                    <th class="view"><$mt:Trans phrase="View"$></th>
+                </tr>
+            </mt:if>
+                <$mt:EntryStatusInt setvar="entry_status"$>
+                <$mt:setvar name="can_edit" value="0"$>
+                <mt:if name="role" eq="Editor">
+                    <$mt:setvar name="can_edit" value="1"$>
+                </mt:if>
+                <tr>
+                <td class="cb">
+                <input type="checkbox" name="ids[]" value="<$mt:EntryId$>" class="select" />
+                </td>
+                <td class="status">
+                <a href="<$mt:CurrentArchiveURL escape="html"$>?query=<$mt:var name="entry_status"$>&amp;target=status&amp;&operator=%3d">
+                    <mt:if name="entry_status" eq="1">
+                        <img src="<$mt:StaticWebPath$>images/status_icons/draft.gif" width="9" height="9" alt="<$mt:Trans phrase="Draft"$>" /></a>
+                    <mt:elseif name="entry_status" eq="2">
+                        <img src="<$mt:StaticWebPath$>images/status_icons/success.gif" width="9" height="9" alt="<$mt:Trans phrase="Published"$>" />
+                    <mt:elseif name="entry_status" eq="4">
+                        <img src="<$mt:StaticWebPath$>images/status_icons/future.gif" width="9" height="9" alt="<$mt:Trans phrase="Future"$>" />
+                    </mt:if>
+                </a>
+                </td>
+                <td class="title">
+                    <mt:if name="can_edit"><a href="<$mt:CurrentArchiveURL escape="html"$>?__mode=view&amp_type=entry&amp;id=<$mt:EntryID$>"></mt:if>
+                        <$mt:EntryTitle escape="html" setvar="entry_title"$>
+                        <mt:if name="entry_title"><$mt:var name="entry_title"$><mt:else>...</mt:else></mt:if>
+                    <mt:if name="can_edit"></a></mt:if>
+                </td>
+                <td class="category">
+                    <mt:EntryCategoryBlock>
+                    <a href="<$mt:CurrentArchiveURL escape="html"$>?category_id=<$mt:CategoryID$>&amp;category_label=<$mt:CategoryLabel escape="url"$>">
+                    <$mt:CategoryLabel escape="html"$>
+                    </a>
+                    </mt:EntryCategoryBlock>
+                    <mt:unless tag="EntryCategory">-</mt:unless>
+                </td>
+                <td class="tags">
+                    <mt:EntryTags glue=", ">
+                    <a href="<$mt:CurrentArchiveURL escape="html"$>?tag=<$mt:TagName escape="html" escape="url"$>">
+                    <$mt:TagName escape="html"$>
+                    </a>
+                    </mt:EntryTags>
+                    <mt:unless tag="EntryTags">-</mt:unless>
+                </td>
+                <td class="user">
+                <a href="<$mt:CurrentArchiveURL escape="html"$>?query=<$mt:EntryAuthorID$>&amp;target=author_id&amp;author_name=<$mt:EntryAuthorDisplayName escape="url"$>&amp;&operator=%3d">
+                    <$mt:EntryAuthorDisplayName escape="html"$>
+                </a>
+                </td>
+                <td class="created">
+                    <$mt:EntryDate$>
+                </td>
+                    <mt:if name="role" eq="Contributor">
+                        <$mt:EntryAuthorID setvar="entry_author_id"$>
+                        <mt:if name="author_id" eq="$entry_author_id"><$mt:setvar name="can_edit" value="1"$></mt:if>
+                    </mt:if>
+                <!--<td class="action">
+                    <mt:if name="can_edit">
+                        <span class="edit_link">
+                            &nbsp; <a href="<$mt:CurrentArchiveURL escape="html"$>?__mode=view&amp_type=entry&amp;id=<$mt:EntryID$>"><$mt:Trans phrase="Edit"$></a>
+                            &nbsp; <a onclick="return confirm( '<$mt:Trans phrase="Are you sure you want to remove this entry?"$>' );" href="<$mt:CurrentArchiveURL escape="html"$>?__mode=delete&amp_type=entry&amp;id=<$mt:EntryID$>&amp;magic_token=<$mt:var name="magic_token"$>"><$mt:Trans phrase="Delete"$></a>
+                        </span>
+                    <mt:else>
+                        <span class="edit_link"> - </span>
+                    </mt:else>
+                    </mt:if>
+                </td>-->
+                <td class="view">
+                    <mt:if name="entry_status" eq="2">
+                        <a href="<$mt:EntryPermalink$>" target="_blank" title="<$mt:Trans phrase="View"$>"><img src="<$mt:StaticWebPath$>images/status_icons/view.gif" width="13" height="9" alt="<$mt:Trans phrase="View"$>" /></a>
+                    </mt:if>
+                </td></tr>
+            <mt:if name="__last__">
+                <$mt:SetVar name="last" value="$__counter__"$>
+                </table>
+            </mt:if>
+            </mt:SearchEntries>
+        </mt:SetVarBlock>
+        <mt:SetVarBlock name="entries_meta">
+            <td class="left">
+            <$mt:Query key="category_id" intvar="1" setvar="category_id"$>
+            <mt:if name="category_id">
+                <$mt:Query key="category_label" escape="html" setvar="category_label"$>
+                <mt:setvarblock name="trans_params"><$mt:Trans phrase="Entry"$>%%<$mt:Trans phrase="Category"$>%% '<$mt:var name="category_label"$>' </mt:setvarblock>
+            </mt:if>
+            <mt:if name="tag">
+                <mt:setvarblock name="trans_params"><$mt:Trans phrase="Entry"$>%%<$mt:Trans phrase="Tag"$>%% '<$mt:var name="tag"$>' </mt:setvarblock>
+            </mt:if>
+            <mt:if name="query">
+                <mt:if name="target" eq="author_id">
+                    <$mt:Query key="author_name" escape="html" setvar="author_name"$>
+                    <mt:setvarblock name="trans_params"><$mt:Trans phrase="Entry"$>%%<$mt:Trans phrase="User"$>%% '<$mt:var name="author_name"$>' </mt:setvarblock>
+                <mt:elseif name="target" eq="status">
+                    <mt:setvarblock name="trans_params"><$mt:Trans phrase="Entry"$>%%<$mt:Trans phrase="Status"$>%% '<mt:if name="query" eq="1"><$mt:Trans phrase="Draft"$><mt:elseif name="query" eq="2"><$mt:Trans phrase="Published"$></mt:if>' </mt:setvarblock>
+                <mt:else>
+                    <mt:setvarblock name="trans_params"><$mt:Trans phrase="Entry"$>%% <$mt:var name="query"$> </mt:setvarblock>
+                </mt:if>
+            </mt:if>
+            <mt:if name="trans_params">
+                <mt:if name="target">
+                    <$mt:Trans phrase="[_1] where [_2] is [_3]" params="$trans_params"$>
+                <mt:elseif name="category_id">
+                    <$mt:Trans phrase="[_1] where [_2] is [_3]" params="$trans_params"$>
+                <mt:elseif name="tag">
+                    <$mt:Trans phrase="[_1] where [_2] is [_3]" params="$trans_params"$>
+                <mt:else>
+                    <$mt:Trans phrase="[_1] contains '[_2]'" params="$trans_params"$>
+                </mt:else>
+            </mt:if>
+                &nbsp; <a href="<$mt:CurrentArchiveURL escape="html"$>"><$mt:Trans phrase="Remove filter"></a>
+            </mt:if>
+            </td>
+            <td class="right">
+            <mt:SetVarBlock name="query_vars"><mt:unless name="limitauto">&amp;limit=<$mt:var name="limit"$></mt:unless><mt:if name="query">&amp;query=<$mt:var name="query" escape="url"$></mt:if><mt:if name="target">&amp;target=<$mt:var name="target" escape="url"$></mt:if><mt:if name="operator">&amp;operator=<$mt:var name="operator" escape="url"$></mt:if><mt:if name="category_id">&amp;category_id=<$mt:var name="category_id"$></mt:if><mt:if name="category_label">&amp;category_label=<$mt:var name="category_label" escape="url"$></mt:if><mt:if name="tag">&amp;tag=<$mt:var name="tag" escape="url"$></mt:if></mt:SetVarBlock>
+            <mt:if name="max">
+                <mt:if name="offset">
+                    <a href="<$mt:CurrentArchiveURL escape="html"$><mt:if name="query_vars">?<$mt:var name="query_vars"$></mt:if>" title="<$mt:Trans phrase="Top"$>">|&laquo;</a>
+                &nbsp;
+                </mt:if>
+                <$mt:Var name="offset" setvar="start"$>
+                <$mt:SetVar name="start" value="1" op="+"$>
+                <$mt:Var name="last" setvar="end"$>
+                <$mt:SetVar name="end" value="$offset" op="+"$>
+                <mt:if name="last">
+                    <$mt:var name="offset" setvar="nextoffset"$>
+                    <$mt:setvar name="nextoffset" value="$last" op="+"$>
+                    <mt:if name="offset">
+                        <$mt:setvar name="prevoffset" value="$offset"$>
+                        <$mt:setvar name="prevoffset" value="$limit" op="-"$>
+                        <mt:if name="prevoffset" gt="-1">
+                            <a href="<$mt:CurrentArchiveURL escape="html"$><mt:if name="prevoffset">?offset=<mt:var name="prevoffset"></mt:if><$mt:Var name="query_vars"$>" title="<$mt:Trans phrase="Previous"$>">&laquo;</a>
+                        </mt:if>
+                    </mt:if>
+                    &nbsp; <$mt:var name="start"$> - <$mt:var name="end"$> / <$mt:var name="max"$> &nbsp;
+                    <mt:if name="max" gt="$nextoffset">
+                        <a href="<$mt:CurrentArchiveURL escape="html"$>?offset=<$mt:var name="nextoffset"$><$mt:Var name="query_vars"$>" title="<$mt:Trans phrase="Next"$>">&raquo;</a>
+                        <$mt:SetVar name="offsetlast" value="$max"$>
+                        <$mt:SetVar name="offsetlast" value="$limit"$ op="/"$>
+                        <$mt:Var name="offsetlast" regex_replace="/\..*$/","" setvar="offsetlast">
+                        <$mt:SetVar name="offsetlast" value="$limit"$ op="*"$>
+                        &nbsp; <a href="<$mt:CurrentArchiveURL escape="html"$>?offset=<$mt:var name="offsetlast"$><$mt:Var name="query_vars"$>" title="<$mt:Trans phrase="Last"$>">&raquo;|</a>
+                    </mt:if>
+                </mt:if>
+            </mt:if>
+            </td>
+        </mt:SetVarBlock>
+        <table id="entries_header" class="entries_meta">
+            <tr>
+                <$mt:var name="entries_meta"$>
+            </tr>
+        </table>
+        <mt:if name="max">
+        <form action="<$mt:CurrentArchiveURL escape="html"$>" method="post" id="entry-listing-form" onsubmit="return checkSelected();">
+            <input type="hidden" name="magic_token" value="<$mt:var name="magic_token"$>" />
+            <input type="hidden" name="__mode" value="" id="listing-action-mode" />
+            <input type="hidden" name="return_url" value="<$mt:CurrentArchiveURL escape="html"$>" />
+        <div id="action-bar-top" class="action-bar">
+            <$mt:var name="action-bar-inner"$>
+        </div>
+            <$mt:var name="entries_table"$>
+        <div id="action-bar-bottom" class="action-bar">
+            <$mt:var name="action-bar-inner"$>
+        </div>
+        <table id="entries_footer" class="entries_meta">
+            <tr>
+                <$mt:var name="entries_meta"$>
+            </tr>
+        </table>
+        </form>
+        <mt:else>
+        <div id="notfound_msg" class="status_msg">
+            <$mt:Trans phrase="Entry was not found.">
+        </div>
+        </mt:else>
+        </mt:if>
+        </mt:if>
+        </div>
+    </body>
+</html>
+</mt:dynamicmtml>
