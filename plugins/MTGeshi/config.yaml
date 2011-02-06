@@ -1,0 +1,13 @@
+# DynamicMTML (C) 2010-2011 Alfasado Inc.
+# This program is distributed under the terms of the
+# GNU General Public License, version 2.
+
+name: MTGeshi
+id:   MTGeshi
+key:  mtgeshi
+author_name: Alfasado Inc.
+author_link: http://alfasado.net/
+version: 0.1
+tags:
+    modifier:
+        geshi: filter_geshi

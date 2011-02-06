@@ -1,0 +1,10 @@
+# DynamicMTML (C) 2010-2011 Alfasado Inc.
+# This program is distributed under the terms of the
+# GNU General Public License, version 2.
+
+name: Wordpress
+id:   Wordpress
+key:  wordpress
+author_name: Alfasado Inc.
+author_link: http://alfasado.net/
+version: 0.1

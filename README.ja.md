@@ -67,7 +67,7 @@ mt-config.cgiに下記のディレクティブを指定することが出来ま�
 
 ## フローチャート
 
-![DynamicMTML フローチャート](https://github.com/alfasado/DynamicMTML/raw/master/addons/DynamicMTML.pack/dynamicmtml.ja.png)
+![DynamicMTML フローチャート](https://github.com/alfasado/DynamicMTML/raw/master/dynamicmtml.ja.png)
 
 ## データベースへの接続に失敗した時の処理の継続(フェイルセーフ)
 
