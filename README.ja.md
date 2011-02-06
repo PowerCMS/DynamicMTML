@@ -5,7 +5,9 @@
 
 DynamicMTML は mod\_rewrite を利用してコンテンツへのリクエストを Dynamic Site Bootstrapper(.mtview.php) に処理させることで、静的ファイルに記述された MTML をダイナミックパブリッシングエンジンを用いて動的ビルドすることの出来る Movable Type の拡張です。また、PHPを利用して Movable Type を拡張するための様々なライブラリやコールバック、プラグインによる拡張のしくみを追加します。
 
+## PHPクラスの相関図
 
+![DynamicMTML 相関図](https://github.com/alfasado/DynamicMTML/raw/master/correlation_diagram.png)
 ## 動作環境
 
 + Movable Type5.04以降
@@ -64,7 +66,9 @@ mt-config.cgiに下記のディレクティブを指定することが出来ま�
 静的ファイルが存在する時場合、存在するファイルがテキストファイルの場合(mime\_typeがtext/foo もしくはapplication/xhtml+xmlの場合)の場合に、ファイルの中にMTタグを含んでいればファイル内のMTタグをダイナミックパブリッシングエンジンで処理して処理結果を返します。ファイル内のMTタグの有無に関わらず、ファイル内にPHPのコードが記述されていれば、PHPのコードもあわせて実行されます(DynamicIncludeStatic環境設定が有効な場合)。静的ファイルが存在しない場合は、MTのダイナミックパブリッシングに処理が渡されます。
 処理の各ポイントでコールされるコールバックに対応したプラグインによる拡張が可能です。
 
-![DynamicMTML Overview](https://github.com/alfasado/DynamicMTML/raw/master/addons/DynamicMTML.pack/dynamicmtml.ja.png)
+## フローチャート
+
+![DynamicMTML フローチャート](https://github.com/alfasado/DynamicMTML/raw/master/addons/DynamicMTML.pack/dynamicmtml.ja.png)
 
 ## データベースへの接続に失敗した時の処理の継続(フェイルセーフ)
 
@@ -99,7 +103,7 @@ MTDynamicMTML及びMTNonDynamicMTMLタグを解釈した後、結果に残って
 
 **MTNonDynamicMTML(ブロックタグ)**
 
-静的ファイル出力のテンプレートに記載した場合、このタグの中のテキストをビルドした結果を<MTNonDynamicMTML>〜</MTNonDynamicMTML>で囲んだ形でファイルに出力されます。このタグの中身はダイナミックパブリッシング処理される時には出力されず、DBへのアクセスに失敗した時等に(MT::get\_instanceに失敗した時)に出力されます。
+静的ファイル出力のテンプレートに記載した場合、このタグの中のテキストをビルドした結果を&lt;MTNonDynamicMTML&gt;〜&lt;/MTNonDynamicMTML&gt;で囲んだ形でファイルに出力されます。このタグの中身はダイナミックパブリッシング処理される時には出力されず、DBへのアクセスに失敗した時等に(MT::get\_instanceに失敗した時)に出力されます。
 
 ---------------------------------------
 
@@ -532,9 +536,9 @@ Google, bing, MSN, Yahoo!, gooからの流入の際(またはサイト内検索(
 ### クラスの取得
 DynamicMTML環境下では以下のようにして取得可能です。
 
-    global $app
+    global $app;
     // または
-    $app = $ctx->stash('bootstrapper')
+    $app = $ctx->stash('bootstrapper');
 
 
 ### MT::App互換のメソッド
@@ -965,7 +969,7 @@ error.php,error.htmlの順でファイルを探してファイルが存在すれ
 
 **$app->non\_dynamic\_mtml($content);**
 
-$contentの中の<MTDynamicMTML>〜</MTDynamicMTML>ブロックを削除して<MTNonDynamicMTML>〜</MTNonDynamicMTML>の中のコンテンツをアクティブにします。これらの処理の後最終的にMTタグは削除され、その結果を返します。
+$contentの中の&lt;MTDynamicMTML&gt;〜&lt;/MTDynamicMTML&gt;ブロックを削除して&lt;MTNonDynamicMTML&gt;〜&lt;/MTNonDynamicMTML&gt;の中のコンテンツをアクティブにします。これらの処理の後最終的にMTタグは削除され、その結果を返します。
 
 ---------------------------------------
 

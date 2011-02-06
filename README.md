@@ -4,6 +4,9 @@
 
 DynamicMTML is the PHP extension framework for Movable Type. By using mod\_rewrite to pass the HTTP request to the dynamic site Bootstrapper (.mtview.php),  MTML Tags in static files will be processed by Movable Type's dynamic publishing engine. This framework also provides various libraries and callbacks for the plugin.
 
+## Correlation diagram
+
+![DynamicMTML Correlation diagram](https://github.com/alfasado/DynamicMTML/raw/master/correlation_diagram.png)
 
 ## System Requirements
 
@@ -71,7 +74,9 @@ If the static file already exists, and its mime\_type is text/foo or application
 
 You can use callbacks from the plug-in during this process.
 
-![DynamicMTML Overview](https://github.com/alfasado/DynamicMTML/raw/master/addons/DynamicMTML.pack/dynamicmtml.en.png)
+## Application Flow Chart
+
+![DynamicMTML Flow Chart](https://github.com/alfasado/DynamicMTML/raw/master/dynamicmtml.en.png)
 
 ## Fail-safe for the database connection error
 
@@ -101,7 +106,7 @@ Once MTDynamicMTML and MTNonDynamicMTML tags were processed, the other MTML tags
 
 ---------------------------------------
 
-**MTDynamicMTML (Block Tag)**
+**MTDynamicMTML(Block Tag)**
 
 If the template's publishing setting was set to static, this block is not built during MT's static publishing process. Instead, this block is processed dynamically at the HTTP access.
 
@@ -565,9 +570,9 @@ Convert string to int.
 
 In DynamicMTML environment, 
 
-    global $app
+    global $app;
     // or
-    $app = $ctx->stash('bootstrapper')
+    $app = $ctx->stash('bootstrapper');
 
 
 ### MT::App compatible methods
@@ -702,13 +707,13 @@ By default, the redirection is accomplished by means of a Location header and a 
 **$app->base();**
 
 The protocol and domain of the application. For example, with the full URI
-http://www.foo.com/mt/mt.php, this method will return http://www.foo.com.
+http://www.foo.com/mt/mt.php, this method will return http://www.foo.com
 
 ---------------------------------------
 
 **$app->path();**
 
-The path component of the URL of the application directory. For example, with the full URL http://www.foo.com/mt/mt.html, this method will return /mt/.
+The path component of the URL of the application directory. For example, with the full URL http://www.foo.com/mt/mt.html, this method will return /mt/
 
 ---------------------------------------
 
@@ -1025,7 +1030,7 @@ Set header status 503 and output error.php or error.html or echo string $msg(def
 
 **$app->non\_dynamic\_mtml($content);**
 
-Remove <MTDynamicMTML>\*</MTDynamicMTML> block of $content, and expand <MTNonDynamicMTML>\*</MTNonDynamicMTML> block of $content, Remove other MT Tag of $content, and return $content.
+Remove &lt;MTDynamicMTML&gt;\*&lt;/MTDynamicMTML&gt; block of $content, and expand &lt;MTNonDynamicMTML&gt;\*&lt;/MTNonDynamicMTML&gt; block of $content, Remove other MT Tag of $content, and return $content.
 See also [Continue processing when database connection failed].
 
 ---------------------------------------
@@ -1338,24 +1343,24 @@ After the build, $content is build result. Get &$content and $content = 'Foo', c
 
 *$args is that. ($args['foo'] is equal to $app->stash('foo'))*
 
-    blog_id(Blog's ID)
-    conditional(Use conditional get)
-    use_cache(Use file cache)
-    cache_dir(Path of cache directory)
-    file(Request file path)
-    base($app->base())
-    path($app->path())
-    script($app->script())
-    request(Current URL that removed the query string)
-    param($app->query_string())
-    is_secure($app->is_secure())
-    url(Current URL)
-    contenttype(mime_type)
-    extension(File extension)
-    build_type('dynamic_mtml(DynamicMTML)',
-     'static_text(Text not contains MTML)',
-     'binary_data(Binary file)',
-     'mt_dynamic(MT's dynamic publishing)')
+    blog_id     : Blog's ID)
+    conditional : Use conditional get)
+    use_cache   : Use file cache)
+    cache_dir   : Path of cache directory)
+    file        : Request file path)
+    base        : $app->base()
+    path        : $app->path()
+    script      : $app->script()
+    request     : Current URL that removed the query string)
+    param       : $app->query_string()
+    is_secure   : $app->is_secure()
+    url         : Current URL
+    contenttype : mime_type
+    extension   : File extension
+    build_type  : dynamic_mtml(DynamicMTML)
+                : static_text(Text not contains MTML)
+                : binary_data(Binary file)
+                : mt_dynamic(MT's dynamic publishing)
 
 ---------------------------------------
 
