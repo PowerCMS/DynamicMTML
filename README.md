@@ -22,7 +22,7 @@ Upload DynamicMTML.pack to the addons directory ( MT\_HOME/addons/ ).
 Check Website/Blog's Settings > General > Dynamic Publishing Options > Enable DynamicMTML and click "Save Changes".
 
 Confirm .htaccess and .mtview.php were generated under the blog's publishing path.
-Confirm a directory called "powercms\_files" was created under the MT root directory ( MT\_HOME/powercms\_files), and was granted a writable permissions.
+Confirm a directory called "powercms\_files" was created under the MT root directory ( MT\_HOME/powercms\_files ), and was granted a writable permissions.
 
 If you wish to enable Perl based dynamic publishing, copy two files under addons/DynamicMTML.pack/tools to the MT\_HOME/tools directory, and grant an executable permission.
 

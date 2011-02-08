@@ -12,6 +12,6 @@ Alfie can run without database, You could be use MTML as pure PHP's template eng
 1. Put Movable Type to server(It works with only MT\_DIR/php directory).
 2. Put DynamicMTML.pack to MT\_DIR/addons/DynamicMTML.pack
 3. Edit alfie.php(change path) and put the file (Can be changed to any file name).
-4. Edit _htaccess.txt(change path) and put the file, rename _htaccess.txt to .htaccess
-5. Create templates_c directory and set write permissions.
+4. Edit \_htaccess.txt(change path) and put the file, rename \_htaccess.txt to .htaccess
+5. Create templates\_c directory and set write permissions.
 6. Access example.html, Displays Welcome message!

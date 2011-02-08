@@ -13,6 +13,6 @@ Alfieはデータベースがなくても動作します。つまり、MTMLを�
 2. DynamicMTML.pack を MT\_DIR/addons/DynamicMTML.pack にコピーします。
 3. mt/mt-config.cgi に DefaultLanguage ja を記述します。
 4. alfie.php のパス情報を環境にあわせて書き換えてアップロードします(このファイル名は変更しても構いません)。
-5. _htaccess.txt のパス情報(指定ファイル名)を環境にあわせて書き換えてアップロードしてから _htaccess.txt を .htaccessにリネームします。
+5. \_htaccess.txt のパス情報(指定ファイル名)を環境にあわせて書き換えてアップロードしてから \_htaccess.txt を .htaccessにリネームします。
 6. templates_c ディレクトリを作成し、書き込み可能なパーミッションを設定します。
 7. example.htmlにアクセスします。Welcomeメッセージが正しく表示されればセットアップは完了です!

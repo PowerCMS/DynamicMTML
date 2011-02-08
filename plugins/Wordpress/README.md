@@ -2,7 +2,7 @@
 
 ## Synopsis
 
-MTPlugin Wordpress is Wordpress's template tag to MTML.
+MTML(Movable Type Markup Language) for Wordpress.
 This plugin works on DynamicMTML or MT's dynamic publishing.
 
 ## Getting Started
@@ -20,7 +20,7 @@ This plugin works on DynamicMTML or MT's dynamic publishing.
         <li class="<mt:if name="__odd__">odd<mt:else>even</mt:if>">
             <a href="<$mt:wp:EntryPermalink$>">
                 <$mt:wp:EntryTitle escape="html"$>
-                (<$mt:wp:ENtryAuthorDisplayName$> / <$mt:wp:EntryDate format="%b %Y"$>)
+                (<$mt:wp:EntryAuthorDisplayName$> / <$mt:wp:EntryDate format="%b %Y"$>)
             </a>
             <mt:wp:EntryCategories glue=",">
                 <mt:if name="__first__">Categories:</mt:if>
@@ -48,7 +48,7 @@ A block tag which iterates over a list of published posts from a blog.
 
 *Attributes:*
 
-    id            : Outputs a single post matching the given entry ID.
+    id            : Outputs a single post matching the given post ID.
     category      : Category name
     category_id   : Category id
     tag           : Tag
@@ -260,13 +260,13 @@ A specialized version of the mt:wp:Categories block tag that respects the hierar
 
 **mt:wp:SubCatIsFirst(Block Tag)**
 
-The contents of this container tag will be displayed when the first category listed by a mt:SubCategories loop tag is reached.
+The contents of this container tag will be displayed when the first category listed by a mt:wp:SubCategories loop tag is reached.
 
 ---------------------------------------
 
 **mt:wp:SubCatIsLast(Block Tag)**
 
-The contents of this container tag will be displayed when the last category listed by a mt:SubCategories loop tag is reached.
+The contents of this container tag will be displayed when the last category listed by a mt:wp:SubCategories loop tag is reached.
 
 ---------------------------------------
 
@@ -385,7 +385,7 @@ Outputs the number of published comments for the current post in context.
 *Alias: mt:wp:the\_date*
 
 Outputs the 'authored' date of the current post in context.
-[See the Date tag for supported attributes.](http://www.movabletype.org/documentation/appendices/tags/date.html).
+[See the Date tag for supported attributes.](http://www.movabletype.org/documentation/appendices/tags/date.html)
 
 ---------------------------------------
 
@@ -394,7 +394,7 @@ Outputs the 'authored' date of the current post in context.
 *Alias: mt:wp:the\_modified*
 
 Outputs the modification date of the current post in context.
-[See the Date tag for supported attributes.](http://www.movabletype.org/documentation/appendices/tags/date.html).
+[See the Date tag for supported attributes.](http://www.movabletype.org/documentation/appendices/tags/date.html)
 
 ---------------------------------------
 
@@ -410,6 +410,14 @@ Wordpress's default format.
     <$mt:wp:EntryPermalink$>
     
     => http://www.example.com/p=1
+
+---------------------------------------
+
+**mt:wp:EntryMeta(Function Tag)**
+
+*Alias: mt:wp:post\_meta*
+
+Given 'key' attribute, Output the value of the custom field.
 
 ---------------------------------------
 
@@ -513,7 +521,7 @@ The number of published posts for the tag in context.
 
 In mt:wp:ArchiveList, A descriptive title of the current 'Monthly' archive.
 The range of dates in the week in "Month YYYY" form.
-[See the Date tag for supported attributes.](http://www.movabletype.org/documentation/appendices/tags/date.html).
+[See the Date tag for supported attributes.](http://www.movabletype.org/documentation/appendices/tags/date.html)
 
 ---------------------------------------
 

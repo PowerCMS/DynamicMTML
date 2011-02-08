@@ -655,7 +655,6 @@ class Wordpress extends MTPlugin {
             $wp = $this->get_wp( $ctx );
             $nextprev_post = $post->nextprev( $wp, $ctx, $nextprev );
             if ( $nextprev_post ) {
-                $nextprev_post->title;
                 $ctx->stash( 'wp_post', $nextprev_post );
                 $repeat = TRUE;
             } else {

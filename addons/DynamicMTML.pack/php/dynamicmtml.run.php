@@ -67,7 +67,20 @@
     $base         = "http{$secure}://{$_SERVER[ 'HTTP_HOST' ]}";
     $port         = (int) $_SERVER[ 'SERVER_PORT' ];
     if (! empty( $port ) && $port !== ( $secure === '' ? 80 : 443 ) ) $base .= ":$port";
-    $request_uri  = $_SERVER[ 'REQUEST_URI' ];
+    $request_uri = NULL;
+    if ( isset( $_SERVER[ 'HTTP_X_REWRITE_URL' ] ) ) {
+        // IIS.
+        $request_uri  = $_SERVER[ 'HTTP_X_REWRITE_URL' ];
+    } elseif ( isset( $_SERVER[ 'REQUEST_URI' ] ) ) {
+        // Apache and others.
+        $request_uri  = $_SERVER[ 'REQUEST_URI' ];
+    } elseif ( isset( $_SERVER[ 'ORIG_PATH_INFO' ] ) ) {
+        // IIS 5.0, PHP as CGI.
+        $request_uri = $_SERVER[ 'ORIG_PATH_INFO' ];
+        if (! empty( $_SERVER[ 'QUERY_STRING' ] ) ) {
+            $request_uri .= '?' . $_SERVER[ 'QUERY_STRING' ];
+        }
+    }
     $root         = $app->chomp_dir( $_SERVER[ 'DOCUMENT_ROOT' ] );
     $ctime        = empty( $_SERVER[ 'REQUEST_TIME' ] )
                   ? time() : $_SERVER[ 'REQUEST_TIME' ];
