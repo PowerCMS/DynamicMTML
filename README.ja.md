@@ -905,7 +905,7 @@ Android,BlackBerry,iPhone(iPod touch),iPad,Palm,Opera Mini($wantsに'Smartphone'
 
 リクエストから配列$arrayで指定された複数のパラメーターの値をクリアします。
 
-$app->include\_exclude\_blogs($ctx,$args);
+**$app->include\_exclude\_blogs($ctx,$args);**
 
 ブロックタグに渡された$ctxと$args(include\_blogs(blog\_ids), exclude\_blogsモディファイアから)複数のブログを対象とするためのSQLを生成して返します。
 
