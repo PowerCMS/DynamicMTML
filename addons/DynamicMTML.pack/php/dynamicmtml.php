@@ -324,7 +324,7 @@ class DynamicMTML {
             $msg = ob_get_contents();
             ob_end_clean();
         }
-        require_once ( 'dynamicmtml.util.php' );
+        require_once( 'dynamicmtml.util.php' );
         require_once( 'class.mt_log.php' );
         $_log = new Log;
         $_log->message = $msg;
@@ -546,7 +546,7 @@ class DynamicMTML {
         if ( $this->stash( 'init_plugin_dir' ) ) {
             return;
         }
-        require_once ( 'dynamicmtml.util.php' );
+        require_once( 'dynamicmtml.util.php' );
         require_once( 'class.dynamicmtml_plugin.php' );
         $plugins_config = array();   // Config from config.yaml or config.php
                                      // 'dynamicmtml' => array( 'id' => 'DynamicMTML', ...)
@@ -570,7 +570,7 @@ class DynamicMTML {
             if ( is_dir( $plugin_dir ) ) {
                 if ( $dh = opendir( $plugin_dir ) ) {
                     while ( ( $dir = readdir( $dh ) ) !== FALSE ) {
-                        if (! preg_match ( '/^\./', $dir ) ) {
+                        if (! preg_match( '/^\./', $dir ) ) {
                             $plugin_base = $plugin_dir . DIRECTORY_SEPARATOR . $dir;
                             $plugin = NULL;
                             $config = array();
@@ -579,7 +579,7 @@ class DynamicMTML {
                                 $plugin_class = $split_dirs[ count( $split_dirs ) - 1 ];
                                 $plugin_key = strtolower( $split_dirs[ count( $split_dirs ) - 1 ] );
                                 if ( preg_match( '/\.pack$/', $plugin_class ) ) {
-                                    $plugin_class = preg_replace( '/\./', '_', $plugin_class );
+                                    $plugin_class = strtr( $plugin_class, '.', '_' );
                                     $plugin_key = preg_replace( '/\.pack$/', '', $plugin_key );
                                 }
                                 $plugins_dir_path[ $plugin_key ] = $plugin_base;
@@ -749,7 +749,7 @@ class DynamicMTML {
 
     function run_tasks ( $task = NULL, $prefix = 'tasks', $sleep = NULL ) {
         $do;
-        require_once ( 'dynamicmtml.util.php' );
+        require_once( 'dynamicmtml.util.php' );
         $mt_dir = dirname( $this->cfg_file );
         $mt_dir = preg_replace( '/[^A-Za-z0-9]+/', '_', $mt_dir );
         $lock_name = "mt-tasks-{$mt_dir}.lock";
@@ -944,7 +944,7 @@ class DynamicMTML {
 
     public function &context () {
         // TODO:
-        require_once ( 'dynamicmtml.util.php' );
+        require_once( 'dynamicmtml.util.php' );
         $ctx = $this->ctx;
         if ( isset( $ctx ) ) return $ctx;
         $mtphpdir = $this->config( 'PHPDir' );
@@ -1012,7 +1012,7 @@ class DynamicMTML {
                     $dirs = explode( DIRECTORY_SEPARATOR, $plugin_callback_dir );
                     $plugin = strtolower( $dirs[ count( $dirs ) - 3 ] );
                     $function = $plugin . '_' . $callback;
-                    $function = preg_replace( '/\./', '_', $function );
+                    $function = strtr( $function, '/\./', '_' );
                     $require = $plugin_callback_dir . DIRECTORY_SEPARATOR . $function . '.php';
                     if ( file_exists( $require ) ) {
                         require_once $require;
@@ -1070,13 +1070,13 @@ class DynamicMTML {
 
     function adjust_file ( $file, $indexes ) {
         if ( DIRECTORY_SEPARATOR != '/' ) {
-            $file = preg_replace( '/\\\\/', '\\', $file );
+            $file = strtr( $file, '\\\\', '\\' );
         } else {
-            $file = preg_replace( '/\/\//', '/', $file );
+            $file = strtr( $file, '//', '/' );
         }
-        $file = str_replace( '../', '', $file );
+        $file = strtr( $file, '../', '' );
         if ( DIRECTORY_SEPARATOR != '/' ) {
-            $file = str_replace( '/', DIRECTORY_SEPARATOR, $file );
+            $file = strtr( $file, '/', DIRECTORY_SEPARATOR );
         }
         if ( is_dir ( $file ) ) {
             foreach ( explode( ',', $indexes ) as $index ) {
@@ -1101,9 +1101,9 @@ class DynamicMTML {
         }
         $file = urldecode( $file );
         if ( DIRECTORY_SEPARATOR != '/' ) {
-            $file = preg_replace( '/\\\\/', '\\', $file );
+            $file = strtr( $file, '\\\\', '\\' );
         } else {
-            $file = preg_replace( '/\/\//', '/', $file );
+            $file = strtr( $file, '//', '/' );
         }
         return $file;
     }
@@ -1262,10 +1262,10 @@ class DynamicMTML {
     function chomp_dir ( $dir ) {
         if ( DIRECTORY_SEPARATOR != '/' ) {
             $dir = preg_replace( '/\\$/', '', $dir );
-            $dir = preg_replace( '/\\\\/', '\\', $dir );
+            $dir = strtr( $dir, '\\\\', '\\'  );
         } else {
             $dir = preg_replace( '/\/$/', '', $dir );
-            $dir = preg_replace( '/\/\//', '/', $dir );
+            $dir = strtr( $dir, '//', '/'  );
         }
         return $dir;
     }
@@ -1305,7 +1305,7 @@ class DynamicMTML {
             $client_author = $client_author[ 0 ];
             if ( isset( $client_author ) ) {
                 $language = $client_author->preferred_language;
-                $language = preg_replace( '/\-/', '_', $language );
+                $language = strtr( $language, '-', '_' );
                 if ( $language == 'en_us' ) {
                     $language = 'en';
                 }
@@ -1477,7 +1477,7 @@ class DynamicMTML {
         }
         if ( $user ) {
             $language = $user->preferred_language;
-            $language = preg_replace( '/\-/', '_', $language );
+            $language = strtr( $language, '-', '_' );
             if ( $language == 'en_us' ) {
                 $language = 'en';
             }
@@ -1736,7 +1736,7 @@ class DynamicMTML {
                 return 0;
             }
         }
-        require_once ( 'class.mt_permission.php' );
+        require_once( 'class.mt_permission.php' );
         $Permission = new Permission;
         $where = "permission_author_id = '{$author_id}'"
                . " and ("
@@ -1775,7 +1775,7 @@ class DynamicMTML {
     }
 
     function get_agent ( $wants = 'Agent', $like = NULL ) {
-        require_once ( 'dynamicmtml.util.php' );
+        require_once( 'dynamicmtml.util.php' );
         return get_agent ( $wants, $like );
     }
 
@@ -2947,7 +2947,7 @@ class DynamicMTML {
 
     function __get_object_context ( $obj ) {
         $table = $obj->_table;
-        $table = preg_replace( '/mt_/', '', $table );
+        $table = preg_replace( '/^mt_/', '', $table );
         $fileinfo_key = $table . '_id';
         $blog = $obj->blog();
         $at = NULL;
@@ -3216,7 +3216,7 @@ class DynamicMTML {
     }
 
     function write2file ( $path, $data, $mode = 'output' ) {
-        require_once ( 'dynamicmtml.util.php' );
+        require_once( 'dynamicmtml.util.php' );
         if ( $mode == 'upload' ) {
             $umask = $this->config( 'UploadUmask' );
             if ( $umask ) {
@@ -3269,7 +3269,7 @@ class DynamicMTML {
     function mkpath ( $path, $perms = NULL ) {
         if (! is_dir( $path ) ) {
             if (! file_exists( $path ) ) {
-                require_once ( 'dynamicmtml.util.php' );
+                require_once( 'dynamicmtml.util.php' );
                 if (! $perms ) {
                     $umask = $this->config( 'DirUmask' );
                     if ( $umask ) {
@@ -3414,7 +3414,7 @@ class DynamicMTML {
         }
         if (! $template ) return '';
         if ( is_array( $params ) ) {
-            require_once ( 'dynamicmtml.util.php' );
+            require_once( 'dynamicmtml.util.php' );
             if ( __is_hash( $params ) ) {
                 $vars =& $ctx->__stash[ 'vars' ];
                 foreach ( $params as $key => $val ) {
@@ -3926,7 +3926,7 @@ class DynamicMTML {
     }
 
     function load ( $class, $terms, $args = array(), $wantarray = FALSE ) {
-        require_once ( 'dynamicmtml.util.php' );
+        require_once( 'dynamicmtml.util.php' );
         $class = $this->escape( $class );
         $_obj = $this->model( $class );
         if (! $_obj ) {
@@ -4006,7 +4006,8 @@ class DynamicMTML {
                                         $expression .= " {$_prefix}{$key} {$op} ";
                                     } else {
                                         $op = strtoupper( $op );
-                                        $op = preg_replace( '/_/', ' ', $op );
+                                        $op = strtr( $op, '_', ' ' );
+                                        // $op = preg_replace( '/_/', ' ', $op );
                                         $expression .= " {$_prefix}{$key} {$op} '{$value}' ";
                                     }
                                 }
@@ -4122,7 +4123,7 @@ class DynamicMTML {
                         $class_name = $arg_array[0];
                         if ( isset( $arg_array[1] ) && is_string( $arg_array[1] ) ) {
                             if ( is_array( $arg_array[2] ) ) {
-                                $column = preg_replace( '/mt_/', '', $arg_array[0] );
+                                $column = preg_replace( '/^mt_/', '', $arg_array[0] );
                                 // $extras = $arg_array[1] . '=' . $column . '_' . $arg_array[1] . ' AND ';
                                 $extras = $arg_array[1] . '=' . $column . '.' . $arg_array[1] . ' AND ';
                                 $expression = '';
@@ -4142,7 +4143,8 @@ class DynamicMTML {
                                                         $expression .=  $column . ".{$key} {$op} ";
                                                     } else {
                                                         $op = strtoupper( $op );
-                                                        $op = preg_replace( '/_/', ' ', $op );
+                                                        // $op = preg_replace( '/_/', ' ', $op );
+                                                        $op = strtr( $op, '_', ' ' );
                                                         $expression .= " {$column}.{$key} {$op} '{$value}' ";
                                                     }
                                                 }
@@ -4192,7 +4194,7 @@ class DynamicMTML {
             $prefix = $obj->_prefix;
         } else {
             $prefix = $obj->_table;
-            $prefix = preg_replace( '/mt_/', '', $prefix );
+            $prefix = preg_replace( '/^mt_/', '', $prefix );
             $prefix .= '_';
         }
         if (! $this->run_callbacks( "{$do}_permission_filter.{$class}", $this->mt(), $this->ctx(), $this->args ) ) {

@@ -21,7 +21,7 @@
         $no_database = TRUE;
         $app->stash( 'no_database', 1 );
         // require_once( $mt_dir . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'dynamic_mt.php' );
-        require_once( 'mt.php' );
+        require_once( $plugin_path . 'mt.php' );
         $mt = new MT();
     }
     $include_static   = $app->config( 'DynamicIncludeStatic' );
@@ -107,10 +107,13 @@
     // ========================================
     // Check Request and Set Parameter
     // ========================================
-    if ( preg_match( '/\?/', $request_uri ) ) {
+    if ( strpos( $request_uri, '?' ) ) {
+    // if ( preg_match( '/\?/', $request_uri ) ) {
         list( $request, $param ) = explode( '?', $request_uri );
         $app->stash( 'query_string', $param );
-        if ( preg_match( '/\/mt\-preview\-/', $request ) ) {
+        $pos = strpos( $request, '/mt-preview-' );
+        if ( $pos !== FALSE ) {
+        // if ( preg_match( '/\/mt\-preview\-/', $request ) ) {
             if ( preg_match( '/^[0-9]{1,}$/', $param ) ) {
                 $use_cache = 0;
                 $clear_cache = 1;
