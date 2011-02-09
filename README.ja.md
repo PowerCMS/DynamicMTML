@@ -1040,7 +1040,7 @@ $argsにはinclude\_private,sort\_by,sort\_orderを指定可能です。
 
 ---------------------------------------
 
-**$app->get\_tag\_obj($str[,$args]);
+**$app->get\_tag\_obj($str[,$args]);**
 
 タグ名が文字列$strと一致するMT::Tagオブジェクトを返します(なければ作成して生成したオブジェクトを返します)。
 $args['no\_generate']を指定した場合、生成されたオブジェクトは保存されません。
