@@ -41,7 +41,7 @@ mt-config.cgiに下記のディレクティブを指定することが出来ま�
 
 **powercms\_filesディレクトリを任意の場所に設定(キャッシュディレクトが含まれます)**
 
-    PowerCMSFilesDir /path/to/powercms\_files
+    PowerCMSFilesDir /path/to/powercms_files
 
 **DynamicMTMLを実行するPHPプラグラムのファイル名称を指定**
 

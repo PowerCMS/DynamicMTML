@@ -1,8 +1,8 @@
-# About MTPlugin Wordpress
+# About MTPlugin WordPress
 
 ## Synopsis
 
-MTML(Movable Type Markup Language) for Wordpress.
+MTML(Movable Type Markup Language) for WordPress.
 This plugin works on DynamicMTML or MT's dynamic publishing.
 
 ## Getting Started
@@ -403,7 +403,7 @@ Outputs the modification date of the current post in context.
 *Alias: mt:wp:the\_permalink*
 
 An absolute URL pointing to the archive page containing this post.
-Wordpress's default format.
+WordPress's default format.
 
 *Example:*
 
@@ -434,7 +434,7 @@ The name of the category in context.
 *Alias: mt:wp:get\_category\_link, mt:wp:CategoryArchiveLink*
 
 A link to the archive page of the current category.
-Wordpress's default format.
+WordPress's default format.
 
 *Example:*
 
@@ -483,7 +483,7 @@ The name of the category in context.
 *Alias: mt:wp:get\_tag\_link, mt:wp:TagArchiveLink*
 
 A link to the archive page of the current tag.
-Wordpress's default format.
+WordPress's default format.
 
 *Example:*
 
@@ -530,7 +530,7 @@ The range of dates in the week in "Month YYYY" form.
 *Alias: mt:wp:get_month_link*
 
 In mt:wp:ArchiveList, A link to the archive page of the current month.
-Wordpress's default format.
+WordPress's default format.
 
 *Attributes:*
 

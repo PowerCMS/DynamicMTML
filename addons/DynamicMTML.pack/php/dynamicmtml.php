@@ -570,7 +570,7 @@ class DynamicMTML {
             if ( is_dir( $plugin_dir ) ) {
                 if ( $dh = opendir( $plugin_dir ) ) {
                     while ( ( $dir = readdir( $dh ) ) !== FALSE ) {
-                        if (! preg_match( '/^\./', $dir ) ) {
+                        if (! preg_match ( '/^\./', $dir ) ) {
                             $plugin_base = $plugin_dir . DIRECTORY_SEPARATOR . $dir;
                             $plugin = NULL;
                             $config = array();
@@ -1012,7 +1012,7 @@ class DynamicMTML {
                     $dirs = explode( DIRECTORY_SEPARATOR, $plugin_callback_dir );
                     $plugin = strtolower( $dirs[ count( $dirs ) - 3 ] );
                     $function = $plugin . '_' . $callback;
-                    $function = strtr( $function, '/\./', '_' );
+                    $function = strtr( $function, '.', '_' );
                     $require = $plugin_callback_dir . DIRECTORY_SEPARATOR . $function . '.php';
                     if ( file_exists( $require ) ) {
                         require_once $require;

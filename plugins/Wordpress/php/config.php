@@ -5,13 +5,13 @@ require_once( dirname( dirname( __FILE__ ) ) . DIRECTORY_SEPARATOR . 'wp-prefix.
 class Wordpress extends MTPlugin {
 
     var $registry = array(
-        'name' => 'Wordpress',
-        'id'   => 'Wordpress',
+        'name' => 'WordPress',
+        'id'   => 'WordPress',
         'key'  => 'wordpress',
         'author_name' => 'Alfasado Inc.',
         'author_link' => 'http://alfasado.net/',
         'version' => '0.1',
-        'description' => 'MTML for Wordpress.',
+        'description' => 'MTML for WordPress.',
         'tags' => array(
             'block'    => array( 'wpget_posts' => 'wp_get_posts',
                                  'wpentries' => 'wp_get_posts',
