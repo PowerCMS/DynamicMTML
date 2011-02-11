@@ -63,7 +63,7 @@ class DynamicMTML {
         $this->static_path = $this->config( 'StaticWebPath' );
         foreach ( $args as $key => $val ) {
             $this->$key = $args[ $key ];
-            if ( $key == 'param' ) {
+            if ( $key === 'param' ) {
                 $this->query_string = $args[ $key ];
             }
         }
@@ -446,7 +446,7 @@ class DynamicMTML {
                         if ( preg_match( '/^\s*(\S+)\s+(.*)$/', $line, $regs ) ) {
                             $key = strtolower( trim( $regs[1] ) );
                             $value = trim( $regs[2] );
-                            if ( $key == 'pluginpath' ) {
+                            if ( $key === 'pluginpath' ) {
                                 $cfg[ $key ][] = $value;
                             } else {
                                 $cfg[ $key ] = $value;
@@ -466,7 +466,7 @@ class DynamicMTML {
         isset( $cfg[ 'pluginpath' ] ) or
             $cfg[ 'pluginpath' ] = array( $this->config( 'MTDir' ) . DIRECTORY_SEPARATOR . 'plugins' );
             $cfg[ 'pluginpath' ][] = $this->config( 'MTDir' ) . DIRECTORY_SEPARATOR . 'addons';
-        if ( strtoupper( substr( PHP_OS, 0,3 ) == 'WIN' ) ) {
+        if ( strtoupper( substr( PHP_OS, 0,3 ) === 'WIN' ) ) {
             $path_sep = ';';
         } else {
             $path_sep = ':';
@@ -703,12 +703,12 @@ class DynamicMTML {
                                 $path = explode( '::', $funk );
                                 $funk = $path[ count( $path ) - 1 ];
                             }
-                            if ( $kind == 'block' ) {
+                            if ( $kind === 'block' ) {
                                 $tag = preg_replace( '/\?$/', '', $tag );
                                 $blocks[ $tag ] = array( $plugin_key => $funk );
-                            } elseif ( $kind == 'function' ) {
+                            } elseif ( $kind === 'function' ) {
                                 $functions[ $tag ] = array( $plugin_key => $funk );
-                            } elseif ( $kind == 'modifier' ) {
+                            } elseif ( $kind === 'modifier' ) {
                                 $modifiers[ $tag ] = array( $plugin_key => $funk );
                             }
                         }
@@ -792,7 +792,7 @@ class DynamicMTML {
             if ( isset( $config[ $prefix ] ) ) {
                 $plugins_tasks = $config[ $prefix ];
                 foreach ( $plugins_tasks as $plugin_key => $settings ) {
-                    if ( (! $task ) || ( $task == $plugin_key ) ) {
+                    if ( (! $task ) || ( $task === $plugin_key ) ) {
                         $label  = isset ( $settings[ 'label' ] ) ?
                                   $label = $this->translate( $settings[ 'label' ] ) : $label = $plugin_key;
                         $plugin = NULL;
@@ -820,10 +820,10 @@ class DynamicMTML {
                             if ( $do ) {
                                 if ( $sleep ) sleep ( $sleep );
                             }
-                            if ( $prefix == 'tasks' ) {
+                            if ( $prefix === 'tasks' ) {
                                 $frequency = isset ( $settings[ 'frequency' ] ) ?
                                              $frequency = $settings[ 'frequency' ] : $frequency = 86400;
-                                if ( $plugin_key == 'FuturePost' ) {
+                                if ( $plugin_key === 'FuturePost' ) {
                                     $futurepostfrequency = $this->config( 'FuturePostFrequency' );
                                     if ( $futurepostfrequency ) {
                                         $frequency = $futurepostfrequency;
@@ -872,7 +872,7 @@ class DynamicMTML {
                                         }
                                     }
                                 }
-                            } elseif ( $prefix == 'task_workers' ) {
+                            } elseif ( $prefix === 'task_workers' ) {
                                 $class = isset ( $settings[ 'class' ] ) ?
                                          $class = $settings[ 'class' ] : $class = NULL;
                                 $jobs = $this->load( 'Ts_Job', array( 'name' => $class ) );
@@ -1157,7 +1157,7 @@ class DynamicMTML {
         $extension = preg_replace( '/^\./', '', $extension );
         if ( $_SERVER[ 'HTTP_USER_AGENT' ] ) {
             if ( preg_match( '/\ADoCoMo\/2\.0 /', $_SERVER[ 'HTTP_USER_AGENT' ] ) ) {
-                if ( $extension == 'html' ) {
+                if ( $extension === 'html' ) {
                     return 'application/xhtml+xml';
                 }
             }
@@ -1253,7 +1253,7 @@ class DynamicMTML {
 
     function type_text ( $contenttype ) {
         $type = explode( '/', $contenttype );
-        if ( $type[0] == 'text' || preg_match( '/xml$/', $contenttype ) ) {
+        if ( $type[0] === 'text' || preg_match( '/xml$/', $contenttype ) ) {
             return 1;
         }
         return 0;
@@ -1306,7 +1306,7 @@ class DynamicMTML {
             if ( isset( $client_author ) ) {
                 $language = $client_author->preferred_language;
                 $language = strtr( $language, '-', '_' );
-                if ( $language == 'en_us' ) {
+                if ( $language === 'en_us' ) {
                     $language = 'en';
                 }
                 $l10n_dir = $this->stash( 'l10n_dir' );
@@ -1470,22 +1470,22 @@ class DynamicMTML {
         // Translate phrase using user's language.
         $user = $this->user();
         $lang = $this->config( 'DefaultLanguage' );
-        if ( $lang == 'jp' ) {
+        if ( $lang === 'jp' ) {
             $lang = 'ja';
-        } elseif ( $lang == 'en_us' ) {
+        } elseif ( $lang === 'en_us' ) {
             $lang = 'en';
         }
         if ( $user ) {
             $language = $user->preferred_language;
             $language = strtr( $language, '-', '_' );
-            if ( $language == 'en_us' ) {
+            if ( $language === 'en_us' ) {
                 $language = 'en';
             }
         } else {
             $language = $lang;
         }
         $Lexicon_lang = 'Lexicon_' . $lang;
-        if ( $lang == $language ) {
+        if ( $lang === $language ) {
             global $$Lexicon_lang;
         } else {
             require_once( 'l10n' . DIRECTORY_SEPARATOR . 'l10n_' . $language . '.php' );
@@ -1724,7 +1724,7 @@ class DynamicMTML {
         }
         $blog_id   = ( is_numeric( $blog ) ) ? $blog : $blog->id;
         $author_id = ( is_numeric( $author ) ) ? $author : $author->id;
-        if ( $permission == 'comment' ) {
+        if ( $permission === 'comment' ) {
             if ( is_numeric( $author ) ) {
                 $author = get_user( $ctx );
             }
@@ -1854,8 +1854,8 @@ class DynamicMTML {
         }
         $include_ids = array();
         if ( $include_blogs ) {
-            if ( $include_blogs == 'all' ) {
-            } elseif ( $include_blogs == 'children' ) {
+            if ( $include_blogs === 'all' ) {
+            } elseif ( $include_blogs === 'children' ) {
                 $blog_id = $blog->id;
                 array_push( $include_ids, $blog_id );
                 $children = $blog->blogs();
@@ -1863,7 +1863,7 @@ class DynamicMTML {
                     $child_id = $child->id;
                     array_push( $include_ids, $child_id );
                 }
-            } elseif ( $include_blogs == 'siblings' ) {
+            } elseif ( $include_blogs === 'siblings' ) {
                 $website = $blog->website();
                 if ( isset ( $website ) ) {
                     $website_id = $website->id;
@@ -2503,6 +2503,7 @@ class DynamicMTML {
         $wants = $param[ 'wants' ];
         $wants = strtolower( $wants );
         $ctx = $this->ctx();
+        $at = NULL;
         if ( $obj->class == 'entry' ) {
             $at = 'Individual';
         } elseif ( $obj->class == 'page' ) {
@@ -2510,7 +2511,7 @@ class DynamicMTML {
         } elseif ( $obj->class == 'category' ) {
             $at = 'Category';
         }
-        if ( $at == 'Category' ) {
+        if ( $at === 'Category' ) {
             $ctx->stash( 'category', $obj );
         } else {
             $ctx->stash( 'entry', $obj );
@@ -2538,7 +2539,7 @@ class DynamicMTML {
         if (! $format = $map->file_template ) {
             $format = $formats[ $at ];
         }
-        if ( $at == 'Page' ) {
+        if ( $at === 'Page' ) {
             $format = preg_replace( '/f$/', 'b%x', $format );
         }
         $params[ 'format' ] = $format;
@@ -2739,7 +2740,7 @@ class DynamicMTML {
         if (! $format = $map->file_template ) {
             $format = $formats[ $at ];
         }
-        if ( $at == 'Page' ) {
+        if ( $at === 'Page' ) {
             $format = preg_replace( '/f$/', 'b%x', $format );
         }
         $params[ 'format' ] = $format;
@@ -2848,7 +2849,8 @@ class DynamicMTML {
             }
         }
         if (! $noindexes ) {
-            if (! in_array( 'Index', $at ) ) {
+            if (! isset( $at[ 'Index' ] ) ) {
+            // if (! in_array( 'Index', $at ) ) {
                 array_push( $at, 'Index' );
             }
         }
@@ -2864,7 +2866,7 @@ class DynamicMTML {
         foreach ( $at as $archive_type ) {
             $orig_params = $params;
             $orig_params[ 'recipe' ] = array( $archive_type );
-            if ( ( $archive_type == 'Individual' ) || ( $archive_type == 'Page' ) ) {
+            if ( ( $archive_type === 'Individual' ) || ( $archive_type === 'Page' ) ) {
                 if ( $limit ) {
                     $orig_params[ 'limit' ] = $limit;
                     $orig_params[ 'offset' ] = $offset;
@@ -2921,7 +2923,7 @@ class DynamicMTML {
         foreach ( $ats as $at ) {
             $at = trim( $at );
             $publish_type = $at;
-            if ( ( $at == 'Individual' ) || ( $at == 'Entry' ) || ( $at == 'Page' ) ) {
+            if ( ( $at === 'Individual' ) || ( $at === 'Entry' ) || ( $at === 'Page' ) ) {
                 $publish_type = 'Entry';
             }
             if ( preg_match( '/ly$/', $at ) ) {
@@ -3018,7 +3020,7 @@ class DynamicMTML {
                 if (! $format = $map->file_template ) {
                     $format = $formats[ $at ];
                 }
-                if ( $at == 'Page' ) {
+                if ( $at === 'Page' ) {
                     $format = preg_replace( '/f$/', 'b%x', $format );
                 }
                 $params[ 'format' ] = $format;
@@ -3217,7 +3219,7 @@ class DynamicMTML {
 
     function write2file ( $path, $data, $mode = 'output' ) {
         require_once( 'dynamicmtml.util.php' );
-        if ( $mode == 'upload' ) {
+        if ( $mode === 'upload' ) {
             $umask = $this->config( 'UploadUmask' );
             if ( $umask ) {
                 $perms = __umask2permission( $umask );
@@ -3236,7 +3238,7 @@ class DynamicMTML {
         }
         $dirname = dirname( $path );
         if ( $this->mkpath( $dirname ) ) {
-            if ( $mode == 'upload' ) {
+            if ( $mode === 'upload' ) {
                 if ( $fh = fopen( "$path.new", 'w' ) ) {
                     fwrite( $fh, $data, 128000 );
                     fclose( $fh );
@@ -3365,13 +3367,13 @@ class DynamicMTML {
             $job = $this->get_by_key( 'Ts_Job', array( 'uniqkey' => $fileinfo->id ) );
             $pid = getmypid();
             $at = $fileinfo->archive_type;
-            if ( ( $at == 'Individual' ) || ( $at == 'Page' ) ) {
+            if ( ( $at === 'Individual' ) || ( $at === 'Page' ) ) {
                 if ( $map->is_preferred ) {
                     $priority = 10;
                 } else {
                     $priority = 5;
                 }
-            } elseif ( $at == 'index' ) {
+            } elseif ( $at === 'index' ) {
                 if ( preg_match( "!/(index|default|atom|feed)!i", $fileinfo->file_path ) ) {
                     $priority = 9;
                 } else {
@@ -3434,7 +3436,7 @@ class DynamicMTML {
         }
         require_once( 'MTUtil.php' );
         $mt = $this->mt();
-        if ( get_class( $ctx ) == 'stdClass' ) {
+        if ( get_class( $ctx ) === 'stdClass' ) {
             $ctx = new MTViewer( $this );
         }
         $ctx->MTViewer( $mt );
@@ -3444,7 +3446,7 @@ class DynamicMTML {
         if ( $fileinfo ) {
             $this->set_context_from_fileinfo( $mt, $ctx, $fileinfo );
         } else {
-            if ( $at == 'index' ) {
+            if ( $at === 'index' ) {
                 $ctx->stash( 'index_archive', TRUE );
             } else {
                 $ctx->stash( 'index_archive', FALSE );
@@ -3520,7 +3522,7 @@ class DynamicMTML {
         $cat = $data->category_id;
         $auth = $data->author_id;
         $entry_id = $data->entry_id;
-        if ( $at == 'index' ) {
+        if ( $at === 'index' ) {
             $at = NULL;
             $ctx->stash( 'index_archive', TRUE );
         } else {
@@ -3574,18 +3576,18 @@ class DynamicMTML {
             $ctx->stash( 'current_archive_type', $at );
         }
         if ( isset( $entry_id ) && ( $entry_id )
-            && ( $at == 'Individual' || $at == 'Page' ) ) {
-            if ( $at == 'Individual' ) {
+            && ( $at === 'Individual' || $at === 'Page' ) ) {
+            if ( $at === 'Individual' ) {
                 // $entry =& $mt->db()->fetch_entry( $entry_id );
                 $entry =& $this->load( 'Entry', $entry_id );
-            } elseif( $at == 'Page' ) {
+            } elseif( $at === 'Page' ) {
                 // $entry =& $mt->db()->fetch_page( $entry_id );
                 $entry =& $this->load( 'Entry', $entry_id );
             }
             $ctx->stash( 'entry', $entry );
             $ctx->stash( 'current_timestamp', $entry->entry_authored_on );
         }
-        if ( $at == 'Category' ) {
+        if ( $at === 'Category' ) {
             $vars =& $ctx->__stash[ 'vars' ];
             $vars[ 'archive_class' ]    = "category-archive";
             $vars[ 'category_archive' ] = 1;
@@ -3599,7 +3601,7 @@ class DynamicMTML {
         $class = $entry->class;
         $user = $this->user;
         $container = NULL;
-        if ( $class == 'page' ) {
+        if ( $class === 'page' ) {
             $container = 'Folder';
         } else {
             $container = 'Category';
@@ -3804,7 +3806,7 @@ class DynamicMTML {
             }
         }
         if ( isset( $args[ 'include_private' ] ) ) {
-            if ( count( $args ) == 1 ) {
+            if ( count( $args ) === 1 ) {
                 if ( $cache = $this->stash( $object_ds . "_tag_cache_with_private[{$object_id}]" ) ) {
                     return $cache;
                 }
@@ -3852,7 +3854,7 @@ class DynamicMTML {
             $this->stash( $object_ds . "_tag_cache[{$object_id}]", $tags );
         }
         if ( isset( $args[ 'include_private' ] ) ) {
-            if ( count( $args ) == 1 ) {
+            if ( count( $args ) === 1 ) {
                 $this->stash( $object_ds . "_tag_cache_with_private[{$object_id}]", $tags );
             }
         }
@@ -3934,11 +3936,11 @@ class DynamicMTML {
         }
         $classname = strtolower( $class );
         $prefix = $classname;
-        if ( $classname == 'website' ) {
+        if ( $classname === 'website' ) {
             $prefix = 'blog';
-        } elseif ( $classname == 'folder' ) {
+        } elseif ( $classname === 'folder' ) {
             $prefix = 'category';
-        } elseif ( $classname == 'page' ) {
+        } elseif ( $classname === 'page' ) {
             $prefix = 'entry';
         }
         if ( isset( $_obj->_prefix ) ) {
@@ -3973,13 +3975,13 @@ class DynamicMTML {
                 if ( $_obj->has_column( $key ) ) {
                     $_prefix = $prefix;
                     if ( in_array( $key, $raw_columns ) ) $_prefix = '';
-                    if ( $key == 'class' ) {
+                    if ( $key === 'class' ) {
                         $set_class = 1;
                     }
                     if ( $where ) $where .= " AND ";
                     if (! is_array( $val ) ) {
                         $val = $this->escape( $val );
-                        if ( $key == 'blog_id' ) {
+                        if ( $key === 'blog_id' ) {
                             if (! is_numeric( $val ) ) {
                                 // include_exclude_blogs
                                 $where .= " {$_prefix}{$key} {$val} ";
@@ -3998,10 +4000,10 @@ class DynamicMTML {
                                 if ( in_array( $op ,$operators ) ) {
                                     // 'like', 'not_like', 'not_null', 'not', '>', '>=',
                                     // '<', '<=', '!='
-                                    if ( $op == 'not' ) {
+                                    if ( $op === 'not' ) {
                                         $op = '!=';
                                     }
-                                    if ( $op == 'not_null' ) {
+                                    if ( $op === 'not_null' ) {
                                         $op = 'IS NOT NULL';
                                         $expression .= " {$_prefix}{$key} {$op} ";
                                     } else {
@@ -4014,7 +4016,7 @@ class DynamicMTML {
                             }
                         } else {
                             $range_expression = '';
-                            if ( count( $val ) == 2 ) {
+                            if ( count( $val ) === 2 ) {
                                 $eq = NULL;
                                 $range = NULL;
                                 if ( $args[ 'range' ] && $args[ 'range' ][ $key ] ) {
@@ -4130,15 +4132,15 @@ class DynamicMTML {
                                 if ( is_array( $arg_array[2] ) && __is_hash( $arg_array[2] ) ) {
                                     foreach ( $arg_array[2] as $key => $val ) {
                                         if ( $expression ) $expression .= ' AND ';
-                                        if ( is_array( $val ) && __is_hash( $val ) && ( count( $val ) == 1 ) ) {
+                                        if ( is_array( $val ) && __is_hash( $val ) && ( count( $val ) === 1 ) ) {
                                             foreach ( $val as $op => $value ) {
                                                 $val = $this->escape( $val );
                                                 $val = $this->__ts2db( $key, $val );
                                                 if ( in_array( $op ,$operators ) ) {
-                                                    if ( $op == 'not' ) {
+                                                    if ( $op === 'not' ) {
                                                         $op = '!=';
                                                     }
-                                                    if ( $op == 'not_null' ) {
+                                                    if ( $op === 'not_null' ) {
                                                         $op = 'IS NOT NULL';
                                                         $expression .=  $column . ".{$key} {$op} ";
                                                     } else {
@@ -4200,7 +4202,7 @@ class DynamicMTML {
         if (! $this->run_callbacks( "{$do}_permission_filter.{$class}", $this->mt(), $this->ctx(), $this->args ) ) {
             return $res;
         }
-        if ( $do == 'save' ) {
+        if ( $do === 'save' ) {
             if ( $obj->id ) {
                 $res = $obj->Update();
             } else {
@@ -4208,7 +4210,7 @@ class DynamicMTML {
             }
             $this->stash( 'obj', $obj );
             $this->stash( "{$prefix}:cached_object:" . $obj->id, $obj );
-        } elseif ( $do == 'delete' ) {
+        } elseif ( $do === 'delete' ) {
             $res = $obj->Delete();
             $this->stash( 'obj', $obj );
             $this->stash( "{$prefix}:cached_object:" . $obj->id, NULL );
@@ -4282,7 +4284,7 @@ class DynamicMTML {
         $children = array( 'Trackback', 'Comment', 'FileInfo', 'Placement' );
         foreach ( $related as $class ) {
             $ds = NULL;
-            if ( $class == 'ObjectTag' ) {
+            if ( $class === 'ObjectTag' ) {
                 $ds = 'object_datasource';
             } else {
                 $ds = 'object_ds';

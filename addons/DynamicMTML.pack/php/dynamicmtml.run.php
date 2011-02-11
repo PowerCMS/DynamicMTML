@@ -2,7 +2,6 @@
 # DynamicMTML (C) 2010-2011 Alfasado Inc.
 # This program is distributed under the terms of the
 # GNU General Public License, version 2.
-
     $plugin_path = dirname( __File__ ) . DIRECTORY_SEPARATOR;
     $mt_dir = dirname( dirname( dirname( $plugin_path ) ) );
     require_once( $plugin_path . 'dynamicmtml.util.php' );
@@ -479,5 +478,5 @@
     if (! isset( $mt ) ) {
         $app->service_unavailable();
     }
-    exit();
+    // exit();
 ?>

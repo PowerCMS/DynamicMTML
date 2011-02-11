@@ -2,7 +2,7 @@
 
 require_once( dirname( dirname( __FILE__ ) ) . DIRECTORY_SEPARATOR . 'wp-prefix.php' );
 
-class Wordpress extends MTPlugin {
+class WordPress extends MTPlugin {
 
     var $registry = array(
         'name' => 'WordPress',
@@ -119,7 +119,7 @@ class Wordpress extends MTPlugin {
 
     function wp_test ( $args, &$ctx ) {
         // for Debug
-        return 'Hello Wordpress.';
+        return 'Hello WordPress.';
     }
 
     function wp_bloginfo ( $args, &$ctx ) {
@@ -655,6 +655,7 @@ class Wordpress extends MTPlugin {
             $wp = $this->get_wp( $ctx );
             $nextprev_post = $post->nextprev( $wp, $ctx, $nextprev );
             if ( $nextprev_post ) {
+                $nextprev_post->title;
                 $ctx->stash( 'wp_post', $nextprev_post );
                 $repeat = TRUE;
             } else {
@@ -952,7 +953,7 @@ class Wordpress extends MTPlugin {
     }
 
     function get_wp ( &$ctx ) {
-        $wp = $ctx->stash( 'Wordpress' );
+        $wp = $ctx->stash( 'WordPress' );
         $app = $this->app;
         // $wp_dir = $ctx->mt->config( 'mtdir' );
         if ( isset( $wp ) ) {
@@ -970,7 +971,7 @@ class Wordpress extends MTPlugin {
         $wp->db = $db;
         $ctx->mt->db = $db;
         $app->init_models( array( 'Users', 'Terms', 'Posts', 'Postmeta', 'Options' ) );
-        $ctx->stash( 'Wordpress', $wp );
+        $ctx->stash( 'WordPress', $wp );
         $this->wordpress = $wp;
         return $wp;
     }
