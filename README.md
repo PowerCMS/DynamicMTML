@@ -1351,7 +1351,7 @@ After the build, $content is build result. Get &$content and $content = 'Foo', c
     base        : $app->base()
     path        : $app->path()
     script      : $app->script()
-    request     : Current URL that removed the query string)
+    request     : Current URL that removed the query string
     param       : $app->query_string()
     is_secure   : $app->is_secure()
     url         : Current URL

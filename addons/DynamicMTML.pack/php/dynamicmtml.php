@@ -1344,15 +1344,22 @@ class DynamicMTML {
     }
 
     function login () {
+        if ( $this->request_method != 'POST' ) {
+            return 0;
+        }
+        $base = $this->base;
+        $q_base = preg_quote( $base, '/' );
+        $referer = $_SERVER[ 'HTTP_REFERER' ];
+        if (! preg_match( "/^$q_base/", $referer ) ) {
+            return 0;
+        }
         $ctx = $this->ctx;
         $username = $this->param( 'username' );
         $password = $this->param( 'password' );
         $remember = $this->param( 'remember' );
         $return_url = $this->param( 'return_url' );
-        $base = $this->base;
         if ( preg_match( '/^http/', $return_url ) ) {
-            $base = preg_quote( $base, '/' );
-            if (! preg_match( "/^$base/", $return_url ) ) {
+            if (! preg_match( "/^$q_base/", $return_url ) ) {
                 $return_url = '';
             }
         } elseif ( $return_url ) {
