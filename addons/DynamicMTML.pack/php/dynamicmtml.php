@@ -1350,7 +1350,7 @@ class DynamicMTML {
         $base = $this->base;
         $q_base = preg_quote( $base, '/' );
         $referer = $_SERVER[ 'HTTP_REFERER' ];
-        if (! preg_match( "/^$q_base/", $referer ) ) {
+        if ( $referer && (! preg_match( "/^$q_base/", $referer ) ) ) {
             return 0;
         }
         $ctx = $this->ctx;
