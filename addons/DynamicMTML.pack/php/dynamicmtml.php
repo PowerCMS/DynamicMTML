@@ -108,7 +108,7 @@ class DynamicMTML {
             $ctx->stash( 'blog_id', $blog_id );
             $this->stash( 'blog', $blog );
             $this->stash( 'blog_id', $blog_id );
-            // $site_path = $blog->site_path();
+            $site_path = $blog->site_path();
             // $templates_c = $site_path . DIRECTORY_SEPARATOR . 'templates_c';
         // } else {
         //     $self = $this->root . dirname( $_SERVER[ 'PHP_SELF' ] );
