@@ -9,7 +9,7 @@ use strict;
 use MT::Util qw( trim remove_html decode_url encode_url );
 use PowerCMS::Util qw( is_cms is_application add_slash get_user to_utf8 utf8_on site_url
                        powercms_files_dir is_user_can include_exclude_blogs referral_serch_keyword
-                       make_seo_basename format_LF );
+                       make_seo_basename format_LF get_agent );
 
 our $plugin_dynamicmtml = MT->component( 'DynamicMTML' );
 
