@@ -108,12 +108,10 @@ class DynamicMTML {
             $ctx->stash( 'blog_id', $blog_id );
             $this->stash( 'blog', $blog );
             $this->stash( 'blog_id', $blog_id );
-            $site_path = $blog->site_path();
-            // $templates_c = $site_path . DIRECTORY_SEPARATOR . 'templates_c';
-        // } else {
-        //     $self = $this->root . dirname( $_SERVER[ 'PHP_SELF' ] );
-        //     $templates_c = $self . DIRECTORY_SEPARATOR . 'templates_c';
-        //     $cache = $self . DIRECTORY_SEPARATOR . 'cache';
+            // $site_path = $blog->site_path();
+            // $self = $this->root . dirname( $_SERVER[ 'PHP_SELF' ] );
+            // $templates_c = $self . DIRECTORY_SEPARATOR . 'templates_c';
+            // $cache = $self . DIRECTORY_SEPARATOR . 'cache';
         }
         $self = $this->root . dirname( $_SERVER[ 'PHP_SELF' ] );
         $templates_c = $self . DIRECTORY_SEPARATOR . 'templates_c';
@@ -122,7 +120,7 @@ class DynamicMTML {
             mkdir( $templates_c, 0755 );
         }
         $this->stash( 'templates_c', $templates_c );
-        $cache = $site_path . DIRECTORY_SEPARATOR . 'cache';
+        $cache = $self . DIRECTORY_SEPARATOR . 'cache';
         if (! is_dir( $cache ) ) {
             mkdir( $cache, 0755 );
         }

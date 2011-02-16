@@ -478,5 +478,5 @@
     if (! isset( $mt ) ) {
         $app->service_unavailable();
     }
-    // exit();
+    exit();
 ?>
