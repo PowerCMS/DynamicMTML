@@ -10,6 +10,16 @@ author_link: http://alfasado.net/
 version: 1.5.2
 schema_version: 1.02
 l10n_class: DynamicMTML::L10N
+init_request: >
+    sub {
+        my $app = MT->instance;
+        my $ua = $app->get_header( 'User-Agent' );
+        unless ( ref $app eq 'MT::App::CMS' ) {
+            if ( $ua =~ /\ADoCoMo\/2\.0 /i ) {
+                $app->{ response_content_type } = 'application/xhtml+xml';
+            }
+        }
+    }
 config_settings:
     DynamicForceCompile:
         default: 0
