@@ -2473,7 +2473,7 @@ sub get_config_inheritance {
         }
         $plugin_data = $plugin->get_config_value( $key, $get_from );
         if ( (! $plugin_data ) && $website ) {
-            $plugin_data = $plugin->get_config_value( 'analytics_profile_id', 'system' );
+            $plugin_data = $plugin->get_config_value( $key, 'system' );
         }
     }
     return $plugin_data;
