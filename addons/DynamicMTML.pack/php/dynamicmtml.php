@@ -2504,57 +2504,40 @@ class DynamicMTML {
         return $this->rebuild_object( $category, $build_type );
     }
 
-    function get_permalink ( $obj, $param = array( 'wants' => 'url' ) ) {
-        $wants = $param[ 'wants' ];
-        $wants = strtolower( $wants );
+    function get_permalink ( $obj, $args = array( 'wants' => 'url', 'with_index' => 1 ) ) {
         $ctx = $this->ctx();
-        $at = NULL;
-        if ( $obj->class == 'entry' ) {
-            $at = 'Individual';
-        } elseif ( $obj->class == 'page' ) {
-            $at = 'Page';
-        } elseif ( $obj->class == 'category' ) {
-            $at = 'Category';
-        }
-        if ( $at === 'Category' ) {
-            $ctx->stash( 'category', $obj );
-        } else {
-            $ctx->stash( 'entry', $obj );
-        }
+        $class = $obj->class;
+        $wants = $args[ 'wants' ];
+        $wants = strtolower( $wants );
+        $blog = $ctx->stash( 'blog' );
         $blog_id = $obj->blog_id;
-        $ctx->stash( 'archive_type', $at );
-        $ctx->stash( 'current_archive_type', $at );
-        $terms = array( 'blog_id' => $blog_id,
-                        'archive_type' => $at,
-                        'is_preferred' => 1 );
-        $map = $this->load( 'TemplateMap', $terms, array( 'limit' => 1 ) );
-        if (! $map ) return;
-        require_once 'function.mtfiletemplate.php';
-        $site_path = $this->site_path( $blog, NULL, 1 );
-        $site_url = $this->site_url( $blog, 1 );
-        $formats = array(
-            'Individual' => '%y/%m/%f',
-            'Category' => '%c/%f',
-            'Monthly' => '%y/%m/%f',
-            'Weekly' => '%y/%m/%d-week/%f',
-            'Daily' => '%y/%m/%d/%f',
-            'Page' => '%-c/%-f',
-            'Yearly' => '%y/%i',
-        );
-        if (! $format = $map->file_template ) {
-            $format = $formats[ $at ];
+        if ( $blog_id && ( $blog_id != $blog->id ) ) {
+            $blog = $ctx->mt->db()->fetch_blog( $blog_id );
         }
-        if ( $at === 'Page' ) {
-            $format = preg_replace( '/f$/', 'b%x', $format );
+        $path = NULL;
+        if ( $class == 'category' ) {
+            $path = $ctx->mt->db()->category_link( $obj->id, $args );
+            if ( $args[ 'with_index' ] && preg_match( '/\/(#.*)*$/', $link ) ) {
+                $index = $ctx->mt->config( 'IndexBasename' );
+                $ext = $blog->blog_file_extension;
+                if ( $ext ) $ext = '.' . $ext; 
+                $index .= $ext;
+                $path = preg_replace( '/\/(#.*)?$/', "/$index\$1", $link );
+            }
+        } elseif ( $class == 'entry' ) {
+            $path = $ctx->mt->db()->entry_link( $entry->id, 'Individual', $args );
+        } elseif ( $class == 'page' ) {
+            $path = $ctx->mt->db()->entry_link( $entry->id, 'Page', $args );
         }
-        $params[ 'format' ] = $format;
-        $path = smarty_function_mtfiletemplate( $params, $ctx );
         if ( $wants == 'url' ) {
-            return $site_url . $path;
+            return $path;
         } elseif ( preg_match ( '/path$/', $wants ) ) {
-            return $site_path . $path;
+            $site_url = $this->site_url( $blog, 1 );
+            $site_path = $this->site_path( $blog, 1 );
+            $search = preg_quote( $site_url, '/' );
+            $path = preg_replace( "/^$search/", $site_path );
+            return $path;
         }
-        return $path;
     }
 
     function count_datebased_archive ( $blog, $params = NULL ) {
