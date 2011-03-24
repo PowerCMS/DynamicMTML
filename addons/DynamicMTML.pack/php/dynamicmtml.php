@@ -2517,17 +2517,17 @@ class DynamicMTML {
         $path = NULL;
         if ( $class == 'category' ) {
             $path = $ctx->mt->db()->category_link( $obj->id, $args );
-            if ( $args[ 'with_index' ] && preg_match( '/\/(#.*)*$/', $link ) ) {
+            if ( $args[ 'with_index' ] && $path && preg_match( '/\/(#.*)*$/', $path ) ) {
                 $index = $ctx->mt->config( 'IndexBasename' );
                 $ext = $blog->blog_file_extension;
                 if ( $ext ) $ext = '.' . $ext; 
                 $index .= $ext;
-                $path = preg_replace( '/\/(#.*)?$/', "/$index\$1", $link );
+                $path = preg_replace( '/\/(#.*)?$/', "/$index\$1", $path );
             }
         } elseif ( $class == 'entry' ) {
-            $path = $ctx->mt->db()->entry_link( $entry->id, 'Individual', $args );
+            $path = $ctx->mt->db()->entry_link( $obj->id, 'Individual', $args );
         } elseif ( $class == 'page' ) {
-            $path = $ctx->mt->db()->entry_link( $entry->id, 'Page', $args );
+            $path = $ctx->mt->db()->entry_link( $obj->id, 'Page', $args );
         }
         if ( $wants == 'url' ) {
             return $path;
