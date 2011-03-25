@@ -209,7 +209,8 @@ class MT {
      */
     function db() {
         if (!isset($this->db)) {
-            require_once("mtdb.".$this->config('DBDriver').".php");
+            require_once($this->php_dir.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR."mtdb.".$this->config('DBDriver').".php");
+            //require_once("mtdb.".$this->config('DBDriver').".php");
             $mtdbclass = 'MTDatabase'.$this->config('DBDriver');
             $this->db = new $mtdbclass($this->config('DBUser'),
                 $this->config('DBPassword'),
