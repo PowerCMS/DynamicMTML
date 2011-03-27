@@ -766,12 +766,19 @@ sub _hdlr_referralkeyword {
 sub _hdlr_trans {
     my ( $ctx, $args, $cond ) = @_;
     my $phrase = $args->{ phrase };
+    my $component = $args->{ component };
     my @params;
     my $param = $args->{ params };
     if ( $param =~ /\%\%/ ) {
         @params = split( /\%\%/, $param );
     } else {
         push ( @params, $param );
+    }
+    if ( $component ) {
+        my $plugin = MT->component( $component );
+        if ( $plugin ) {
+            return $plugin->translate( $phrase, @params );
+        }
     }
     return MT->translate( $phrase, @params );
 }
