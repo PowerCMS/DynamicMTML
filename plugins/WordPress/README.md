@@ -470,11 +470,11 @@ The number of published posts for the category in context.
 
 ---------------------------------------
 
-**mt:wp:CategoryName(Function Tag)**
+**mt:wp:TagName(Function Tag)**
 
-*Alias: mt:wp:cat\_name*
+*Alias: mt:wp:tag\_name*
 
-The name of the category in context.
+The name of the tag in context.
 
 ---------------------------------------
 
