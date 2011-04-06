@@ -707,6 +707,14 @@ sub _hdlr_file_get_contents {
     return '';
 }
 
+sub _hdlr_rand {
+    my ( $ctx, $args, $cond ) = @_;
+    my $min = $args->{ min };
+    my $max = $args->{ max } - $min + 1;
+    my $rand = int( rand( $max ) );
+    return $rand + $min;
+}
+
 sub _filter_build_mtml {
     my ( $str, $arg, $ctx ) = @_;
     my $builder = $ctx->stash( 'builder' );

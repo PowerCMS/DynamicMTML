@@ -127,6 +127,7 @@ tags:
         DynamicSiteBootstrapper: $dynamicmtml::DynamicMTML::Tags::_hdlr_dynamic_site_bootstrapper
         FileGetContents: $dynamicmtml::DynamicMTML::Tags::_hdlr_file_get_contents
         PluginVersion: $dynamicmtml::DynamicMTML::Tags::_hdlr_plugin_version
+        Rand: $dynamicmtml::DynamicMTML::Tags::_hdlr_rand
     modifier:
         pickup_extension: $dynamicmtml::DynamicMTML::Tags::_filter_pickup_extension
         highlightingsearchword: $dynamicmtml::DynamicMTML::Tags::_filter_highlightingsearchword

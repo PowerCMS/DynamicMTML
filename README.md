@@ -379,6 +379,12 @@ Output translated phrase based on the current user's language preference.
 
 ---------------------------------------
 
+**MTRand(Function Tag)**
+
+Specify min and max attribute, Output a random number.
+
+---------------------------------------
+
 **highlightingsearchword(Attribute)**
 
 If the referral website is Google, bing, MSN, Yahoo! or goo(or search this site \*parameter is 'query' or 'search'), strong tag with attribute class argument.
