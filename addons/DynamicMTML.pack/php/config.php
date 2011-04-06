@@ -69,7 +69,7 @@ class DynamicMTML_pack extends MTPlugin {
                                  'rawmtmltag' => 'mtml',
                                  'trans' => 'trans',
                                  'referralkeyword' => 'referralkeyword',
-                                 'rand' => 'rand',
+                                 'rand' => 'mtrand',
                                  'tablecolumnvalue' => 'tablecolumnvalue', ),
             'modifier' => array( 'trimwhitespace' => 'trimwhitespace',
                                  'highlightingsearchword' => 'highlightingsearchword',
@@ -356,7 +356,7 @@ class DynamicMTML_pack extends MTPlugin {
         return smarty_function_mtml( $args, $ctx );
     }
     
-    function rand ( $args, &$ctx ) {
+    function mtrand ( $args, &$ctx ) {
         require_once( $this->tags_dir() . 'function.mtrand.php' );
         return smarty_function_mtrand( $args, $ctx );
     }
