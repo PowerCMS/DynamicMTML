@@ -1,11 +1,7 @@
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
 package PowerCMS::Util;
 use strict;
 use Exporter;
-our $powercms_util_version = '2.051';
+our $powercms_util_version = '2.052';
 @PowerCMS::Util::ISA = qw( Exporter );
 use vars qw( @EXPORT_OK );
 @EXPORT_OK = qw( build_tmpl save_asset upload convert_gif_png association_link create_entry
@@ -105,7 +101,8 @@ sub icon_class {
 
 sub build_tmpl {
     my ( $app, $tmpl, $args, $params ) = @_;
-#     my %args = ( blog => $blog,
+#     my %args = ( ctx => $ctx,
+#                  blog => $blog,
 #                  entry => $entry,
 #                  category => $category,
 #                  author => $author,
@@ -123,8 +120,11 @@ sub build_tmpl {
     $tmpl = $app->translate_templatized( $tmpl );
     require MT::Template;
     require MT::Builder;
-    require MT::Template::Context;
-    my $ctx = MT::Template::Context->new;
+    my $ctx = $args->{ ctx };
+    if (! $ctx ) {
+        require MT::Template::Context;
+        $ctx = MT::Template::Context->new;
+    }
     my $blog = $args->{ blog };
     my $entry = $args->{ entry };
     my $category = $args->{ category };
@@ -335,6 +335,12 @@ sub upload {
     my $no_asset = $params->{ no_asset };
     my $description = $params->{ description };
     my $force_decode_filename = $params->{ force_decode_filename };
+    my $no_decode = $app->config( 'NoDecodeFilename' );
+    if (! $force_decode_filename ) {
+        if ( $no_decode ) {
+            $force_decode_filename = 1;
+        }
+    }
     my $fmgr = MT::FileMgr->new( 'Local' ) or die MT::FileMgr->errstr;
     my $q = $app->param;
     my @files = $q->upload( $name );
@@ -351,7 +357,9 @@ sub upload {
         my $orig_filename = file_basename( $file );
         $orig_filename = decode_url( $orig_filename ) if $force_decode_filename;
         my $file_label = file_label( $orig_filename );
-        $orig_filename = set_upload_filename( $orig_filename );
+        if (! $no_decode ) {
+            $orig_filename = set_upload_filename( $orig_filename );
+        }
         my $out = File::Spec->catfile( $dir, $orig_filename );
         if ( $rename ) {
             $out = uniq_filename( $out );
@@ -362,7 +370,9 @@ sub upload {
                                     $out, $fmgr->errstr );
         }
         my $temp = "$out.new";
-        open ( my $fh, ">$out" ) or die "Can't open $out!";
+        my $umask = $app->config( 'UploadUmask' );
+        my $old = umask( oct $umask );
+        open ( my $fh, ">$temp" ) or die "Can't open $temp!";
         binmode ( $fh );
         while( read ( $file, my $buffer, 1024 ) ) {
             $buffer = format_LF( $buffer ) if $format_LF;
@@ -370,6 +380,7 @@ sub upload {
         }
         close ( $fh );
         $fmgr->rename( $temp, $out );
+        umask( $old );
         my $user = $params->{ author };
         $user = current_user( $app ) unless defined $user;
         if ( $no_asset ) {
@@ -1383,10 +1394,15 @@ sub set_upload_filename {
 sub uniq_filename {
     my $file = shift;
     require File::Basename;
+    my $no_decode = MT->config( 'NoDecodeFilename' );
     my $dir = File::Basename::dirname( $file );
     my $tilda = quotemeta( '%7E' );
     $file =~ s/$tilda//g;
-    $file = File::Spec->catfile( $dir, set_upload_filename( $file ) );
+    if ( $no_decode ) {
+        $file = File::Spec->catfile( $dir, $file );
+    } else {
+        $file = File::Spec->catfile( $dir, set_upload_filename( $file ) );
+    }
     return $file unless ( -f $file );
     my $file_extension = file_extension( $file );
     my $base = $file;
