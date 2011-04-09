@@ -777,7 +777,7 @@ sub _hdlr_trans {
     my $component = $args->{ component };
     my @params;
     my $param = $args->{ params };
-    if ( $param =~ /\%\%/ ) {
+    if ( $param && $param =~ /\%\%/ ) {
         @params = split( /\%\%/, $param );
     } else {
         push ( @params, $param );
