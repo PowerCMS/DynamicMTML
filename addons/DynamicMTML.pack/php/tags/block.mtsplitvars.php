@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
 function smarty_block_mtsplitvars( $args, $content, &$ctx, &$repeat ) {
     $localvars = array( 'split_vars', '__mtsplit_vars_max', '__mtsplit_vars_old_vars' );
     $name = $args[ 'name' ];
@@ -37,20 +33,20 @@ function smarty_block_mtsplitvars( $args, $content, &$ctx, &$repeat ) {
     if ( $counter < $max ) {
         $count = $counter + 1;
         $value = $vars[ $counter ];
-        if ( ( $glue ) && ( $count != $max ) ) {
-            $value .= $glue;
-        }
         $ctx->__stash[ 'vars' ][ $name ] = $value;
         $ctx->__stash[ 'vars' ][ '__counter__' ] = $count;
         $ctx->__stash[ 'vars' ][ '__odd__' ]  = ( $count % 2 ) == 1;
         $ctx->__stash[ 'vars' ][ '__even__' ] = ( $count % 2 ) == 0;
         $ctx->__stash[ 'vars' ][ '__first__' ] = $count == 1;
         $ctx->__stash[ 'vars' ][ '__last__' ] = ( $count == $max );
-        $repeat = true;
+        if ( $content && ( $glue ) && ( $count != $max ) ) {
+            $content .= $glue;
+        }
+        $repeat = TRUE;
     } else {
         $ctx->__stash[ 'vars' ] = $ctx->stash( '__mtsplit_vars_old_vars' );
         $ctx->restore( $localvars );
-        $repeat = false;
+        $repeat = FALSE;
     }
     return $content;
 }
