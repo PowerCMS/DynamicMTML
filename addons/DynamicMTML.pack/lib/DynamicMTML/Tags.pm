@@ -352,7 +352,6 @@ sub _hdlr_query_loop {
 
 sub _hdlr_query_vars {
     my ( $ctx, $args, $cond ) = @_;
-    my ( $ctx, $args, $cond ) = @_;
     my $app = MT->instance();
     return '' unless is_application( $app );
     my $glue = $args->{ glue };
