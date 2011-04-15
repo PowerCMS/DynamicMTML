@@ -141,7 +141,6 @@
     }
     $contenttype = $app->get_mime_type( $extension );
     $type_text = $app->type_text( $contenttype );
-    $cache = $app->cache_filename( $blog_id, $file, $param );
     $path = preg_replace( '!(/[^/]*$)!', '', $request );
     $path .= '/';
     $script = preg_replace( '!(^.*?/)([^/]*$)!', '$2', $request );
@@ -156,7 +155,6 @@
     $args = array( 'blog_id' => $blog_id,
                    'conditional' => $conditional,
                    'use_cache' => $use_cache,
-                   'cache' => $cache,
                    'root' => $root,
                    'cache_dir' => $cache_dir,
                    'plugin_path' => $plugin_path,
@@ -224,6 +222,8 @@
     // ========================================
     // Search Cache
     // ========================================
+    $cache = $app->cache_filename( $blog_id, $file, $param );
+    $args[ 'cache' ] = $cache;
     if ( $use_cache && file_exists( $cache ) ) {
         require_once( $plugin_path . 'dynamicmtml.check_cache.php' );
     }
