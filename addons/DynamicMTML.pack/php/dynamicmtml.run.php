@@ -223,6 +223,7 @@
     // Search Cache
     // ========================================
     $cache = $app->cache_filename( $blog_id, $file, $param );
+    $app->stash( 'cache', $cache );
     $args[ 'cache' ] = $cache;
     if ( $use_cache && file_exists( $cache ) ) {
         require_once( $plugin_path . 'dynamicmtml.check_cache.php' );
