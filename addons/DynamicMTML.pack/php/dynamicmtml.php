@@ -1644,9 +1644,11 @@ class DynamicMTML {
         }
         $plugins_config = $this->stash( 'plugins_config' );
         if ( isset ( $plugins_config[ $component ] ) ) {
-            if ( $plugin = $plugins_config[ $component ][ 'plugin' ] ) {
-                $plugin->app = $this;
-                return $plugin;
+            if ( isset ( $plugins_config[ $component ][ 'plugin' ] ) ) {
+                if ( $plugin = $plugins_config[ $component ][ 'plugin' ] ) {
+                    $plugin->app = $this;
+                    return $plugin;
+                }
             }
             require_once( 'class.dynamicmtml_plugin.php' );
             $plugin = new MTPlugin;
