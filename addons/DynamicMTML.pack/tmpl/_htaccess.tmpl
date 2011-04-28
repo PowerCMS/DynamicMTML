@@ -13,7 +13,7 @@ DirectoryIndex <$MTBlogRelativeURL$><$MTDynamicSiteBootstrapper$>
   RewriteCond %{REQUEST_FILENAME} !-f [OR]
   RewriteCond %{REQUEST_FILENAME} -d [OR]
   RewriteCond %{REQUEST_FILENAME} ^[^.]+$|\.(<$MTBlogFilesMatch$>)$ [NC]
-  RewriteRule ^ <$MTDynamicSiteBootstrapper$> [L]
+  RewriteRule ^ <$MTBlogRelativeURL$><$MTDynamicSiteBootstrapper$> [L]
 </IfModule>
 <IfModule !mod_rewrite.c>
   Order Deny,Allow
