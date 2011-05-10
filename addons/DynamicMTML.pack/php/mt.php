@@ -1,12 +1,4 @@
 <?php
-# Original Copyright
-# 
-# Movable Type (r) Open Source (C) 2004-2010 Six Apart, Ltd.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-#
-# $Id: mt.php 6010 2010-09-30 06:13:53Z takayama $
-
 /***
  * Loading exception classes
  */
@@ -600,7 +592,11 @@ class MT {
             }
 
             if ($cat) {
+                // Folder Archive Support
                 $archive_category = $mtdb->fetch_category($cat);
+                if (! $archive_category) {
+                    $archive_category = $mtdb->fetch_folder($cat);
+                }
                 $ctx->stash('category', $archive_category);
                 $ctx->stash('archive_category', $archive_category);
             }

@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
 global $Lexicon_ja;
 $Lexicon_ja = array(
     'Page not found - [_1]' => '[_1]が見つかりませんでした。',

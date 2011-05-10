@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
 function smarty_block_mtqueryloop( $args, $content, &$ctx, &$repeat ) {
     $localvars = array( 'query_params', '__max', '__mtqueryloop_old_vars' );
     $to_encoding = $ctx->mt->config( 'PublishCharset' );

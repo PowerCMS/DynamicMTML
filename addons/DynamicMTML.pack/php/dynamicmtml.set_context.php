@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
     $fi_path = $data->fileinfo_url;
     $fid = $data->id;
     $at = $data->archive_type;

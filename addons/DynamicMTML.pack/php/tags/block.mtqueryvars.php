@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
 function smarty_block_mtqueryvars( $args, $content, &$ctx, &$repeat ) {
     $app = $ctx->stash( 'bootstrapper' );
     $localvars = array( 'query_params', '__mtqueryvars_max', '__mtqueryvars_old_vars' );

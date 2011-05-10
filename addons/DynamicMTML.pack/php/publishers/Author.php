@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
     $terms = array( 'blog_id' => $blog_id,
                     'archive_type' => $at );
     $maps = $this->load( 'TemplateMap', $terms );

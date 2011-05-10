@@ -1,10 +1,3 @@
-# Original
-# Movable Type (r) Open Source (C) 2001-2010 Six Apart, Ltd.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-#
-# $Id: WeblogPublisher.pm 5849 2010-09-01 02:00:18Z takayama $
-
 # DynamicMTML::WeblogPublisher: WeblogPublisher for DynamicMTML.pack
 
 package DynamicMTML::WeblogPublisher;

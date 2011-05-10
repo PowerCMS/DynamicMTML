@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
     if ( isset( $mt ) ) {
         if (! isset ( $data ) ) {
             $data = $mt->db()->resolve_url( $mt->db()->escape( urldecode( $request ) ), $blog_id, array( 1, 2, 4 ) );

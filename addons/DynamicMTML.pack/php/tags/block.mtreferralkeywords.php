@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
 function smarty_block_mtreferralkeywords( $args, $content, $ctx, &$repeat ) {
     $localvars = array( 'keywords', '_counter', '__max' );
     $glue = $args[ 'glue' ];

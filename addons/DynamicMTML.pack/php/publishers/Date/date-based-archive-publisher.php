@@ -1,8 +1,4 @@
 <?php
-# DynamicMTML (C) 2010-2011 Alfasado Inc.
-# This program is distributed under the terms of the
-# GNU General Public License, version 2.
-
     // $extra_terms = array();
     if ( $rebuild_start_ts ) {
         foreach ( $maps as $map ) {
