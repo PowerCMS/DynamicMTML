@@ -10,7 +10,7 @@ class WordPress extends MTPlugin {
         'key'  => 'wordpress',
         'author_name' => 'Alfasado Inc.',
         'author_link' => 'http://alfasado.net/',
-        'version' => '0.1',
+        'version' => '0.2',
         'description' => 'MTML for WordPress.',
         'tags' => array(
             'block'    => array( 'wpget_posts' => 'wp_get_posts',
@@ -124,7 +124,6 @@ class WordPress extends MTPlugin {
 
     function wp_bloginfo ( $args, &$ctx ) {
         $app = $this->app;
-        $wp = $this->get_wp( $ctx );
         $this_tag = $ctx->this_tag();
         $name = $args[ 'name' ];
         if (! $name ) {
@@ -132,7 +131,9 @@ class WordPress extends MTPlugin {
         }
         if ( $option = $ctx->stash( "wp_option{$name}" ) ) {
         } else {
+            $wp = $this->get_wp( $ctx );
             $option = $app->load( 'Options' , array( 'name' => $name  ), array( 'limit' => 1 ) );
+            $this->reset_mt( $ctx );
             $ctx->stash( "wp_option:{$name}", $option );
         }
         if ( isset( $option ) ) {
@@ -175,6 +176,7 @@ class WordPress extends MTPlugin {
             }
             $category = $app->model( 'Terms' );
             $wp_categories = $category->load_category( $wp, $ctx, NULL, $args, $taxonomy );
+            $this->reset_mt( $ctx );
             $ctx->stash( '__wp_categories', $wp_categories );
             $ctx->stash( '__wp_categories_count', count( $wp_categories ) );
         } else {
@@ -191,6 +193,7 @@ class WordPress extends MTPlugin {
             $category = $wp_categories[ $counter ];
             $wp = $this->get_wp( $ctx );
             $children = $category->children( $wp, $ctx, $taxonomy, $args );
+            $this->reset_mt( $ctx );
             $ctx->stash( 'wp_category', $category );
             $count = $counter + 1;
             $last = 0;
@@ -236,6 +239,7 @@ class WordPress extends MTPlugin {
             $ctx->stash( '__wp_archivelist_old_vars', $ctx->__stash[ 'vars' ] );
             $wp = $this->get_wp( $ctx );
             $wp_archivelist = $this->get_archive_list( $ctx, $archive_type );
+            $this->reset_mt( $ctx );
             if ( $sort_order == 'descend' ) {
                 krsort( $wp_archivelist );
             }
@@ -321,6 +325,7 @@ class WordPress extends MTPlugin {
                 $taxonomy = 'category';
             }
             $wp_categories = $post->categories( $wp, $ctx, $taxonomy );
+            $this->reset_mt( $ctx );
             $ctx->__stash[ 'vars' ][ '__counter__' ] = 0;
             $ctx->stash( '__wp_categories', $wp_categories );
             $ctx->stash( '__wp_categories_count', count( $wp_categories ) );
@@ -503,7 +508,6 @@ class WordPress extends MTPlugin {
         $localvars = array( '__wp_posts', '__wp_posts_count', 'wp_post',
                             '__wp_get_posts_old_vars' );
         $app = $this->app;
-        $wp = $this->get_wp( $ctx );
         $id = $args[ 'id' ];
         if (! isset( $content ) ) {
             $ctx->localize( $localvars );
@@ -512,6 +516,7 @@ class WordPress extends MTPlugin {
             $counter = 0;
             $category = $args[ 'category' ];
             $category_id = $args[ 'category_id' ];
+            $wp = $this->get_wp( $ctx );
             if ( $category ) {
                 if ( $cat = $this->get_category( $ctx, $category ) ) {
                     $category_id = $cat->term_id;
@@ -594,6 +599,7 @@ class WordPress extends MTPlugin {
                     $wp_posts = $app->load( 'Posts', array( 'ID' => $id ) );
                 }
             }
+            $this->reset_mt( $ctx );
             $ctx->stash( '__wp_posts', $wp_posts );
             $ctx->stash( '__wp_posts_count', count( $wp_posts ) );
         } else {
@@ -654,6 +660,7 @@ class WordPress extends MTPlugin {
             }
             $wp = $this->get_wp( $ctx );
             $nextprev_post = $post->nextprev( $wp, $ctx, $nextprev );
+            $this->reset_mt( $ctx );
             if ( $nextprev_post ) {
                 $nextprev_post->title;
                 $ctx->stash( 'wp_post', $nextprev_post );
@@ -805,6 +812,7 @@ class WordPress extends MTPlugin {
         $category = $app->model( 'Terms' );
         $category = $category->load_category( $wp, $ctx, $name,
                                               array( 'limit' => 1 ), $taxonomy );
+        $this->reset_mt( $ctx );
         if ( $category ) {
             $term_id = $category->term_id;
             if ( $term_id ) {
@@ -912,6 +920,7 @@ class WordPress extends MTPlugin {
                 $current_ts = __get_next_year( $current_ts );
             } while( $current_ts != __get_next_year( $last_ts ) );
         }
+        $this->reset_mt( $ctx );
         $ctx->stash( "wp_archive_list:{$at}:{$type}:{$status}:{$sort}", $archive_list );
         if ( $load ) {
             return $object_list;
@@ -963,17 +972,27 @@ class WordPress extends MTPlugin {
             $lib = __cat_file( array( $dynamicmtml->plugin_path, 'php', 'mt.php' ) );
             require_once( $lib );
         }
-        $cfg_file =  dirname( dirname( __FILE__ ) ) . DIRECTORY_SEPARATOR . 'wp-config.cgi';
+        $cfg_file = dirname( dirname( __FILE__ ) ) . DIRECTORY_SEPARATOR . 'wp-config.cgi';
         // $cfg_file = __cat_file( $wp_dir, 'wp-config.cgi' );
         $wp = new MT( NULL, $cfg_file );
         $db = $wp->db();
+        $cfg_file = dirname( dirname( __FILE__ ) ) . DIRECTORY_SEPARATOR . 'wp-config.cgi';
         $db->set_names( $wp );
         $wp->db = $db;
-        $ctx->mt->db = $db;
         $app->init_models( array( 'Users', 'Terms', 'Posts', 'Postmeta', 'Options' ) );
         $ctx->stash( 'WordPress', $wp );
         $this->wordpress = $wp;
         return $wp;
+    }
+
+    function reset_mt ( &$ctx ) {
+        $app = $this->app;
+        $blog_id = NULL;
+        if ( $blog = $app->blog ) {
+            $blog_id = $blog->id;
+        }
+        $mt = new MT( $blog_id, $app->cfg_file );
+        $db = $mt->db();
     }
 
 }
