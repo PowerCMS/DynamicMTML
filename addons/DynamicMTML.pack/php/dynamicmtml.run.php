@@ -5,7 +5,6 @@
     require_once( $plugin_path . 'dynamicmtml.php' );
     require_once( $mt_dir . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'MTUtil.php' );
     if (! isset( $mt_config ) ) $mt_config = $mt_dir . DIRECTORY_SEPARATOR . 'mt-config.cgi';
-    $app = new DynamicMTML();
     global $mt;
     global $ctx;
     $ctx = NULL;
