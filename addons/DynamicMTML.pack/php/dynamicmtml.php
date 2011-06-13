@@ -375,9 +375,19 @@ class DynamicMTML {
         $to_encoding or $to_encoding = 'UTF-8';
         if ( $param ) {
             if ( $value = $this->get_param( $param ) ) {
-                $from_encoding = mb_detect_encoding( $value, 'UTF-8,EUC-JP,SJIS,JIS' );
-                $value = mb_convert_encoding( $value, $to_encoding, $from_encoding );
-                return $value;
+                if (! is_array( $value ) ) {
+                    $from_encoding = mb_detect_encoding( $value, 'UTF-8,EUC-JP,SJIS,JIS' );
+                    $value = mb_convert_encoding( $value, $to_encoding, $from_encoding );
+                    return $value;
+                } else {
+                    $new_array = array();
+                    foreach ( $value as $val ) {
+                        $from_encoding = mb_detect_encoding( $val, 'UTF-8,EUC-JP,SJIS,JIS' );
+                        $val = mb_convert_encoding( $val, $to_encoding, $from_encoding );
+                        array_push ( $new_array, $val );
+                    }
+                    return $new_array;
+                }
             }
         } else {
             $vars = $_REQUEST;
