@@ -41,7 +41,10 @@ class DynamicMTML_pack extends MTPlugin {
                                  'ifblogdynamicmtml' => 'ifblogdynamicmtml',
                                  'iflogin' => 'iflogin',
                                  'ifuseragent' => 'ifuseragent',
-                                 'ifuserhaspermission' => 'ifuserhaspermission', ),
+                                 'ifuserhaspermission' => 'ifuserhaspermission',
+                                 'seterrorhandler' => 'seterrorhandler',
+                                 'striptags' => 'striptags',
+                                 ),
             'function' => array( 'authorlanguage' => 'authorlanguage',
                                  'useragent' => 'useragent',
                                  'blogdynamicdirectoryindex' => 'blogdynamicdirectoryindex',
@@ -66,7 +69,9 @@ class DynamicMTML_pack extends MTPlugin {
                                  'trans' => 'trans',
                                  'referralkeyword' => 'referralkeyword',
                                  'rand' => 'mtrand',
-                                 'tablecolumnvalue' => 'tablecolumnvalue', ),
+                                 'tablecolumnvalue' => 'tablecolumnvalue',
+                                 'error' => 'error',
+                                 ),
             'modifier' => array( 'trimwhitespace' => 'trimwhitespace',
                                  'highlightingsearchword' => 'highlightingsearchword',
                                  'make_seo_basename' => 'make_seo_basename',
@@ -261,6 +266,16 @@ class DynamicMTML_pack extends MTPlugin {
         return smarty_block_mtifuserhaspermission( $args, $content, $ctx, $repeat );
     }
 
+    function seterrorhandler ( $args, $content, &$ctx, &$repeat ) {
+        require_once( $this->tags_dir() . 'block.mtseterrorhandler.php' );
+        return smarty_block_mtseterrorhandler( $args, $content, $ctx, $repeat );
+    }
+
+    function striptags ( $args, $content, &$ctx, &$repeat ) {
+        require_once( $this->tags_dir() . 'block.mtstriptags.php' );
+        return smarty_block_mtstriptags( $args, $content, $ctx, $repeat );
+    }
+
     function ifuseragent ( $args, $content, &$ctx, &$repeat ) {
         require_once( $this->tags_dir() . 'block.mtifuseragent.php' );
         return smarty_block_mtifuseragent( $args, $content, $ctx, $repeat );
@@ -320,6 +335,11 @@ class DynamicMTML_pack extends MTPlugin {
     function tablecolumnvalue ( $args, &$ctx ) {
         require_once( $this->tags_dir() . 'function.mttablecolumnvalue.php' );
         return smarty_function_mttablecolumnvalue( $args, $ctx );
+    }
+
+    function error ( $args, &$ctx ) {
+        require_once( $this->tags_dir() . 'function.mterror.php' );
+        return smarty_function_mterror( $args, $ctx );
     }
 
     function referralkeyword ( $args, &$ctx ) {
@@ -424,7 +444,7 @@ class DynamicMTML_pack extends MTPlugin {
     }
     
     function highlightingsearchword ( $text, $arg ) {
-        require_once( $this->tags_dir() . 'modifier.trimwhitespace.php' );
+        require_once( $this->tags_dir() . 'modifier.highlightingsearchword.php' );
         return smarty_modifier_highlightingsearchword( $text, $arg );
     }
 

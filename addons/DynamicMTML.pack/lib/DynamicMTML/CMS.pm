@@ -10,6 +10,8 @@ our $plugin_dynamicmtml = MT->component( 'DynamicMTML' );
 
 sub _install_dynamic_mtml {
     my $app = shift;
+    $app->validate_magic or
+        return $app->trans_error( 'Permission denied.' );
     require File::Spec;
     my $do = 1;
     my $mtview = MT->config->DynamicSiteBootstrapper || '.mtview.php';
@@ -73,6 +75,8 @@ sub _install_dynamic_mtml {
 
 sub _flush_dynamic_cache {
     my $app = shift;
+    $app->validate_magic or
+        return $app->trans_error( 'Permission denied.' );
     my $do;
     require File::Spec;
     if (! _dynamic_permission() ) {
