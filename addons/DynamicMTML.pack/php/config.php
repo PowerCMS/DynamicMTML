@@ -44,6 +44,7 @@ class DynamicMTML_pack extends MTPlugin {
                                  'ifuserhaspermission' => 'ifuserhaspermission',
                                  'seterrorhandler' => 'seterrorhandler',
                                  'striptags' => 'striptags',
+                                 'buildrecurs' => 'buildrecurs',
                                  ),
             'function' => array( 'authorlanguage' => 'authorlanguage',
                                  'useragent' => 'useragent',
@@ -274,6 +275,10 @@ class DynamicMTML_pack extends MTPlugin {
     function striptags ( $args, $content, &$ctx, &$repeat ) {
         require_once( $this->tags_dir() . 'block.mtstriptags.php' );
         return smarty_block_mtstriptags( $args, $content, $ctx, $repeat );
+    }
+
+    function buildrecurs ( $args, $content, &$ctx, &$repeat ) {
+        return $content;
     }
 
     function ifuseragent ( $args, $content, &$ctx, &$repeat ) {

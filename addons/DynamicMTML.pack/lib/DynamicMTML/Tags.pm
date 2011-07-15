@@ -4,10 +4,8 @@ use strict;
 
 use MT::Util qw( trim remove_html decode_url encode_url );
 use PowerCMS::Util qw( is_cms is_application add_slash get_user to_utf8 utf8_on site_url
-                       powercms_files_dir is_user_can include_exclude_blogs referral_serch_keyword
+                       powercms_files_dir is_user_can include_exclude_blogs referral_search_keyword
                        make_seo_basename format_LF get_agent );
-
-our $plugin_dynamicmtml = MT->component( 'DynamicMTML' );
 
 sub _hdlr_dynamicmtml {
     my ( $ctx, $args, $cond ) = @_;
@@ -736,12 +734,13 @@ sub _hdlr_referralkeywords {
     my $tokens = $ctx->stash( 'tokens' );
     my $builder = $ctx->stash( 'builder' );
     my $glue = $args->{ glue };
-    my @keywords = referral_serch_keyword();
+    my @keywords = referral_search_keyword();
     return '' unless @keywords;
     my $vars = $ctx->{ __stash }{ vars } ||= {};
     my $res = '';
     my $i = 1;
     for my $val ( @keywords ) {
+        next unless $val;
         $val = utf8_on( $val );
         $val = trim( $val );
         local $vars->{ keyword } = $val;
@@ -759,7 +758,7 @@ sub _hdlr_referralkeywords {
 }
 
 sub _hdlr_referralkeyword {
-    my $keyword = referral_serch_keyword();
+    my $keyword = referral_search_keyword();
     return '' unless $keyword;
     $keyword = utf8_on( $keyword );
     $keyword = trim( $keyword );
@@ -800,9 +799,10 @@ sub _filter_highlightingsearchword {
     my $tag_end    = '</strong>';
     my $qtag_start = quotemeta( $tag_start );
     my $qtag_end   = quotemeta( $tag_end );
-    my @keywords   = referral_serch_keyword();
-    return '' unless @keywords;
+    my @keywords   = referral_search_keyword();
+    return $text unless defined @keywords;
     for my $keyword ( @keywords ) {
+        next unless $keyword;
         $keyword = utf8_on( $keyword );
         $keyword = trim( $keyword );
         $keyword = quotemeta( $keyword );
@@ -864,6 +864,26 @@ sub _filter_intval {
 
 sub _hdlr_powercms_files_dir {
     return MT->config->PowerCMSFilesDir || powercms_files_dir();
+}
+
+sub _hdlr_error {
+    my ( $ctx, $args, $cond ) = @_;
+    my $message = $args->{ message };
+    return $ctx->error( $message );
+}
+
+sub _hdlr_build_recurs {
+    my ( $ctx, $args, $cond ) = @_;
+    my $res = _hdlr_pass_tokens( @_ );
+    my $exclude = $args->{ exclude } || 'CMS';
+    my $app = MT->instance;
+    if ( is_application( $app ) ) {
+        if ( ref $app ne 'MT::App::' . $exclude ) {
+            require MT::Template::Tags::Filters;
+            return MT::Template::Tags::Filters::_fltr_mteval( $res, 1, $ctx );
+        }
+    }
+    return $res;
 }
 
 1;

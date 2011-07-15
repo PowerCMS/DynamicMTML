@@ -1,14 +1,14 @@
 package PowerCMS::Util;
 use strict;
 use Exporter;
-our $powercms_util_version = '2.052';
+our $powercms_util_version = '3.0';
 @PowerCMS::Util::ISA = qw( Exporter );
 use vars qw( @EXPORT_OK );
 @EXPORT_OK = qw( build_tmpl save_asset upload convert_gif_png association_link create_entry
                  make_entry write2file read_from_file move_file copy_item remove_item
                  relative2path path2relative path2url relative2url url2path
                  site_path site_url static_or_support support_dir archive_path
-                 current_ts next_date prev_date valid_ts month2int send_mail get_mail
+                 current_ts current_date current_time next_date prev_date valid_ts month2int send_mail get_mail
                  mime_type valid_email get_content get_feed extract_content regex_extract
                  str_replace regex_replace ftp_new ftp_get ftp_put ftp_mkdir ftp_quit
                  make_zip_archive current_user get_user current_blog uniq_filename set_upload_filename
@@ -27,13 +27,16 @@ use vars qw( @EXPORT_OK );
                  is_cms is_application is_windows is_blog is_plugin is_writable is_image csv_new
                  get_children_files get_childlen_files get_childlen_filenames flush_blog_cmscache
                  plugin_template_path get_asset_from_text include_blogs include_exclude_blogs
-                 convert2thumbnail create_thumbnail program_is_contained
+                 convert2thumbnail create_thumbnail program_is_contained permitted_blog_ids
                  referral_site referral_search_keyword referral_serch_keyword make_seo_basename
-                 encode_utf8_string_to_cp932_octets
+                 encode_utf8_string_to_cp932_octets set_powercms_config get_powercms_config
+                 set_powercms_config_values reset_powercms_config_values charset_is_utf8
+                 can_edit_entry allow_upload error_log
                );
 
 use MT::Util qw( epoch2ts ts2epoch offset_time_list format_ts encode_url decode_url
                  perl_sha1_digest_hex is_valid_email remove_html trim );
+# use PowerCMS::Config qw( get_powercms_config set_powercms_config );
 
 use MT::Log;
 use MT::FileMgr;
@@ -164,12 +167,22 @@ sub build_tmpl {
         $ctx->{ __stash }->{ vars }->{ magic_token } = $app->current_magic if $app->user;
     }
     my $build = MT::Builder->new;
-    my $tokens = $build->compile( $ctx, $tmpl )
-        or return $app->error( $app->translate(
-            "Parse error: [_1]", $build->errstr ) );
-    defined( my $html = $build->build( $ctx, $tokens ) )
-        or return $app->error( $app->translate(
-            "Build error: [_1]", $build->errstr ) );
+#     my $tokens = $build->compile( $ctx, $tmpl )
+#         or return $app->error( $app->translate(
+#             "Parse error: [_1]", $build->errstr ) );
+#     defined( my $html = $build->build( $ctx, $tokens ) )
+#         or return $app->error( $app->translate(
+#             "Build error: [_1]", $build->errstr ) );
+    my $tokens = $build->compile( $ctx, $tmpl );
+    unless ( $tokens ) {
+        error_log( $app->translate( "Parse error: [_1]", $build->errstr ), $blog ? $blog->id : undef );
+        return;
+    }
+    my $html = $build->build( $ctx, $tokens );
+    unless ( defined $html ) {
+        error_log( $app->translate( "Build error: [_1]", $build->errstr ), $blog ? $blog->id : undef );
+        return;
+    }
     unless ( MT->version_number < 5 ) {
         $html = utf8_on( $html );
     }
@@ -317,6 +330,9 @@ sub save_asset {
 sub upload {
     my ( $app, $blog, $name, $dir, $params ) = @_;
     my $limit = $app->config( 'CGIMaxUpload' ) || 20480000;
+    $app->validate_magic() or return 0;
+    return 0 unless $app->can_do( 'save_asset' );
+    return 0 unless $blog;
 #    my %params = ( object => $obj,
 #                   author => $author,
 #                   rename => 1,
@@ -327,6 +343,7 @@ sub upload {
 #                   no_asset => 1,
 #                   );
 #    my $upload = upload( $app, $blog, $name, $dir, \%params );
+
     my $obj = $params->{ object };
     my $rename = $params->{ 'rename' };
     my $label = $params->{ label };
@@ -355,6 +372,38 @@ sub upload {
     }
     for my $file ( @files ) {
         my $orig_filename = file_basename( $file );
+        my $basename = $orig_filename;
+        $basename =~ s!\\!/!g;    ## Change backslashes to forward slashes
+        $basename =~ s!^.*/!!;    ## Get rid of full directory paths
+        if ( $basename =~ m!\.\.|\0|\|! ) {
+            return ( undef, 1 );
+        }
+        $basename
+            = Encode::is_utf8( $basename )
+            ? $basename
+            : Encode::decode( $app->charset,
+            File::Basename::basename( $basename ) );
+        if ( my $deny_exts = $app->config->DeniedAssetFileExtensions ) {
+            my @deny_exts = map {
+                if   ( $_ =~ m/^\./ ) {qr/$_/i}
+                else                  {qr/\.$_/i}
+            } split '\s?,\s?', $deny_exts;
+            my @ret = File::Basename::fileparse( $basename, @deny_exts );
+            if ( $ret[2] ) {
+                return ( undef, 1 );
+            }
+        }
+        if ( my $allow_exts = $app->config( 'AssetFileExtensions' ) ) {
+            my @allow_exts = map {
+                if   ( $_ =~ m/^\./ ) {qr/$_/i}
+                else                  {qr/\.$_/i}
+            } split '\s?,\s?', $allow_exts;
+            my @ret = File::Basename::fileparse( $basename, @allow_exts );
+            unless ( $ret[2] ) {
+                return ( undef, 1 );
+            }
+        }
+        $orig_filename = $basename;
         $orig_filename = decode_url( $orig_filename ) if $force_decode_filename;
         my $file_label = file_label( $orig_filename );
         if (! $no_decode ) {
@@ -371,8 +420,15 @@ sub upload {
         }
         my $temp = "$out.new";
         my $umask = $app->config( 'UploadUmask' );
-        my $old = umask( oct $umask );
         open ( my $fh, ">$temp" ) or die "Can't open $temp!";
+        if ( is_image( $file ) ) {
+            require MT::Image;
+            if (! MT::Image::is_valid_image( $fh ) ) {
+                close ( $fh );
+                next;
+            }
+        }
+        my $old = umask( oct $umask );
         binmode ( $fh );
         while( read ( $file, my $buffer, 1024 ) ) {
             $buffer = format_LF( $buffer ) if $format_LF;
@@ -744,9 +800,18 @@ sub relative2path {
 sub path2relative {
     my ( $path, $blog, $exclude_archive_path ) = @_;
     my $app = MT->instance();
-    my $static_file_path = quotemeta( static_or_support() );
-    my $archive_path = quotemeta( archive_path( $blog ) );
-    my $site_path = quotemeta( site_path( $blog, $exclude_archive_path ) );
+    my $static_file_path = static_or_support();
+    my $archive_path = archive_path( $blog );
+    my $site_path = site_path( $blog, $exclude_archive_path );
+    if ( is_windows() ) {
+        $path =~ s!\\!/!g;
+        $static_file_path =~ s!\\!/!g;
+        $archive_path =~ s!\\!/!g;
+        $site_path =~ s!\\!/!g;
+    }
+    $static_file_path = quotemeta( $static_file_path );
+    $archive_path = quotemeta( $archive_path );
+    $site_path = quotemeta( $site_path );
     $path =~ s/$static_file_path/%s/;
     $path =~ s/$site_path/%r/;
     if ( $archive_path ) {
@@ -761,14 +826,44 @@ sub path2relative {
 
 sub path2url {
     my ( $path, $blog, $exclude_archive_path ) = @_;
-    my $site_path = quotemeta ( site_path( $blog, $exclude_archive_path ) );
+    my $site_path = quotemeta( site_path( $blog, $exclude_archive_path ) );
     my $site_url = site_url( $blog );
     $path =~ s/^$site_path/$site_url/;
     if ( is_windows() ) {
-        $path =~ s!/!\\!g;
+        $path =~ s!\\!/!g;
     }
     return $path;
 }
+
+# BACKWARD
+# sub path2relative {
+#     my ( $path, $blog, $exclude_archive_path ) = @_;
+#     my $app = MT->instance();
+#     my $static_file_path = quotemeta( static_or_support() );
+#     my $archive_path = quotemeta( archive_path( $blog ) );
+#     my $site_path = quotemeta( site_path( $blog, $exclude_archive_path ) );
+#     $path =~ s/$static_file_path/%s/;
+#     $path =~ s/$site_path/%r/;
+#     if ( $archive_path ) {
+#         $path =~ s/$archive_path/%a/;
+#     }
+#     if ( $path =~ m!^https{0,1}://! ) {
+#         my $site_url = quotemeta( site_url( $blog ) );
+#         $path =~ s/$site_url/%r/;
+#     }
+#     return $path;
+# }
+# 
+# sub path2url {
+#     my ( $path, $blog, $exclude_archive_path ) = @_;
+#     my $site_path = quotemeta ( site_path( $blog, $exclude_archive_path ) );
+#     my $site_url = site_url( $blog );
+#     $path =~ s/^$site_path/$site_url/;
+#     if ( is_windows() ) {
+#         $path =~ s!/!\\!g;
+#     }
+#     return $path;
+# }
 
 sub relative2url {
     my ( $path, $blog ) = @_;
@@ -839,6 +934,20 @@ sub current_ts {
     my $blog = shift;
     my @tl = offset_time_list( time, $blog );
     my $ts = sprintf '%04d%02d%02d%02d%02d%02d', $tl[5]+1900, $tl[4]+1, @tl[3,2,1,0];
+    return $ts;
+}
+
+sub current_date {
+    my $blog = shift;
+    my @tl = offset_time_list( time, $blog );
+    my $ts = sprintf "%04d-%02d-%02d", $tl[5]+1900, $tl[4]+1, $tl[3];
+    return $ts;
+}
+
+sub current_time {
+    my $blog = shift;
+    my @tl = offset_time_list( time, $blog );
+    my $ts = sprintf "%02d:%02d:%02d", @tl[2,1,0];
     return $ts;
 }
 
@@ -1003,15 +1112,29 @@ sub send_mail {
         };
         $params = $params4cb;
     }
-    return unless defined( $subject );
-    return unless defined( $body );
-    return unless ( $from && $to && $subject ne '' && $body ne '' );
+    my $plugin = MT->component( 'PowerCMS' );
+    unless ( defined( $subject ) ) {
+        error_log( $plugin->translate( 'Sending mail failed: [_1]', $plugin->translate( 'Subject is empty.' ) ) );
+        return;
+    }
+    unless ( defined( $body ) ) {
+        error_log( $plugin->translate( 'Sending mail failed: [_1]', $plugin->translate( 'Body is empty.' ) ) );
+        return;
+    }
+    unless ( defined( $to ) ) {
+        error_log( $plugin->translate( 'Sending mail failed: [_1]', $plugin->translate( 'To is empty.' ) ) );
+        return;
+    }
+    unless ( defined( $from ) ) {
+        error_log( $plugin->translate( 'Sending mail failed: [_1]', $plugin->translate( 'From is empty.' ) ) );
+        return;
+    }
     $params = { key => 'default' } unless defined $params;
     $params->{ key } = 'default' unless defined $params->{ key };
     my $app = MT->instance();
     my $mgr = MT->config;
     my $enc = $mgr->PublishCharset;
-    my $mail_enc = lc ( $mgr->MailEncoding || $enc );
+    my $mail_enc = lc( $mgr->MailEncoding || $enc );
     $body = MT::I18N::encode_text( $body, $enc, $mail_enc );
     return unless
         $app->run_callbacks( ( ref $app ) . '::pre_send_mail', $app, \$args, \$params );
@@ -1030,14 +1153,18 @@ sub send_mail {
         ( ref $bcc eq 'ARRAY' ? ( Bcc => $bcc ) : () ),
         ( $content_type ? ( 'Content-Type' => $content_type ) : () ),
     );
-    require MT::Mail;
+    my $send = sub {
+        require MT::Mail;
+        my $res = MT::Mail->send( \%head, $body );
+        unless ( $res ) {
+            MT->log( MT::Mail->errstr );
+            return 0;
+        }
+    };
     if ( is_application( $app ) ) {
-        force_background_task(
-           sub { MT::Mail->send( \%head, $body )
-                or return ( 0, "The error occurred.", MT::Mail->errstr ); } );
+        return force_background_task( $send );
     } else {
-        MT::Mail->send( \%head, $body )
-                or return ( 0, "The error occurred.", MT::Mail->errstr );
+        return $send->();
     }
 }
 
@@ -1061,7 +1188,7 @@ sub get_mail {
     my $tempdir = $app->config( 'TempDir' );
     my @emails;
     for my $id ( sort ( keys %$messages ) ) {
-        mkdir( $tempdir, 0777 ) unless ( -d $tempdir );
+        mkdir( $tempdir, 0755 ) unless ( -d $tempdir );
         my $message = $pop3->get( $id );
         my $parser = new MIME::Parser;
         my $workdir = tempdir ( DIR => $tempdir );
@@ -1204,7 +1331,6 @@ sub current_blog {
 sub get_content {
     my ( $uri, $utf8, $file ) = @_;
     my $app = MT->instance();
-    eval { require LWP::UserAgent } || return undef;
     my $remote_ip;
     eval { $remote_ip = $app->remote_ip };
     my $agent;
@@ -1213,15 +1339,7 @@ sub get_content {
     } else {
         $agent = 'Mozilla/5.0 (Power CMS for MT)';
     }
-    my $protcol = $1 if $uri =~ /^([^:]*):/;
-    my $ua = LWP::UserAgent->new;
-    $ua->agent( $agent );
-    my $proxy = MT->instance->config->PingProxy;
-    $ua->proxy( $protcol, $proxy ) if ( $protcol && $proxy );
-    my $no_proxy = MT->instance->config->PingNoProxy;
-    $ua->no_proxy( split( /,\s*/, $no_proxy ) ) if $no_proxy;
-    my $timeout = MT->instance->config->PingTimeout;
-    $ua->timeout( $timeout ) if $timeout;
+    my $ua = MT->new_ua( { agent => $agent } ) or return undef;
     my $req = HTTP::Request->new( GET => $uri );
     my $res = $ua->request( $req );
     if ( $res ) {
@@ -1399,7 +1517,7 @@ sub uniq_filename {
     my $tilda = quotemeta( '%7E' );
     $file =~ s/$tilda//g;
     if ( $no_decode ) {
-        $file = File::Spec->catfile( $dir, $file );
+        $file = File::Spec->catfile( $dir, file_basename( $file ) );
     } else {
         $file = File::Spec->catfile( $dir, set_upload_filename( $file ) );
     }
@@ -1594,7 +1712,10 @@ sub if_ua_Android {
 
 sub if_user_can {
     my ( $blog, $user, $permission ) = @_;
-    $permission = 'can_' . $permission;
+    return unless $user;
+    unless ( $permission =~ /^can_/ ) {
+        $permission = 'can_' . $permission;
+    }
     my $perm = $user->is_superuser;
     unless ( $perm ) {
         if ( $blog ) {
@@ -2018,7 +2139,7 @@ sub powercms_files_dir {
             my $do = _create_powercms_subdir( $powercms_files );
             return chomp_dir( $powercms_files );
         }
-        chmod ( 0777, $powercms_files );
+        chmod ( 0755, $powercms_files );
         my $do = _create_powercms_subdir( $powercms_files );
         return chomp_dir( $powercms_files ) if (-w $powercms_files );
     }
@@ -2027,7 +2148,7 @@ sub powercms_files_dir {
         $fmgr->mkpath( $powercms_files );
         if (-d $powercms_files ) {
             unless (-w $powercms_files ) {
-                chmod ( 0777, $powercms_files );
+                chmod ( 0755, $powercms_files );
             }
         }
     }
@@ -2056,12 +2177,12 @@ sub _create_powercms_subdir {
                 unless (-e $directory ) {
                     if ( make_dir( $directory ) ) {
                         unless (-w $directory ) {
-                            chmod ( 0777, $directory );
+                            chmod ( 0755, $directory );
                         }
                     }
                 } else {
                     unless (-w $directory ) {
-                        chmod ( 0777, $directory );
+                        chmod ( 0755, $directory );
                     }
                 }
                 return 0 unless (-w $directory );
@@ -2079,7 +2200,7 @@ sub make_dir {
     unless ( $fmgr->exists( $path ) ) {
         $fmgr->mkpath( $path );
         if (-d $path ) {
-            # chmod ( 0777, $path );
+            # chmod ( 0755, $path );
             return 1;
         }
     }
@@ -2292,10 +2413,12 @@ sub get_weblog_ids {
     my $cache;
     if ( $website ) {
         $blog_ids = $r->cache( 'powercms_get_weblog_ids_blog:' . $website->id );
-        $cache = $plugin->get_config_value( 'get_weblog_ids_cache', 'blog:'. $website->id );
+        # $cache = $plugin->get_config_value( 'get_weblog_ids_cache', 'blog:'. $website->id );
+        $cache = get_powercms_config( 'powercms', 'get_weblog_ids_cache', $website );
     } else {
         $blog_ids = $r->cache( 'powercms_get_weblog_ids_system' );
-        $cache = $plugin->get_config_value( 'get_weblog_ids_cache' );
+        # $cache = $plugin->get_config_value( 'get_weblog_ids_cache' );
+        $cache = get_powercms_config( 'powercms', 'get_weblog_ids_cache' );
     }
     return $blog_ids if $blog_ids;
     if ( $cache ) {
@@ -2317,10 +2440,12 @@ sub get_weblog_ids {
     }
     if ( $website ) {
         $r->cache( 'powercms_get_weblog_ids_blog:' . $website->id, $blog_ids );
-        $plugin->set_config_value( 'get_weblog_ids_cache', join ( ',', @$blog_ids ), 'blog:'. $website->id );
+        # $plugin->set_config_value( 'get_weblog_ids_cache', join ( ',', @$blog_ids ), 'blog:'. $website->id );
+        set_powercms_config( 'powercms', 'get_weblog_ids_cache', join ( ',', @$blog_ids ), $website );
     } else {
         $r->cache( 'powercms_get_weblog_ids_system', $blog_ids );
-        $plugin->set_config_value( 'get_weblog_ids_cache', join ( ',', @$blog_ids ) );
+        # $plugin->set_config_value( 'get_weblog_ids_cache', join ( ',', @$blog_ids ) );
+        set_powercms_config( 'powercms', 'get_weblog_ids_cache', join ( ',', @$blog_ids ) );
     }
 #     if ( wantarray ) {
 #         return @$blog_ids;
@@ -2398,9 +2523,11 @@ sub flush_weblog_ids {
     return unless $plugin;
     $website = $website->website if $website->class eq 'blog';
     if ( $website ) {
-        $plugin->set_config_value( 'get_weblog_ids_cache', '', 'blog:'. $website->id );
+        # $plugin->set_config_value( 'get_weblog_ids_cache', '', 'blog:'. $website->id );
+        set_powercms_config( 'powercms', 'get_weblog_ids_cache', '', $website );
     } else {
-        $plugin->set_config_value( 'get_weblog_ids_cache', '' );
+        # $plugin->set_config_value( 'get_weblog_ids_cache', '' );
+        set_powercms_config( 'powercms', 'get_weblog_ids_cache', '' );
     }
 }
 
@@ -2496,6 +2623,7 @@ sub get_config_inheritance {
 }
 
 sub flush_blog_cmscache {
+    # TODO::CMSCache Plugin is not Exists at 1st release.
     my $blog = shift;
     return unless $blog;
     if ( my $cmscache = MT->component( 'CMSCache' ) ) {
@@ -2763,6 +2891,388 @@ sub encode_utf8_string_to_cp932_octets {
     $str = Encode::encode_utf8( $str );
     Encode::from_to( $str, 'utf8', 'cp932' );
     return $str;
+}
+
+sub permitted_blog_ids {
+    my ( $app, $permissions ) = @_;
+    my @permissions = ref $permissions eq 'ARRAY' ? @$permissions : $permissions;
+    my @blog_ids;
+    my $blog = $app->blog;
+    if ( $blog ) {
+        push( @blog_ids, $blog->id );
+        unless ( $blog->is_blog ) {
+            push( @blog_ids, map { $_->id } @{ $blog->blogs } );
+        }
+    }
+    my $user = $app->user;
+    if ( $user->is_superuser ) {
+        unless ( @blog_ids ) {
+            my @all_blogs = MT::Blog->load( { class => '*' } );
+            @blog_ids = map { $_->id } @all_blogs;
+        }
+        if ( @blog_ids ) {
+            @blog_ids = uniq_array( \@blog_ids );
+            return wantarray ? @blog_ids : \@blog_ids;
+        }
+    }
+    require MT::Permission;
+    my $iter = MT->model( 'permission' )->load_iter( { author_id => $user->id,
+                                                       ( @blog_ids ? ( blog_id => \@blog_ids ) : ( blog_id => { not => 0 } ) ),
+                                                     }
+                                                   );
+    my @permitted_blog_ids;
+    while ( my $p = $iter->() ) {
+        for my $permission ( @permissions ) {
+            next unless $p->blog;
+            if ( is_user_can( $p->blog, $user, $permission ) ) {
+                push( @permitted_blog_ids, $p->blog->id );
+                last;
+            }
+        }
+    }
+    if ( @permitted_blog_ids ) {
+        @permitted_blog_ids = uniq_array( \@permitted_blog_ids );
+        return wantarray ? @permitted_blog_ids : \@permitted_blog_ids;
+    }
+    return;
+}
+
+sub powercms_config_param {
+    my ( $cb, $app, $param, $tmpl ) = @_;
+    my $plugin = MT->component( 'PowerCMS' );
+    require File::Spec;
+    my $powercms_config_templates = MT->registry( 'powercms_config_template' );
+    my @templates = keys( %$powercms_config_templates );
+    my %init_configs;
+    for my $key ( @templates ) {
+        $init_configs{ $key } = $powercms_config_templates->{ $key }->{ order };
+    }
+    my @configs;
+    foreach my $key ( sort { $init_configs{ $b } <=> $init_configs{ $a } } keys %init_configs ) {
+        push ( @configs, $powercms_config_templates->{ $key } );
+    }
+    my $blog = $app->blog;
+    my $scope = 'system';
+    if ( $blog ) {
+        if ( $blog->is_blog ) {
+            $scope = 'blog';
+        } else {
+            $scope = 'website';
+        }
+    }
+    my $powercms_settings = MT->registry( 'powercms_settings' );
+    my $template = File::Spec->catfile( plugin_template_path( $plugin, 'tmpl' ), 'powercms_config_plugin.tmpl' );
+    $template = read_from_file( $template );
+    my $pointer_field = $tmpl->getElementById( 'config_loop' );
+    my $return_args = '__mode=powercms_config';
+    if ( $blog ) {
+        $return_args .= '&blog_id=' . $blog->id;
+    }
+    my $count = 0;
+    for my $cfg ( @configs ) {
+        my $nodeset = $tmpl->createElement( 'for' );
+        my $component_key = $cfg->{ component };
+        my $component = MT->component( $component_key );
+        my $tmpl_path = File::Spec->catfile( plugin_template_path( $component, 'tmpl' ), $cfg->{ $scope } );
+        my $innerHTML = $template;
+        my $inner = read_from_file( $tmpl_path );
+        $component_key = lc( $component_key );
+        my %tmpl_args = ( blog => $app->blog );
+        my %tmpl_params = ( plugin_key => $component_key, plugin_tmpl => $inner,
+                            script_url => $app->uri,
+                            return_args => $return_args );
+        my $settings = $powercms_settings->{ $component_key };
+        for my $key ( keys %$settings ) {
+            $tmpl_params{ $key } = get_powercms_config( $component_key, $key, $blog );
+        }
+        if ( $blog ) {
+            $tmpl_params{ blog_id } = $blog->id;
+        }
+        $innerHTML = build_tmpl( $app, $innerHTML, \%tmpl_args, \%tmpl_params );
+        $innerHTML .= '<mt:include name="include/actions_bar.tmpl" bar_position="bottom" hide_pager="1"></fieldset></form>';
+        $nodeset->innerHTML( $innerHTML );
+        $tmpl->insertAfter( $nodeset, $pointer_field );
+        $count++;
+    }
+    if (! $count ) {
+        $param->{ no_config } = 1;
+    }
+}
+
+sub powercms_config {
+    my $app = shift;
+    my $blog_id = $app->param( 'blog_id' );
+    return $app->trans_error( 'Permission denied.' ) if ! $app->user->is_superuser && ! $blog_id;
+    return $app->trans_error( 'Permission denied.' ) if ! $app->can_do( 'administer_blog' );
+    my $plugin = MT->component( 'PowerCMS' );
+    $app->{ plugin_template_path } = plugin_template_path( $plugin );
+    my $tmpl = 'powercms_config.tmpl';
+    my %param;
+    $param{ saved } = $app->param( 'saved' );
+    return $app->build_page( $tmpl, \%param );
+}
+
+sub save_powercms_config {
+    my $app = shift;
+    my $blog_id = $app->param( 'blog_id' );
+    my $blog = $app->blog;
+    return $app->trans_error( 'Permission denied.' ) if ! $app->user->is_superuser && ! $blog_id;
+    return $app->trans_error( 'Permission denied.' ) if ! $app->can_do( 'administer_blog' );
+    $app->validate_magic or return $app->trans_error( 'Permission denied.' );
+    my $action = $app->param( 'action' );
+    my $plugin_key = $app->param( 'plugin_key' );
+    if ( $action && ( $action eq 'reset' ) ) {
+        __reset_config( $plugin_key, $blog );
+        $app->add_return_arg( reset => 1 );
+        $app->call_return;
+    } else {
+        my $powercms_settings = MT->registry( 'powercms_settings' );
+        my $plugin_settings = $powercms_settings->{ $plugin_key };
+        my @settings = keys( %$plugin_settings );
+        my $configs;
+        for my $setting ( @settings ) {
+            $configs->{ $setting } = $app->param( $setting );
+        }
+        __save_config( $plugin_key, $configs, $blog );
+        $app->add_return_arg( saved => 1 );
+        $app->call_return;
+    }
+}
+
+sub __reset_config {
+    my ( $plugin_key, $blog ) = @_;
+    return __save_config( $plugin_key, undef, $blog );
+}
+
+sub set_powercms_config_values {
+    return __save_config( @_ );
+}
+
+sub reset_powercms_config_values {
+    return __reset_config( @_ );
+}
+
+sub __save_config {
+    my ( $plugin_key, $configs, $blog ) = @_;
+    if ( $blog ) {
+        if (! ref $blog ) {
+            if ( $blog =~ /^\d+$/ ) {
+                require MT::Blog;
+                $blog = MT::Blog->load( $blog );
+                return unless $blog;
+            }
+        }
+    }
+    my $powercms_config = read_powercms_config( $blog );
+    if ( $configs ) {
+        $powercms_config->{ $plugin_key } = $configs;
+    } else {
+        delete( $powercms_config->{ $plugin_key } );
+    }
+    require MT::Serialize;
+    my $ser = MT::Serialize->serialize( \$powercms_config );
+    if (! $blog ) {
+        my $cfg_class = MT->model( 'config' ) or return;
+        my $config = $cfg_class->load() || $cfg_class->new;
+        $config->powercms_config( $ser );
+        $config->save or die $config->errstr;
+    } else {
+        $blog->powercms_config( $ser );
+        $blog->save or die $blog->errstr;
+    }
+    return 1;
+}
+
+sub read_powercms_config {
+    my $blog = shift;
+    if ( $blog ) {
+        if (! ref $blog ) {
+            if ( $blog =~ /^\d+$/ ) {
+                require MT::Blog;
+                $blog = MT::Blog->load( $blog );
+                return () unless $blog;
+            }
+        }
+    }
+    require MT::Request;
+    my $r = MT::Request->instance;
+    my $data;
+    my $params = ();
+    if (! $blog ) {
+        my $cfg_class = MT->model( 'config' ) or return;
+        if ( $r->cache( 'PowerCMSConfig' ) ) {
+            return $r->cache( 'PowerCMSConfig' );
+        } else {
+            my $cfg_class = MT->model( 'config' ) or return;
+            my $config = $cfg_class->load() || return;
+            $data = $config->powercms_config;
+            require MT::Serialize;
+            $data = MT::Serialize->unserialize( $data );
+            $params = $$data;
+            $r->cache( 'PowerCMSConfig', $params );
+        }
+    } else {
+        if ( $r->cache( 'PowerCMSConfig:' . $blog->id ) ) {
+            return $r->cache( 'PowerCMSConfig:' . $blog->id );
+        } else {
+            $data = $blog->powercms_config;
+            require MT::Serialize;
+            $data = MT::Serialize->unserialize( $data );
+            $params = $$data;
+            $r->cache( 'PowerCMSConfig:' . $blog->id, $params );
+        }
+    }
+    return $params;
+}
+
+sub set_powercms_config {
+    my ( $plugin_key, $key, $value, $blog ) = @_;
+    if ( $blog && ( $blog ne 'system' ) ) {
+        if (! ref $blog ) {
+            if ( $blog =~ /^\d+$/ ) {
+                require MT::Blog;
+                $blog = MT::Blog->load( $blog );
+                return unless $blog;
+            }
+        }
+    }
+    my $powercms_config = read_powercms_config( $blog );
+    my $configs;
+    if ( $powercms_config ) {
+        $configs = $powercms_config->{ $plugin_key };
+    }
+    $configs->{ $key } = $value;
+    return __save_config( $plugin_key, $configs, $blog );
+}
+
+sub get_powercms_config {
+    my ( $plugin_key, $key, $blog ) = @_;
+    if ( $blog ) {
+        if (! ref $blog ) {
+            if ( $blog =~ /^\d+$/ ) {
+                require MT::Blog;
+                $blog = MT::Blog->load( $blog );
+                return unless $blog;
+            }
+        }
+    }
+    require MT::Request;
+    my $r = MT::Request->instance;
+    my $params = ();
+    if (! $blog ) {
+        my $cfg_class = MT->model( 'config' ) or return;
+        if ( $r->cache( 'PowerCMSConfig' ) ) {
+            $params = $r->cache( 'PowerCMSConfig' );
+        } else {
+            my $cfg_class = MT->model( 'config' ) or return;
+            my $config = $cfg_class->load() || return;
+            my $data = $config->powercms_config;
+            require MT::Serialize;
+            $data = MT::Serialize->unserialize( $data );
+            $params = $$data;
+            $r->cache( 'PowerCMSConfig', $params );
+        }
+    } else {
+        if ( $r->cache( 'PowerCMSConfig:' . $blog->id ) ) {
+            $params = $r->cache( 'PowerCMSConfig:' . $blog->id );
+        } else {
+            my $data = $blog->powercms_config;
+            require MT::Serialize;
+            $data = MT::Serialize->unserialize( $data );
+            $params = $$data;
+            $r->cache( 'PowerCMSConfig:' . $blog->id, $params );
+        }
+    }
+    my $settings = $params->{ $plugin_key };
+    if (! defined $settings ) {
+        return get_default( $plugin_key, $key );
+    }
+    my $value = $settings->{ $key };
+    if (! defined $value ) {
+        return get_default( $plugin_key, $key );
+    }
+    return $value;
+}
+
+sub get_default {
+    my ( $plugin_key, $key ) = @_;
+    my $powercms_settings = MT->registry( 'powercms_settings' );
+    if ( $powercms_settings->{ $plugin_key } ) {
+        if ( $powercms_settings->{ $plugin_key }->{ $key } ) {
+            return $powercms_settings->{ $plugin_key }->{ $key }->{ default };
+        }
+    }
+}
+
+sub charset_is_utf8 {
+    my $charset = MT->config->PublishCharset;
+    if ( $charset =~ m/utf-?8/i ) {
+        return 1;
+    }
+    return 0;
+}
+
+sub can_edit_entry {
+    my ( $entry, $author ) = @_;
+    my $can_edit_entry = 1;
+    my $permission_checkers = MT->registry( 'permission_checker' );
+    if ( $permission_checkers ) {
+        my $checkers = $permission_checkers->{ edit_entry };
+        for my $checker ( @$checkers ) {
+            my $code = MT->handler_to_coderef( $checker );
+            $can_edit_entry = $code->( $entry, $author );
+        }
+    }
+    return $can_edit_entry;
+}
+
+sub allow_upload {
+    my $file = shift;
+    my $app = MT->instance;
+    if ( my $deny_exts = $app->config->DeniedAssetFileExtensions ) {
+        my @deny_exts = map {
+            if   ( $_ =~ m/^\./ ) {qr/$_/i}
+            else                  {qr/\.$_/i}
+        } split '\s?,\s?', $deny_exts;
+        my @ret = File::Basename::fileparse( $file, @deny_exts );
+        if ( $ret[2] ) {
+            return 0;
+        }
+    }
+    if ( my $allow_exts = $app->config( 'AssetFileExtensions' ) ) {
+        my @allow_exts = map {
+            if   ( $_ =~ m/^\./ ) {qr/$_/i}
+            else                  {qr/\.$_/i}
+        } split '\s?,\s?', $allow_exts;
+        my @ret = File::Basename::fileparse( $file, @allow_exts );
+        unless ( $ret[2] ) {
+            return 0;
+        }
+    }
+    if ( -f $file ) {
+        if ( is_image( $file ) ) {
+            open( my $fh, "<$file" );
+            require MT::Image;
+            if (! MT::Image::is_valid_image( $fh ) ) {
+                close ( $fh );
+                return 0;
+            }
+            close( $fh );
+        }
+    }
+    return 1;
+}
+
+sub error_log {
+    my ( $message, $blog_id ) = @_;
+    my $log = MT->model( 'log' )->new;
+    $log->message( $message );
+    $log->level( MT::Log::ERROR() );
+    $log->blog_id( $blog_id ? ( blog_id => $blog_id ) : () );
+    $log->class( 'system' );
+    $log->category( 'powercms' );
+    $log->save or die $log->errstr;
+    return 1;
 }
 
 1;

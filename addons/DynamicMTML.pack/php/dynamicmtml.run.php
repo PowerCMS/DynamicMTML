@@ -184,6 +184,15 @@
         $ctx =& $mt->context();
         if (! $no_database ) {
             set_error_handler( array( &$mt, 'error_handler' ) );
+            $driver = $app->config( 'objectdriver' );
+            $driver = preg_replace( '/^DB[ID]::/', '', $driver );
+            $driver or $driver = 'mysql';
+            $driver = strtolower( $driver );
+            $cfg =& $app->config;
+            $cfg[ 'dbdriver' ] = $driver;
+            if ( $driver == 'mysql' or $driver == 'postgres' ) {
+                $mt->db()->set_names( $mt );
+            }
             $blog = $mt->db()->fetch_blog( $blog_id );
             $ctx->stash( 'blog', $blog );
             $ctx->stash( 'blog_id', $blog_id );

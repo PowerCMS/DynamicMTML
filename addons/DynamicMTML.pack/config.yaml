@@ -92,6 +92,7 @@ tags:
         NonDynamicMTML: $dynamicmtml::DynamicMTML::Tags::_hdlr_nondynamicmtml
         IfBlogDynamicMTML?: $dynamicmtml::DynamicMTML::Tags::_hdlr_if_blog_dynamicmtml
         EntryCategoryBlock: $dynamicmtml::DynamicMTML::Tags::_hdlr_entry_category_block
+        BuildRecurs: $dynamicmtml::DynamicMTML::Tags::_hdlr_build_recurs
     function:
         ML: $dynamicmtml::DynamicMTML::Tags::_hdlr_raw_mtml_tag
         MTML: $dynamicmtml::DynamicMTML::Tags::_hdlr_raw_mtml_tag
