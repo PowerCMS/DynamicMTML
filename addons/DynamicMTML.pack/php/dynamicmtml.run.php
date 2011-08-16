@@ -202,9 +202,10 @@
         } else {
             $ctx->stash( 'no_database', 1 );
             $app->set_context( $mt, $ctx );
-            $mt->init_plugins();
-            //require_once( 'init.dynamicmtml.php' );
+            // $mt->init_plugins();
+            // require_once( 'init.dynamicmtml.php' );
         }
+        $mt->init_plugins();
         // TODO::Create Blog object.
         $ctx->stash( 'callback_dir', $app->stash( 'callback_dir' ) );
         $ctx->stash( 'preview', $app->stash( 'preview' ) );
