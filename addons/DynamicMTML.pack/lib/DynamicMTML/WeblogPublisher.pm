@@ -2451,7 +2451,7 @@ these parameters. Elements in C<%args> are as follows:
 Holds the template context that has been constructed for building (see
 C<MT::Template::Context>).
 
-=item C<ArchiveType> 
+=item C<ArchiveType>
 
 The archive type of the file, usually one of C<'Index'>,
 C<'Individual'>, C<'Category'>, C<'Daily'>, C<'Monthly'>, or
@@ -2475,7 +2475,7 @@ archive page other than an individual page, this parameter is not
 necessarily undefined. It is best to rely on the C<$at> parameter to
 determine whether a single entry is on deck to be built.
 
-=item C<PeriodStart> 
+=item C<PeriodStart>
 
 In the case of a date-based archive page, this is a timestamp at the
 beginning of the period from which entries will be included on this

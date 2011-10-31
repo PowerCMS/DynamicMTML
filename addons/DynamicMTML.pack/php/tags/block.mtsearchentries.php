@@ -98,7 +98,7 @@ function smarty_block_mtsearchentries( $args, $content, &$ctx, &$repeat ) {
             }
         }
         $operator = strtoupper( $args[ 'operator' ] );
-        if ( $operator != 'LIKE' and 
+        if ( $operator != 'LIKE' and
              $operator != 'NOT LIKE' and
              $operator != 'IS NULL' and
              $operator != 'IS NOT NULL' and
@@ -154,7 +154,7 @@ function smarty_block_mtsearchentries( $args, $content, &$ctx, &$repeat ) {
             if ( $query ) {
                 if ( $expression ) {
                     $sql .= " AND ( {$expression} )";
-                } else { 
+                } else {
                     $sql .= " AND $target $operator '$query'";
                 }
             }
@@ -187,7 +187,7 @@ function smarty_block_mtsearchentries( $args, $content, &$ctx, &$repeat ) {
         if ( $query ) {
             if ( $expression ) {
                 $where .= " AND ( {$expression} )";
-            } else { 
+            } else {
                 $where .= " AND $target $operator '$query'";
             }
         }

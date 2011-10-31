@@ -853,7 +853,7 @@ sub path2url {
 #     }
 #     return $path;
 # }
-# 
+#
 # sub path2url {
 #     my ( $path, $blog, $exclude_archive_path ) = @_;
 #     my $site_path = quotemeta ( site_path( $blog, $exclude_archive_path ) );
