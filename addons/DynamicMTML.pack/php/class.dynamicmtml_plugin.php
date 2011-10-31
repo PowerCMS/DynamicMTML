@@ -1,12 +1,12 @@
 <?php
 class MTPlugin extends DynamicMTML {
-    
+
     var $app;
 
     function app () {
         return $this->app;
     }
-    
+
     function get_config_obj ( $scope ) {
         $component = $this->key();
         $get_from = 'configuration';

@@ -75,7 +75,7 @@ class Spyc {
   /**
      * Load a string of YAML into a PHP array statically
      *
-     * The load method, when supplied with a YAML string, will do its best 
+     * The load method, when supplied with a YAML string, will do its best
      * to convert YAML in a string into a PHP array.  Pretty simple.
      *
      * Note: use this function if you don't want files from the file system
@@ -306,7 +306,7 @@ class Spyc {
 
     for ($i = 0; $i < count($Source); $i++) {
       $line = $Source[$i];
-      
+
       $lineIndent = $this->_getIndent($line);
       $this->path = $this->getParentPathByIndent($lineIndent);
       $line = $this->stripIndent($line, $lineIndent);
@@ -385,9 +385,9 @@ class Spyc {
      return $this->returnArrayElement($line);
 
     if ($this->isPlainArray($line))
-     return $this->returnPlainArray($line); 
-     
-     
+     return $this->returnPlainArray($line);
+
+
     return $this->returnKeyValuePair($line);
 
   }
@@ -558,21 +558,21 @@ class Spyc {
   private function addArrayInline ($array, $indent) {
       $CommonGroupPath = $this->path;
       if (empty ($array)) return false;
-      
+
       foreach ($array as $k => $_) {
         $this->addArray(array($k => $_), $indent);
         $this->path = $CommonGroupPath;
       }
       return true;
   }
-  
+
   private function addArray ($array, $indent) {
 
     if (count ($array) > 1)
       return $this->addArrayInline ($array, $indent);
-    
+
     $key = key ($array);
-    
+
     if (!isset ($array[$key])) return false;
     if ($array[$key] === array()) { $array[$key] = ''; };
     $value = $array[$key];
@@ -708,7 +708,7 @@ class Spyc {
     if ($line[0] != '-') return false;
     if (strlen ($line) > 3)
       if (substr($line,0,3) == '---') return false;
-    
+
     return true;
   }
 
@@ -748,15 +748,15 @@ class Spyc {
   private function startsMappedValue ($line) {
     if (preg_match('/^(.*):$/',$line)) return true;
   }
-  
+
   private function isPlainArray ($line) {
     if (preg_match('/^\[(.*)\]$/', $line)) return true;
     return false;
   }
-  
+
   private function returnPlainArray ($line) {
-    return $this->_toType($line); 
-  }  
+    return $this->_toType($line);
+  }
 
   private function returnKeyValuePair ($line) {
 
@@ -800,7 +800,7 @@ class Spyc {
   }
 
 
-  private function nodeContainsGroup ($line) {    
+  private function nodeContainsGroup ($line) {
     $symbolsForReference = 'A-z0-9_\-';
     if (strpos($line, '&') === false && strpos($line, '*') === false) return false; // Please die fast ;-)
     if (preg_match('/^(&['.$symbolsForReference.']+)/', $line, $matches)) return $matches[1];

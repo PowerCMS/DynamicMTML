@@ -114,7 +114,7 @@ class Terms extends BaseObject {
             return $wp_parent;
         }
     }
-    
+
     function children ( $wp, &$ctx, $taxonomy = 'category', $args = array() ) {
         if ( $children = $this->children ) {
             return $children;
@@ -131,7 +131,7 @@ class Terms extends BaseObject {
         $this->children = $wp_children;
         return $wp_children;
     }
-    
+
     function record2object ( &$ctx, &$record ) {
         $app = $ctx->stash( 'bootstrapper' );
         $terms = $app->model( 'Terms' );

@@ -9,7 +9,7 @@ DirectoryIndex /alfie.php
 </IfModule>
 <IfModule !mod_rewrite.c>
   Order Deny,Allow
-  Deny from all 
+  Deny from all
 <FilesMatch (^(|[^.]+)|alfie.php?)$>
   Allow from all
 </FilesMatch>

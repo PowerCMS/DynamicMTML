@@ -219,7 +219,7 @@ class MT {
      */
     public function cache_driver() {
         if (isset($this->cache_driver)) return $this->cache_driver;
-    
+
         # Check for memcached enabled
         require_once("class.basecache.php");
         try {
@@ -354,7 +354,7 @@ class MT {
         isset($cfg['cgipath']) or
             $cfg['cgipath'] = '/cgi-bin/';
         if (substr($cfg['cgipath'], strlen($cfg['cgipath']) - 1, 1) != '/')
-            $cfg['cgipath'] .= '/'; 
+            $cfg['cgipath'] .= '/';
         isset($cfg['staticwebpath']) or
             $cfg['staticwebpath'] = $cfg['cgipath'] . 'mt-static/';
         isset($cfg['publishcharset']) or
@@ -613,7 +613,7 @@ class MT {
                 }
                 $ctx->stash('current_archive_type', $at);
             }
-    
+
             if (isset($entry_id) && ($entry_id) && ($at == 'Individual' || $at == 'Page')) {
                 if ($at == 'Individual') {
                     $entry =& $mtdb->fetch_entry($entry_id);
@@ -697,7 +697,7 @@ class MT {
     function doConditionalGet($last_modified) {
         // Thanks to Simon Willison...
         //   http://simon.incutio.com/archive/2003/04/23/conditionalGet
-        // A PHP implementation of conditional get, see 
+        // A PHP implementation of conditional get, see
         //   http://fishbowl.pastiche.org/archives/001132.html
         $etag = '"'.md5($last_modified).'"';
         // Send the headers
@@ -708,7 +708,7 @@ class MT {
             stripslashes($_SERVER['HTTP_IF_MODIFIED_SINCE']) :
             false;
         $if_none_match = isset($_SERVER['HTTP_IF_NONE_MATCH']) ?
-            stripslashes($_SERVER['HTTP_IF_NONE_MATCH']) : 
+            stripslashes($_SERVER['HTTP_IF_NONE_MATCH']) :
             false;
         if (!$if_modified_since && !$if_none_match) {
             return;
@@ -765,9 +765,9 @@ class MT {
             echo "</pre></div>\n\n";
         } else {
             // console view...
-            $stderr = fopen('php://stderr', 'w'); 
-            fwrite($stderr,implode("\n", $dump)); 
-            echo (implode("\n", $dump)); 
+            $stderr = fopen('php://stderr', 'w');
+            fwrite($stderr,implode("\n", $dump));
+            echo (implode("\n", $dump));
             fclose($stderr);
         }
     }
@@ -907,13 +907,13 @@ class MT {
 //         return 0;
 //     }
 // }
-// 
+//
 // $spam_protect_map = array(':' => '&#58;', '@' => '&#64;', '.' => '&#46;');
 // function spam_protect($str) {
 //     global $spam_protect_map;
 //     return strtr($str, $spam_protect_map);
 // }
-// 
+//
 // function offset_time($ts, $blog = null, $dir = null) {
 //     if (isset($blog)) {
 //         if (!is_array($blog)) {
@@ -927,7 +927,7 @@ class MT {
 //     }
 //     intval($offset) or $offset = 0;
 //     $tsa = localtime($ts);
-// 
+//
 //     if ($tsa[8]) {  // daylight savings offset
 //         $offset++;
 //     }
@@ -937,7 +937,7 @@ class MT {
 //     $ts += $offset * 3600;
 //     return $ts;
 // }
-// 
+//
 // function translate_phrase_param($str, $params = null) {
 //     if (is_array($params) && (strpos($str, '[_') !== false)) {
 //         for ($i = 1; $i <= count($params); $i++) {

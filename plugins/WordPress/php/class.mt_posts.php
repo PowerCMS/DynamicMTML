@@ -46,15 +46,15 @@ class Posts extends BaseObject {
     function tags ( $wp, &$ctx ) {
         return $this->categories( $wp, $ctx, 'post_tag' );
     }
-    
+
     function categories ( $wp, &$ctx, $taxonomy = 'category' ) {
         $app = $ctx->stash( 'bootstrapper' );
         $id = $this->post_id;
         if ( $wp_categories = $ctx->stash( "wp_post_taxonomy:{$taxonomy}:{$id}" ) ) {
             return $wp_categories;
         }
-        $sql = "SELECT * 
-                FROM `wp_terms` , `wp_term_taxonomy` , `wp_term_relationships` 
+        $sql = "SELECT *
+                FROM `wp_terms` , `wp_term_taxonomy` , `wp_term_relationships`
                 WHERE wp_terms.term_id=wp_term_taxonomy.term_id
                 AND wp_term_taxonomy.taxonomy='{$taxonomy}'
                 AND wp_term_relationships.term_taxonomy_id=wp_term_taxonomy.term_taxonomy_id
@@ -75,7 +75,7 @@ class Posts extends BaseObject {
         $ctx->stash( "wp_taxonomy:{$wp_post_taxonomy}:{$id}", $wp_categories );
         return $wp_categories;
     }
-    
+
     function get_meta ( &$ctx, $key = NULL ) {
         $app = $ctx->stash( 'bootstrapper' );
         $post_id = $this->post_id;

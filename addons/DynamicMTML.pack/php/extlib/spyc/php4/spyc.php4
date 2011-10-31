@@ -287,7 +287,7 @@ class Spyc {
         $i--;
       }
       $lineArray = $this->_parseLine($line);
-      
+
       if ($literalBlockStyle)
       $lineArray = $this->revertLiteralPlaceHolder ($lineArray, $literalBlock);
 
@@ -344,9 +344,9 @@ class Spyc {
 
     if ($this->isArrayElement($line))
      return $this->returnArrayElement($line);
-     
+
     if ($this->isPlainArray($line))
-     return $this->returnPlainArray($line);      
+     return $this->returnPlainArray($line);
 
     return $this->returnKeyValuePair($line);
 
@@ -509,18 +509,18 @@ class Spyc {
   function addArrayInline ($array, $indent) {
       $CommonGroupPath = $this->path;
       if (empty ($array)) return false;
-      
+
       foreach ($array as $k => $_) {
         $this->addArray(array($k => $_), $indent);
         $this->path = $CommonGroupPath;
       }
       return true;
   }
-  
+
   function addArray ($array, $indent) {
     if (count ($array) > 1)
       return $this->addArrayInline ($array, $indent);
-    
+
 
     $key = key ($array);
     if (!isset ($array[$key])) return false;
@@ -700,15 +700,15 @@ class Spyc {
   function startsMappedValue ($line) {
     if (preg_match('/^(.*):$/',$line)) return true;
   }
-  
+
   function isPlainArray ($line) {
     if (preg_match('/^\[(.*)\]$/', $line)) return true;
     return false;
   }
-  
+
   function returnPlainArray ($line) {
-    return $this->_toType($line); 
-  }    
+    return $this->_toType($line);
+  }
 
   function returnKeyValuePair ($line) {
 

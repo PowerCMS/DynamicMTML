@@ -905,7 +905,7 @@ class DynamicMTML {
                                                 $run_task = TRUE;
                                             } catch ( Exception $e ) {
                                                 $task_error = $e->getMessage();
-                                            } 
+                                            }
                                         }
                                     }
                                 }
@@ -1544,7 +1544,7 @@ class DynamicMTML {
         require_once( 'class.mt_session.php' );
         $_session = new Session;
         $extras = array(
-                'order by' => '`session_start` DESC', 
+                'order by' => '`session_start` DESC',
                 'limit' => 1,
         );
         if ( (! $sessid ) || (! $name ) ) {
@@ -1578,7 +1578,7 @@ class DynamicMTML {
             $session = $session[0];
             $vars[ 'magic_token' ] = $session->id;
         }
-        
+
         $this->stash( 'session', $session );
         return $session;
     }
@@ -2012,7 +2012,7 @@ class DynamicMTML {
         $etag = '"' . md5( $last_modified ) . '"';
         if ( $if_nonematch && ( $if_nonematch == $etag ) ) {
             $conditional = 1;
-        } 
+        }
         if ( $if_modified && ( $if_modified >= $ts ) ) {
             $conditional = 1;
         }
@@ -2528,7 +2528,7 @@ class DynamicMTML {
             if ( $args[ 'with_index' ] && $path && preg_match( '/\/(#.*)*$/', $path ) ) {
                 $index = $ctx->mt->config( 'IndexBasename' );
                 $ext = $blog->blog_file_extension;
-                if ( $ext ) $ext = '.' . $ext; 
+                if ( $ext ) $ext = '.' . $ext;
                 $index .= $ext;
                 $path = preg_replace( '/\/(#.*)?$/', "/$index\$1", $path );
             }
@@ -2876,7 +2876,7 @@ class DynamicMTML {
         return $do;
     }
 
-    function rebuild_archives ( $params = array ( 
+    function rebuild_archives ( $params = array (
                                 'blog' => NULL,
                                 'recipe' => array( 'Index', 'Category', 'Monthly' ),
                                 'updated' => 1,

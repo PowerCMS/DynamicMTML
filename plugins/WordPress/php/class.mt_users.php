@@ -4,7 +4,7 @@ require_once( 'class.baseobject.php' );
 class Users extends BaseObject {
     public $_table = WP_CLASS_USERS;
     public $_prefix = 'user_';
-    
+
     public $raw_columns = array( 'ID', 'display_name' );
 
     function has_column ( $column ) {

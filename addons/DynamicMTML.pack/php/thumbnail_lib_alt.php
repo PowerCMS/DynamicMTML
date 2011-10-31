@@ -316,7 +316,7 @@ class Thumbnail_alt {
                     $thumb_w, $thumb_h, $target_w, $target_h);
 
             $output = $this->src_type;
-            
+
             // begin patch
             if ($this->dest_type != 'auto') {
                 $output = strtolower($this->dest_type) == 'gif' ? 1
