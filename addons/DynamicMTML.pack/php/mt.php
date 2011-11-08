@@ -201,8 +201,8 @@ class MT {
      */
     function db() {
         if (!isset($this->db)) {
-            require_once($this->php_dir.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR."mtdb.".$this->config('DBDriver').".php");
-            //require_once("mtdb.".$this->config('DBDriver').".php");
+            //require_once($this->php_dir.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR."mtdb.".$this->config('DBDriver').".php");
+            require_once("mtdb.".$this->config('DBDriver').".php");
             $mtdbclass = 'MTDatabase'.$this->config('DBDriver');
             $this->db = new $mtdbclass($this->config('DBUser'),
                 $this->config('DBPassword'),
@@ -282,7 +282,6 @@ class MT {
         // path to handlers
         $cfg['phplibdir'] = $cfg['phpdir'] . DIRECTORY_SEPARATOR . 'lib';
 
-        $cfg['dbhost'] or $cfg['dbhost'] = 'localhost'; // default to localhost
         $driver = $cfg['objectdriver'];
         $driver = preg_replace('/^DB[ID]::/', '', $driver);
         $driver or $driver = 'mysql';
@@ -332,7 +331,10 @@ class MT {
 
     function configure_from_db() {
         $cfg =& $this->config;
-        if (isset($cfg['Database'])){
+        if (isset($cfg['allowconnectotherdb'])){
+            return 1;
+        }
+        if (isset($cfg['database'])){
             // If database.
             $mtdb =& $this->db();
             $db_config = $mtdb->fetch_config();
@@ -578,7 +580,7 @@ class MT {
 
         $cache_id = $blog_id.';'.$fi_path;
         if (!$ctx->is_cached('mt:'.$tpl_id, $cache_id)) {
-            if (isset($at) && ($at != 'Category')) {
+            if (isset($at) && ($at != 'Category') && ($at != 'Tag')) { //Tag Archive
                 require_once("archive_lib.php");
                 try {
                     $archiver = ArchiverFactory::get_archiver($at);
@@ -590,7 +592,6 @@ class MT {
                 }
                 $archiver->template_params($ctx);
             }
-
             if ($cat) {
                 // Folder Archive Support
                 $archive_category = $mtdb->fetch_category($cat);
@@ -599,6 +600,13 @@ class MT {
                 }
                 $ctx->stash('category', $archive_category);
                 $ctx->stash('archive_category', $archive_category);
+            }
+            if ( $data->has_column( 'tag_id' ) ) {
+                // Tag Archive Support
+                $tag = $data->fileinfo_tag_id;
+                $archive_tag = $mtdb->fetch_tag($tag);
+                $ctx->stash('tag', $archive_tag);
+                $ctx->stash('Tag', $archive_tag);
             }
             if ($auth) {
                 $archive_author = $mtdb->fetch_author($auth);
