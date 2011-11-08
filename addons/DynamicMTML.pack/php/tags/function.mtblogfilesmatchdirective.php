@@ -10,7 +10,7 @@ function smarty_function_mtblogfilesmatchdirective ( $args, &$ctx ) {
     $lc = strtolower ( $exclude_extension );
     $uc = strtoupper ( $exclude_extension );
     $extensions = explode( ',', $lc );
-    $extensions_uc = split( ',', $uc );
+    $extensions_uc = explode( ',', $uc );
     $extensions = array_merge( $extensions, $extensions_uc );
     $exclude_extension = implode( '|', $extensions );
     $FilesMatch = '<FilesMatch .*\.(?!' . $exclude_extension . ')>';

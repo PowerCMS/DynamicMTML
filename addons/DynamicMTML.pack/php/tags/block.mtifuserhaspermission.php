@@ -1,6 +1,5 @@
 <?php
 function smarty_block_mtifuserhaspermission( $args, $content, &$ctx, &$repeat ) {
-    return $ctx->_hdlr_if( $args, $content, $ctx, $repeat, TRUE );
     $app = $ctx->stash( 'bootstrapper' );
     $client_author = $ctx->stash( 'client_author' );
     if (! isset( $client_author ) ) {

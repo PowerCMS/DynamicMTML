@@ -32,6 +32,7 @@ sub _build_file_filter {
     $ctx->stash( 'current_archive_file', $file );
     my $url = path2url( $file, $blog );
     $ctx->stash( 'current_archive_url', $url );
+    $ctx->stash( 'is_file', 1 );
     return 1;
 }
 
@@ -219,6 +220,9 @@ sub _disable_dynamicmtml {
 sub _post_save_blog {
     my ( $cb, $app, $obj, $original ) = @_;
     my $blog = $app->blog;
+    if ( $blog->id ne $obj->id ) { # is new
+        $blog = $obj;
+    }
     my $component = MT->component( 'DynamicMTML' );
     my $version = $component->version;
     if (! $obj->dynamic_mtml ) {
@@ -488,13 +492,15 @@ sub _list_template_source {
     my $link = $app->base . $app->uri(
                     mode => 'install_dynamic_mtml',
                     args => { blog_id => $blog_id,
-                              return_args => $return_args } );
+                              return_args => $return_args,
+                              magic_token => $app->current_magic(), } );
     my $label = $plugin_dynamicmtml->translate( 'Install DynamicMTML' );
     my $new = "<li><a class=\"icon-left icon-related\" href=\"$link\">$label</a><li>" if $app->blog;
     my $link2 = $app->base . $app->uri(
                     mode => 'flush_dynamic_cache',
                     args => { blog_id => $blog_id,
-                              return_args => $return_args } );
+                              return_args => $return_args,
+                              magic_token => $app->current_magic(), } );
     my $label2 = $plugin_dynamicmtml->translate( 'Flush Dynamic Cache' );
     my $new2 = "<li><a class=\"icon-left icon-related\" href=\"$link2\">$label2</a><li>";
     $$tmpl =~ s/($old)/$new$new2$1/;
@@ -540,11 +546,33 @@ sub _edit_template_param {
     }
 }
 
+sub _view_log {
+    my ( $cb, $app, $param, $tmpl ) = @_;
+    my $class_loop = $param->{ class_loop };
+    push @$class_loop, { class_name => 'dynamic', class_label => MT->translate( 'Dynamic Error' ) };
+    $param->{ class_loop } = $class_loop;
+}
+
 sub _footer_source {
     my ( $cb, $app, $tmpl ) = @_;
-    my $old = quotemeta( '<__trans phrase="http://www.sixapart.com/movabletype/">' );
-    my $new = '<mt:if name="label" like="DynamicMTML">http://alfasado.net/<mt:else>';
-    $$tmpl =~ s!($old)!$new$1</mt:if>!;
+    my $id = MT->component(__PACKAGE__ =~ /^([^:]+)/)->id;
+    $$tmpl =~ s{(<__trans phrase="http://www\.sixapart\.com/movabletype/">)}
+               {<mt:if name="id" eq="$id"><__trans phrase="http://alfasado.net/"><mt:else>$1</mt:if>};
+}
+
+sub _cb_tp {
+    my ( $cb, $app, $param, $tmpl ) = @_;
+    my $top_nav_loop = $param->{ top_nav_loop } or return 1;
+    for my $top_nav ( @$top_nav_loop ) {
+        if ( $top_nav->{ id } eq 'tools' ) {
+            my $sub_nav_loop = $top_nav->{ sub_nav_loop };
+            for my $sub_nav ( @$sub_nav_loop ) {
+                if ( $sub_nav->{ 'link' } =~ /flush_dynamic_cache/ ) {
+                    $sub_nav->{ 'link' } .= '&magic_token=' . $app->current_magic();
+                }
+            }
+        }
+    }
 }
 
 1;

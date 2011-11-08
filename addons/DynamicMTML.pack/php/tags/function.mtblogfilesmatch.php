@@ -10,7 +10,7 @@ function smarty_function_mtblogfilesmatch ( $args, &$ctx ) {
     $lc = strtolower ( $dynamic_extension );
     $uc = strtoupper ( $dynamic_extension );
     $extensions = explode( ',', $lc );
-    $extensions_uc = split( ',', $uc );
+    $extensions_uc = explode( ',', $uc );
     $extensions = array_merge( $extensions, $extensions_uc );
     $dynamic_extension = implode( '|', $extensions );
     $FilesMatch = $dynamic_extension;

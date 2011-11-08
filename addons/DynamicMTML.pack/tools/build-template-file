@@ -1,30 +1,34 @@
 #!/usr/bin/perl
 use strict;
-use lib qw( lib extlib addons/DynamicMTML.pack/lib );
+use File::Spec;
+use FindBin;
+use lib map File::Spec->catdir($FindBin::Bin, File::Spec->updir, $_),
+    (qw/lib extlib/, File::Spec->catdir('addons', 'DynamicMTML.pack', 'lib'));
 use PowerCMS::Util qw( build_tmpl write2file read_from_file );
 use MT;
 use MT::Blog;
 use MT::Author;
-my $mt = MT->new();
+my $mt        = MT->new();
 my $file      = trim_args( $ARGV[0] );
 my $template  = read_from_file( $file );
 my $blog_id   = trim_args( $ARGV[1] );
 my $author_id = trim_args( $ARGV[2] );
 my $key       = trim_args( $ARGV[3] );
-my $blog = MT::Blog->load( $blog_id );
+my $blog      = MT::Blog->load( $blog_id );
 my $author;
 $author = MT::Author->load( $author_id ) if $author_id;
-my %args = ( blog => $blog,
-             author => $author,
-             file => \$file,
-             template => \$template,
-            );
-$mt->run_callbacks( 'dynamicmtml_pre_perlbuild', $mt, \%args, \$contents );
+my %args = (
+    blog     => $blog,
+    author   => $author,
+    file     => \$file,
+    template => \$template,
+);
+$mt->run_callbacks( 'dynamicmtml_pre_perlbuild', $mt, \%args );
 my $contents = build_tmpl( $mt, $template, \%args );
 $mt->run_callbacks( 'dynamicmtml_post_perlbuild', $mt, \%args, \$contents );
 write2file( "$file.$key", $contents );
 sub trim_args {
     my $str = shift;
-    $str =~ s!^\-!!;
+    $str =~ s!^-!!;
     return $str;
 }

@@ -7,7 +7,7 @@ DBUser root
 DBPassword root
 DBHost localhost
 DBPort 8889
-DBSocket /Applications/MAMP/tmp/mysql/mysql.sock
+#DBSocket /path/to/mysql.sock
 SQLSetNames 1
 
 ##### DynamiMTML Settings #####
@@ -18,5 +18,6 @@ DynamicPHPFirst 0
 
 ##### Language Settings #####
 DefaultLanguage ja
+AllowConnectOtherDB 1
 */
 ?>

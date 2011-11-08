@@ -288,7 +288,7 @@ class Thumbnail_alt {
         if(!file_exists($dest_file)) {
             $dir_name = dirname($dest_file);
             if (!file_exists($dir_name))
-                mkpath($dir_name, 0777);
+                mkpath($dir_name, 0755);
             if (!is_writable($dir_name)) {
                 return false;
             }

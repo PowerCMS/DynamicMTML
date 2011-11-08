@@ -29,6 +29,8 @@ function smarty_block_mtqueryloop( $args, $content, &$ctx, &$repeat ) {
         $from_encoding = mb_detect_encoding( $value, 'UTF-8,EUC-JP,SJIS,JIS' );
         $value = mb_convert_encoding( $value, $to_encoding, $from_encoding );
         $ctx->__stash[ 'vars' ][ $key ] = $value;
+        $ctx->__stash[ 'vars' ][ '__key__' ] = $key;
+        $ctx->__stash[ 'vars' ][ '__value__' ] = $value;
         $ctx->__stash[ 'vars' ][ '__counter__' ] = $count;
         $ctx->__stash[ 'vars' ][ '__odd__' ]  = ( $count % 2 ) == 1;
         $ctx->__stash[ 'vars' ][ '__even__' ] = ( $count % 2 ) == 0;

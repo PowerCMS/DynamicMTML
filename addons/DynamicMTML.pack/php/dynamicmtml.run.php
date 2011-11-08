@@ -57,18 +57,35 @@
     } else {
         $app->mod_rewrite = 1;
     }
-    $app->run_callbacks( 'init_request' );
+    $app->run_callbacks( 'init_app' );
     $secure       = empty( $_SERVER[ 'HTTPS' ] ) ? '' : 's';
     $base         = "http{$secure}://{$_SERVER[ 'HTTP_HOST' ]}";
     $port         = (int) $_SERVER[ 'SERVER_PORT' ];
     if (! empty( $port ) && $port !== ( $secure === '' ? 80 : 443 ) ) $base .= ":$port";
     $request_uri = NULL;
     if ( isset( $_SERVER[ 'HTTP_X_REWRITE_URL' ] ) ) {
-        // IIS.
+        // IIS with ISAPI_Rewrite
         $request_uri  = $_SERVER[ 'HTTP_X_REWRITE_URL' ];
     } elseif ( isset( $_SERVER[ 'REQUEST_URI' ] ) ) {
         // Apache and others.
         $request_uri  = $_SERVER[ 'REQUEST_URI' ];
+    } elseif ( isset( $_SERVER[ 'HTTP_X_ORIGINAL_URL' ] ) ) {
+        // Other IIS.
+        $request_uri = $_SERVER[ 'HTTP_X_ORIGINAL_URL' ];
+        $_SERVER[ 'REQUEST_URI' ] = $_SERVER[ 'HTTP_X_ORIGINAL_URL' ];
+        if ( isset( $_SERVER[ 'QUERY_STRING' ] ) ) {
+            $request_uri .= '?' . $_SERVER[ 'QUERY_STRING' ];
+            if (! $_GET ) {
+                parse_str( $_SERVER[ 'QUERY_STRING' ], $_GET );
+            }
+            if (! $_COOKIE ) {
+                $cookies = explode( ';', $_SERVER[ 'HTTP_COOKIE' ] );
+                foreach ( $cookies as $cookie_str ) {
+                    list( $key, $value ) = explode( '=', trim( $cookie_str ) );
+                    $_COOKIE[ $key ] = trim( $value );
+                }
+            }
+        }
     } elseif ( isset( $_SERVER[ 'ORIG_PATH_INFO' ] ) ) {
         // IIS 5.0, PHP as CGI.
         $request_uri = $_SERVER[ 'ORIG_PATH_INFO' ];
@@ -76,7 +93,14 @@
             $request_uri .= '?' . $_SERVER[ 'QUERY_STRING' ];
         }
     }
-    $root         = $app->chomp_dir( $_SERVER[ 'DOCUMENT_ROOT' ] );
+    $root = $app->config( 'ServerDocumentRoot' );
+    if (! isset( $root ) ) {
+        $root = $_SERVER[ 'DOCUMENT_ROOT' ];
+    }
+    $root = $app->chomp_dir( $root );
+    if ( isset( $alias_name ) ) {
+        $alias_original = $root . $app->chomp_dir( $alias_name );
+    }
     $ctime        = empty( $_SERVER[ 'REQUEST_TIME' ] )
                   ? time() : $_SERVER[ 'REQUEST_TIME' ];
     $request      = NULL;
@@ -126,7 +150,7 @@
     $file = $root . DIRECTORY_SEPARATOR . $request;
     $cache_dir = $app->stash( 'powercms_files_dir' ) . DIRECTORY_SEPARATOR . 'cache';
     // $app->chomp_dir( $cache_dir );
-    $file = $app->adjust_file( $file, $indexes );
+    $file = $app->adjust_file( $file, $indexes, $alias_original, $alias_path );
     $static_path = $app->__add_slash( $app->config( 'StaticFilePath' ) );
     $app->check_excludes( $file, $excludes, $mt_dir, $static_path );
     if (! is_null( $file ) ) {
@@ -187,7 +211,7 @@
             $driver = $app->config( 'objectdriver' );
             $driver = preg_replace( '/^DB[ID]::/', '', $driver );
             $driver or $driver = 'mysql';
-            $driver = strtolower( $driver );
+            $driver = strtolower($driver);
             $cfg =& $app->config;
             $cfg[ 'dbdriver' ] = $driver;
             if ( $driver == 'mysql' or $driver == 'postgres' ) {
@@ -202,8 +226,8 @@
         } else {
             $ctx->stash( 'no_database', 1 );
             $app->set_context( $mt, $ctx );
-            // $mt->init_plugins();
-            // require_once( 'init.dynamicmtml.php' );
+            //$mt->init_plugins();
+            //require_once( 'init.dynamicmtml.php' );
         }
         $mt->init_plugins();
         // TODO::Create Blog object.
@@ -215,7 +239,7 @@
         $app->run_callbacks( 'post_init', $mt, $ctx, $args );
         if ( ( $base_original != $root ) || ( $request_original != $request ) ) {
             $file = $root . DIRECTORY_SEPARATOR . $request;
-            $file = $app->adjust_file( $file, $indexes );
+            $file = $app->adjust_file( $file, $indexes, $alias_original, $alias_path );
             $app->stash( 'file', $file );
             $app->stash( 'root', $root );
             $app->stash( 'request', $request );
@@ -257,13 +281,15 @@
         $dynamicmtml = TRUE;
     }
     if ( file_exists( $file ) && $dynamicmtml ) {
-        if ( $app->stash( 'preview' ) ) {
-            if (! isset( $mt ) ) {
-                $app->access_forbidden();
-            } else {
-                $client_author = $app->user();
-                if (! $client_author || $client_author->type == 2 ) {
+        if ( $app->config( 'Database' ) ) {
+            if ( $app->config( 'PermCheckAtPreview' ) ) {
+                if (! isset( $mt ) ) {
                     $app->access_forbidden();
+                } else {
+                    $client_author = $app->user();
+                    if (! $client_author || $client_author->type == 2 ) {
+                        $app->access_forbidden();
+                    }
                 }
             }
         }

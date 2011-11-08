@@ -1,0 +1,15 @@
+<mt:setvarblock name="page_title"><$mt:var name="page_title"$></mt:setvarblock>
+
+<mt:if name="statusmsg">
+<mt:setvarblock name="system_msg" append="1">
+        <mtapp:statusmsg
+            id="saved-changes"
+            class="success">
+            <mt:var name="statusmsg">
+        </mtapp:statusmsg>
+</mt:setvarblock>
+</mt:if>
+
+<mt:include name="include/header.tmpl">
+
+<mt:include name="include/footer.tmpl">

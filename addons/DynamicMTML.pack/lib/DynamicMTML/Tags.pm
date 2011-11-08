@@ -7,6 +7,10 @@ use PowerCMS::Util qw( is_cms is_application add_slash get_user to_utf8 utf8_on 
                        powercms_files_dir is_user_can include_exclude_blogs referral_search_keyword
                        make_seo_basename format_LF get_agent );
 
+sub _hdlr_set_error {
+    return _hdlr_pass_tokens( @_ );
+}
+
 sub _hdlr_dynamicmtml {
     my ( $ctx, $args, $cond ) = @_;
     my $app = MT->instance();
@@ -206,8 +210,14 @@ sub _hdlr_search_entries {
     my @entries;
     my $count_entries;
     my @blog_ids = include_exclude_blogs( $ctx, $args );
+    if ( $args->{ blog_id } ) {
+        push( @blog_ids, $args->{ blog_id } );
+    }
+    if ( @blog_ids && ! $blog_ids[ 0 ] ) {
+        @blog_ids = ();
+    }
     if ( $target ) {
-        my $terms = { blog_id => \@blog_ids,
+        my $terms = { ( @blog_ids ? ( blog_id => \@blog_ids ) : () ),
                       $target => { $operator => $query } };
         if ( $status ne '*' ) {
             $terms->{ status } = $status;
@@ -220,7 +230,7 @@ sub _hdlr_search_entries {
             $count_entries = MT->model( $class )->count( $terms, $count_args );
         }
     } else {
-        my %terms1 = ( blog_id => \@blog_ids,
+        my %terms1 = ( ( @blog_ids ? ( blog_id => \@blog_ids ) : () ),
                        title   => { $operator => $query } );
         if ( $status ne '*' ) {
             $terms1{ status } = $status;
@@ -228,7 +238,7 @@ sub _hdlr_search_entries {
         if ( $unique && $published_entry_ids ) {
             $terms1{ id } = { not => \@$published_entry_ids };
         }
-        my %terms2 = ( blog_id => \@blog_ids,
+        my %terms2 = ( ( @blog_ids ? ( blog_id => \@blog_ids ) : () ),
                        text    => { $operator => $query } );
         if ( $status ne '*' ) {
             $terms2{ status } = $status;
@@ -236,7 +246,7 @@ sub _hdlr_search_entries {
         if ( $unique && $published_entry_ids ) {
             $terms2{ id } = { not => \@$published_entry_ids };
         }
-        my %terms3 = ( blog_id => \@blog_ids,
+        my %terms3 = ( ( @blog_ids ? ( blog_id => \@blog_ids ) : () ),
                        text_more => { $operator => $query } );
         if ( $status ne '*' ) {
             $terms3{ status } = $status;
@@ -244,7 +254,7 @@ sub _hdlr_search_entries {
         if ( $unique && $published_entry_ids ) {
             $terms3{ id } = { not => \@$published_entry_ids };
         }
-        my %terms4 = ( blog_id => \@blog_ids,
+        my %terms4 = ( ( @blog_ids ? ( blog_id => \@blog_ids ) : () ),
                        keywords => { $operator => $query } );
         if ( $status ne '*' ) {
             $terms4{ status } = $status;
@@ -252,7 +262,7 @@ sub _hdlr_search_entries {
         if ( $unique && $published_entry_ids ) {
             $terms4{ id } = { not => \@$published_entry_ids };
         }
-        my %terms5 = ( blog_id => \@blog_ids,
+        my %terms5 = ( ( @blog_ids ? ( blog_id => \@blog_ids ) : () ),
                        excerpt => { $operator => $query } );
         if ( $status ne '*' ) {
             $terms5{ status } = $status;
@@ -331,6 +341,8 @@ sub _hdlr_query_loop {
         $val = to_utf8( $val );
         $val = utf8_on( $val );
         local $vars->{ $key } = $val;
+        local $vars->{ __key__ } = $key;
+        local $vars->{ __value__ } = $val;
         local $vars->{ __counter__ } = $i;
         local $vars->{ __first__ } = 1 if $i == 1;
         local $vars->{ __last__ }  = 1 if $i == scalar @vals;
@@ -447,13 +459,20 @@ sub _hdlr_table_column_value {
 sub _hdlr_user_agent {
     my ( $ctx, $args, $cond ) = @_;
     my $app = MT->instance();
+    if ( $args->{ raw } ) {
+        return $app->get_header( 'User-Agent' );
+    }
     return get_agent( $app, $args->{ wants }, $args->{ like } );
 }
 
 sub _hdlr_if_login {
+    my ( $ctx, $args, $cond ) = @_;
     my $app = MT->instance();
     my $user = get_user( $app );
-    return 1 if defined $user;
+    if ( defined $user ) {
+        $ctx->stash( 'author', $user );
+        return 1;
+    }
     return 0;
 }
 
@@ -767,6 +786,26 @@ sub _hdlr_referralkeyword {
 
 sub _hdlr_trans {
     my ( $ctx, $args, $cond ) = @_;
+    my $user = get_user();
+    my $lang = MT->config( 'DefaultLanguage' );
+    if ( $lang eq 'jp' ) {
+        $lang = 'ja';
+    } elsif ( $lang eq 'en_us' ) {
+        $lang = 'en';
+    }
+    my $language;
+    my $app = MT->instance();
+    my $current_language = $app->current_language();
+    if ( $user ) {
+        $language = $user->preferred_language;
+        $language =~ s/\-/_/;
+        if ( $language eq 'en_us' ) {
+            $language = 'en';
+        }
+    } else {
+        $language = $lang;
+    }
+    $app->set_language( $language );
     my $phrase = $args->{ phrase };
     my $component = $args->{ component };
     my @params;
@@ -782,7 +821,9 @@ sub _hdlr_trans {
             return $plugin->translate( $phrase, @params );
         }
     }
-    return MT->translate( $phrase, @params );
+    my $trans_phrase = $app->translate( $phrase, @params );
+    $app->set_language( $current_language );
+    return $trans_phrase;
 }
 
 sub _hdlr_entry_statusint {
@@ -800,7 +841,7 @@ sub _filter_highlightingsearchword {
     my $qtag_start = quotemeta( $tag_start );
     my $qtag_end   = quotemeta( $tag_end );
     my @keywords   = referral_search_keyword();
-    return $text unless defined @keywords;
+    return $text unless @keywords;
     for my $keyword ( @keywords ) {
         next unless $keyword;
         $keyword = utf8_on( $keyword );
@@ -866,6 +907,18 @@ sub _hdlr_powercms_files_dir {
     return MT->config->PowerCMSFilesDir || powercms_files_dir();
 }
 
+sub _hdlr_strip_tags {
+    my($ctx, $args, $cond) = @_;
+    my $text = &_hdlr_pass_tokens(@_);
+    return $text if index($text || '', '<') == -1;
+    my $allowable_tags = defined $args->{allowable_tags}
+                       ? $args->{allowable_tags}
+                       : $ctx->{config}->AllowableTags;
+                         #|| '<a><br><b><i><p><strong><em><img><ul><ol><li><blockquote><pre>';
+    require HTML::StripTags;
+    HTML::StripTags::strip_tags($text, $allowable_tags);
+}
+
 sub _hdlr_error {
     my ( $ctx, $args, $cond ) = @_;
     my $message = $args->{ message };
@@ -875,6 +928,9 @@ sub _hdlr_error {
 sub _hdlr_build_recurs {
     my ( $ctx, $args, $cond ) = @_;
     my $res = _hdlr_pass_tokens( @_ );
+    if ( $ctx->stash( 'is_file' ) ) {
+        return $res;
+    }
     my $exclude = $args->{ exclude } || 'CMS';
     my $app = MT->instance;
     if ( is_application( $app ) ) {

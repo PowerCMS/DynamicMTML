@@ -3,7 +3,7 @@ id:   DynamicMTML
 key:  dynamicmtml
 author_name: Alfasado Inc.
 author_link: http://alfasado.net/
-version: 1.5.2
+version: 1.5.6
 schema_version: 1.02
 l10n_class: DynamicMTML::L10N
 init_request: >
@@ -31,6 +31,10 @@ config_settings:
         default: 0
     DynamicPHPFirst:
         default: 0
+    PermCheckAtPreview:
+        default: 0
+    AllowableTags:
+        default: '<a><br><b><i><p><strong><em><img><ul><ol><li><blockquote><pre>'
 object_types:
     blog:
         dynamic_mtml: boolean
@@ -47,9 +51,13 @@ applications:
         menus:
             tools:clear_cache:
                 label: Flush Dynamic Cache
-                order: 20000
+                order: 1950
                 mode: flush_dynamic_cache
                 condition: $dynamicmtml::DynamicMTML::CMS::_dynamic_permission
+                view:
+                    - blog
+                    - website
+                    - system
         methods:
             install_dynamic_mtml: $dynamicmtml::DynamicMTML::CMS::_install_dynamic_mtml
             flush_dynamic_cache: $dynamicmtml::DynamicMTML::CMS::_flush_dynamic_cache
@@ -70,6 +78,8 @@ callbacks:
         - handler: $dynamicmtml::DynamicMTML::Plugin::_disable_dynamicmtml
           priority: 1
     cms_post_save.template: $dynamicmtml::DynamicMTML::Plugin::_post_save_template
+    MT::App::CMS::template_param.view_log: $dynamicmtml::DynamicMTML::Plugin::_view_log
+    MT::App::CMS::template_param: $dynamicmtml::DynamicMTML::Plugin::_cb_tp
 tags:
     block:
         RawMTML: $dynamicmtml::DynamicMTML::Tags::_hdlr_raw_mtml
@@ -93,6 +103,8 @@ tags:
         IfBlogDynamicMTML?: $dynamicmtml::DynamicMTML::Tags::_hdlr_if_blog_dynamicmtml
         EntryCategoryBlock: $dynamicmtml::DynamicMTML::Tags::_hdlr_entry_category_block
         BuildRecurs: $dynamicmtml::DynamicMTML::Tags::_hdlr_build_recurs
+        SetErrorHandler: $dynamicmtml::DynamicMTML::Tags::_hdlr_set_error
+        StripTags: $dynamicmtml::DynamicMTML::Tags::_hdlr_strip_tags
     function:
         ML: $dynamicmtml::DynamicMTML::Tags::_hdlr_raw_mtml_tag
         MTML: $dynamicmtml::DynamicMTML::Tags::_hdlr_raw_mtml_tag
@@ -125,6 +137,7 @@ tags:
         FileGetContents: $dynamicmtml::DynamicMTML::Tags::_hdlr_file_get_contents
         PluginVersion: $dynamicmtml::DynamicMTML::Tags::_hdlr_plugin_version
         Rand: $dynamicmtml::DynamicMTML::Tags::_hdlr_rand
+        Error: $dynamicmtml::DynamicMTML::Tags::_hdlr_error
     modifier:
         pickup_extension: $dynamicmtml::DynamicMTML::Tags::_filter_pickup_extension
         highlightingsearchword: $dynamicmtml::DynamicMTML::Tags::_filter_highlightingsearchword

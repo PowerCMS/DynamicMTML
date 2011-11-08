@@ -2,7 +2,7 @@ package DynamicMTML::CMS;
 
 use strict;
 use warnings;
-use lib qw( plugins/DynamicMTML.pack/lib );
+# use lib qw( plugins/DynamicMTML.pack/lib );
 use PowerCMS::Util qw( get_children_files powercms_files_dir powercms_files_dir_path
                        is_user_can site_path register_templates_to make_dir );
 
@@ -101,7 +101,7 @@ sub _flush_dynamic_cache {
     }
     my $cache_dir = File::Spec->catdir( $powercms_files_dir, 'cache' );
     my @blogs;
-    if ( $app->blog ) {
+    if ( $app->blog && $app->blog->dynamic_cache ) {
         push ( @blogs, $app->blog );
     } else {
         require MT::Blog;
@@ -119,7 +119,7 @@ sub _flush_dynamic_cache {
         }
         my $templates_c = File::Spec->catdir( site_path( $blog ), 'templates_c' );
         if ( -d $templates_c ) {
-            my @template = get_children_files( $templates_c, "/$search/" );
+            my @template = get_children_files( $templates_c );
             for my $tmpl ( @template ) {
                 unlink $tmpl;
                 $do = 1;

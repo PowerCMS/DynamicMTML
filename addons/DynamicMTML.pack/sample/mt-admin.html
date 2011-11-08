@@ -241,11 +241,11 @@
     }
 ?>
 <mt:dynamicmtml trimwhitespace="1">
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="<$MTPublishCharset encode_html="1"$>"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="ja" xml:lang="ja">
     <head>
-        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta http-equiv="Content-Type" content="text/html; charset=<$MTPublishCharset encode_html="1"$>" />
         <meta http-equiv="Content-Style-Type" content="text/css" />
         <meta http-equiv="Content-Script-Type" content="text/javascript" />
         <link rel="icon" href="<$mt:StaticWebPath$>images/favicon.ico" type="image/ico" />
@@ -439,7 +439,7 @@
                     <mt:SubCatIsFirst><ul></mt:SubCatIsFirst>
                     <$mt:CategoryID setvar="this_category_id"$>
                     <li><input type="radio" class="rb_category_id" id="rb_category_<$mt:CategoryID$>" onchange="change_primary( this,<$mt:CategoryID$> );" name="primary_category_id"<mt:if name="primary_category_id" eq="$this_category_id"> checked="checked"</mt:if> value="<$mt:CategoryID$>" />
-                    <label><input type="checkbox" class="cb_category_id" id="cb_category_<$mt:CategoryID$>" onchange="change_category( this,<$mt:CategoryID$> );" <mt:loop name="entry_categories"><mt:if name="entry_category_id" eq="$this_category_id">checked="checked" </mt:if></mt:loop>name="category_id[]" value="<$mt:CategoryID$>"><$mt:CategoryLabel$></label>
+                    <label><input type="checkbox" class="cb_category_id" id="cb_category_<$mt:CategoryID$>" onchange="change_category( this,<$mt:CategoryID$> );"<mt:loop name="entry_categories"><mt:if name="entry_category_id" eq="$this_category_id"> checked="checked"</mt:if></mt:loop> name="category_id[]" value="<$mt:CategoryID$>"><$mt:CategoryLabel$></label>
                     <$mt:SubCatsRecurse$>
                     </li>
                     <mt:SubCatIsLast></ul></mt:SubCatIsLast>
@@ -460,7 +460,7 @@
                 <input type="hidden" name="__mode" value="save" />
                 <mt:if name="id"><input type="hidden" name="id" value="<$mt:var name="id"$>" /></mt:if>
                 <input type="hidden" name="_type" value="entry" />
-                <script tyle="text/javascript">
+                <script type="text/javascript">
                     document.getElementById( 'title' ).focus();
                 </script>
             </div>
@@ -504,7 +504,7 @@
                 <input type="checkbox" name="ids[]" value="<$mt:EntryId$>" class="select" />
                 </td>
                 <td class="status">
-                <a href="<$mt:CurrentArchiveURL escape="html"$>?query=<$mt:var name="entry_status"$>&amp;target=status&amp;&operator=%3d">
+                <a href="<$mt:CurrentArchiveURL escape="html"$>?query=<$mt:var name="entry_status"$>&amp;target=status&amp;operator=%3d">
                     <mt:if name="entry_status" eq="1">
                         <img src="<$mt:StaticWebPath$>images/status_icons/draft.gif" width="9" height="9" alt="<$mt:Trans phrase="Draft"$>" /></a>
                     <mt:elseif name="entry_status" eq="2">
@@ -515,7 +515,7 @@
                 </a>
                 </td>
                 <td class="title">
-                    <mt:if name="can_edit"><a href="<$mt:CurrentArchiveURL escape="html"$>?__mode=view&amp_type=entry&amp;id=<$mt:EntryID$>"></mt:if>
+                    <mt:if name="can_edit"><a href="<$mt:CurrentArchiveURL escape="html"$>?__mode=view&amp;_type=entry&amp;id=<$mt:EntryID$>"></mt:if>
                         <$mt:EntryTitle escape="html" setvar="entry_title"$>
                         <mt:if name="entry_title"><$mt:var name="entry_title"$><mt:else>...</mt:else></mt:if>
                     <mt:if name="can_edit"></a></mt:if>
@@ -537,7 +537,7 @@
                     <mt:unless tag="EntryTags">-</mt:unless>
                 </td>
                 <td class="user">
-                <a href="<$mt:CurrentArchiveURL escape="html"$>?query=<$mt:EntryAuthorID$>&amp;target=author_id&amp;author_name=<$mt:EntryAuthorDisplayName escape="url"$>&amp;&operator=%3d">
+                <a href="<$mt:CurrentArchiveURL escape="html"$>?query=<$mt:EntryAuthorID$>&amp;target=author_id&amp;author_name=<$mt:EntryAuthorDisplayName escape="url"$>&amp;operator=%3d">
                     <$mt:EntryAuthorDisplayName escape="html"$>
                 </a>
                 </td>
@@ -551,8 +551,8 @@
                 <!--<td class="action">
                     <mt:if name="can_edit">
                         <span class="edit_link">
-                            &nbsp; <a href="<$mt:CurrentArchiveURL escape="html"$>?__mode=view&amp_type=entry&amp;id=<$mt:EntryID$>"><$mt:Trans phrase="Edit"$></a>
-                            &nbsp; <a onclick="return confirm( '<$mt:Trans phrase="Are you sure you want to remove this entry?"$>' );" href="<$mt:CurrentArchiveURL escape="html"$>?__mode=delete&amp_type=entry&amp;id=<$mt:EntryID$>&amp;magic_token=<$mt:var name="magic_token"$>"><$mt:Trans phrase="Delete"$></a>
+                            &nbsp; <a href="<$mt:CurrentArchiveURL escape="html"$>?__mode=view&amp;_type=entry&amp;id=<$mt:EntryID$>"><$mt:Trans phrase="Edit"$></a>
+                            &nbsp; <a onclick="return confirm( '<$mt:Trans phrase="Are you sure you want to remove this entry?"$>' );" href="<$mt:CurrentArchiveURL escape="html"$>?__mode=delete&amp;_type=entry&amp;id=<$mt:EntryID$>&amp;magic_token=<$mt:var name="magic_token"$>"><$mt:Trans phrase="Delete"$></a>
                         </span>
                     <mt:else>
                         <span class="edit_link"> - </span>

@@ -205,10 +205,10 @@ function smarty_block_mtsearchentries( $args, $content, &$ctx, &$repeat ) {
         if ( $not_entry_id ) {
             $where .= " AND entry_id != {$not_entry_id} ";
         }
-        if ( $category_expression ) {
-            $where .= " AND placement_entry_id = entry_id ";
-            $where .= " AND $category_expression ";
-        }
+       if ( $category_expression ) {
+           $where .= " AND placement_entry_id = entry_id ";
+           $where .= " AND $category_expression ";
+       }
         if ( $tag_id ) {
             $where .= " AND objecttag_object_id = entry_id ";
             $where .= " AND objecttag_tag_id = {$tag_id} ";
@@ -220,11 +220,11 @@ function smarty_block_mtsearchentries( $args, $content, &$ctx, &$repeat ) {
         $extra = array(
             'limit' => $lastn,
             'offset' => $offset,
-            'distinct' => 1,
+//            'distinct' => 1,
         );
         if ( $category_expression || $tag_id ) {
             $join = array();
-            if ( $category_id ) {
+            if ( ( $category_id || $category ) && $category_expression ) {
                 $join[ 'mt_placement' ] = array( 'condition' =>
                                                  "$category_expression" );
             }

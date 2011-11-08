@@ -1,26 +1,26 @@
 #!/usr/bin/perl
 use strict;
-use lib qw( lib extlib addons/DynamicMTML.pack/lib );
+use File::Spec;
+use FindBin;
+use lib map File::Spec->catdir($FindBin::Bin, File::Spec->updir, $_),
+    (qw/lib extlib/, File::Spec->catdir('addons', 'DynamicMTML.pack', 'lib'));
 use MT;
-my $mt = MT->new();
-use DynamicMTML::WeblogPublisher;
 use MT::FileInfo;
+use DynamicMTML::WeblogPublisher;
+my $mt    = MT->new();
 my $id    = $ARGV[0];
 my $key   = $ARGV[1];
 my $force = $ARGV[2];
 my $pub   = DynamicMTML::WeblogPublisher->new;
 my $fi    = MT::FileInfo->load( $id );
 if (! $force ) {
-    my $map_id = $fi->templatemap_id;
-    my $tmpl_id = $fi->template_id;
-    if ( $map_id ) {
-        my $map = MT::TemplateMap->load( $map_id );
-        if ( $map ) {
+    if ( my $map_id = $fi->templatemap_id ) {
+        if ( my $map = MT::TemplateMap->load( $map_id ) ) {
             return unless $map->build_type;
         }
-    } elsif ( $tmpl_id ) {
-        my $tmpl = MT::Template->load( $tmpl_id );
-        if ( $tmpl ) {
+    }
+    elsif ( my $tmpl_id = $fi->template_id ) {
+        if ( my $tmpl = MT::Template->load( $tmpl_id ) ) {
             return unless $tmpl->build_type;
         }
     }

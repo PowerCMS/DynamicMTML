@@ -40,6 +40,7 @@ function get_agent ( $wants = 'Agent', $like = NULL ) {
         'incognito'   => 'iPhone',
         'webmate'     => 'iPhone',
         'Opera\sMini' => 'Opera Mini',
+        'Windows\sPhone' => 'Windows Phone',
     );
     foreach ( $smartphone as $key => $val ) {
         $pattern = "/$key/";
@@ -137,7 +138,7 @@ function referral_search_keyword ( $ctx, &$keywords = array() ) {
         parse_str( $query, $params );
     }
     if ( $params ) {
-        if ( $site_url ) {
+        if ( /**/FALSE &&/**/ $site_url ) {
             $site_url = preg_quote( $site_url, '/' );
             if ( preg_match ( "/^$site_url/", $request ) ) {
                 $phrase = $params[ 'query' ];
@@ -343,6 +344,52 @@ function __cat_file ( $dir, $path = NULL ) {
 
 function __cat_dir ( $dir, $path = NULL ) {
     return __cat_file( $dir, $path );
+}
+
+function get_fileinfo_from_ctx ( $ctx ) {
+    $app = $ctx->stash( 'bootstrapper' );
+    if ( $app ) {
+        $data = $app->stash( 'fileinfo' );
+        if ( isset( $data ) ) {
+            return $data;
+        }
+    }
+    if ( $data = $ctx->stash( 'fileinfo' ) ) {
+        return $data;
+    }
+    $path = NULL;
+    if ( !$path && $_SERVER[ 'REQUEST_URI' ] ) {
+        $path = $_SERVER[ 'REQUEST_URI' ];
+        // strip off any query string...
+        $path = preg_replace( '/\?.*/', '', $path );
+        // strip any duplicated slashes...
+        $path = preg_replace( '!/+!', '/', $path );
+    }
+    if ( preg_match( '/IIS/', $_SERVER[ 'SERVER_SOFTWARE' ] ) ) {
+        if ( preg_match( '/^\d+;( .* )$/', $_SERVER[ 'QUERY_STRING' ], $matches ) ) {
+            $path = $matches[1];
+            $path = preg_replace( '!^http://[^/]+!', '', $path );
+            if ( preg_match( '/\?( .+ )?/', $path, $matches ) ) {
+                $_SERVER[ 'QUERY_STRING' ] = $matches[1];
+                $path = preg_replace( '/\?.*$/', '', $path );
+            }
+        }
+    }
+    $path = preg_replace( '/\\\\/', '\\\\\\\\', $path );
+    $pathinfo = pathinfo( $path );
+    $ctx->stash( '_basename', $pathinfo[ 'filename' ] );
+    if ( isset( $_SERVER[ 'REDIRECT_QUERY_STRING' ] ) ) {
+        $_SERVER[ 'QUERY_STRING' ] = getenv( 'REDIRECT_QUERY_STRING' );
+    }
+    if ( preg_match( '/\.( \w+ )$/', $path, $matches ) ) {
+        $req_ext = strtolower( $matches[1] );
+    }
+    $data = $ctx->mt->resolve_url( $path );
+    if ( $app ) {
+        $app->stash( 'fileinfo', $data );
+    }
+    $ctx->stash( 'fileinfo', $data );
+    return $data;
 }
 
 function convert2thumbnail ( $text, $type = 'auto', $embed_px,

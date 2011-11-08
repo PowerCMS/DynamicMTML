@@ -104,14 +104,16 @@ class DynamicMTML {
             $ctx->stash( 'blog_id', $blog_id );
             $this->stash( 'blog', $blog );
             $this->stash( 'blog_id', $blog_id );
-            // $site_path = $blog->site_path();
-            // $self = $this->root . dirname( $_SERVER[ 'PHP_SELF' ] );
-            // $templates_c = $self . DIRECTORY_SEPARATOR . 'templates_c';
-            // $cache = $self . DIRECTORY_SEPARATOR . 'cache';
+
+            $site_path = $blog->site_path();
+            $self = $site_path;
+            $templates_c = $self . DIRECTORY_SEPARATOR . 'templates_c';
+            $cache = $self . DIRECTORY_SEPARATOR . 'cache';
+        } else {
+            $self = $this->root . dirname( $_SERVER[ 'PHP_SELF' ] );
+            $templates_c = $self . DIRECTORY_SEPARATOR . 'templates_c';
+            $cache = $self . DIRECTORY_SEPARATOR . 'cache';
         }
-        $self = $this->root . dirname( $_SERVER[ 'PHP_SELF' ] );
-        $templates_c = $self . DIRECTORY_SEPARATOR . 'templates_c';
-        $cache = $self . DIRECTORY_SEPARATOR . 'cache';
         if (! is_dir( $templates_c ) ) {
             mkdir( $templates_c, 0755 );
         }
@@ -1072,11 +1074,11 @@ class DynamicMTML {
         }
     }
 
-    function adjust_file ( $file, $indexes ) {
+    function adjust_file ( $file, $indexes, $original, $replace ) {
         if ( DIRECTORY_SEPARATOR != '/' ) {
-            $file = strtr( $file, '\\\\', '\\' );
+            $file = str_replace( '\\\\', '\\', $file );
         } else {
-            $file = strtr( $file, '//', '/' );
+            $file = str_replace( '//', '/', $file );
         }
         $file = strtr( $file, '../', '' );
         if ( DIRECTORY_SEPARATOR != '/' ) {
@@ -1096,6 +1098,9 @@ class DynamicMTML {
             $file = $file;
         } elseif ( file_exists( urldecode( $file ) ) ) {
             $file = urldecode( $file );
+        }
+        if ( $original && $replace ) {
+            $file = preg_replace( '/' . preg_quote( $original, '/' ) . '/', $replace, $file );
         }
         if ( preg_match( '/' . preg_quote( DIRECTORY_SEPARATOR, '/' ) . '$/', $file ) ) {
             $file = preg_replace( '/\/$/', '', $file );
@@ -1275,6 +1280,9 @@ class DynamicMTML {
     }
 
     function get_author ( &$ctx, $timeout = NULL, $permission = NULL ) {
+        if ( ! $ctx ) {
+            return NULL;
+        }
         if ( $client_author = $ctx->stash( 'client_author' ) ) {
             $this->stash( 'user', $client_author );
         }
@@ -2032,16 +2040,36 @@ class DynamicMTML {
         if (! $type ) {
             $type = 'text/html';
         }
-        header( "Content-Type: $type" );
+//        if ( preg_match( '/IIS/', $_SERVER[ 'SERVER_SOFTWARE' ] ) ) {
+        if ( $this->config( 'SendHTTPHeaderMethod' ) == 'echo' ) {
+            $headers[] = "content-type: $type";
+        } else {
+            header( "content-type: $type");
+        }
         if ( $ts ) {
             $last_modified = gmdate( "D, d M Y H:i:s", $ts ) . ' GMT';
             $etag = '"' . md5( $last_modified ) . '"';
-            header( "Last-Modified: $last_modified" );
-            header( "ETag: $etag" );
+//            if ( preg_match( '/IIS/', $_SERVER[ 'SERVER_SOFTWARE' ] ) ) {
+            if ( $this->config( 'SendHTTPHeaderMethod' ) == 'echo' ) {
+                $headers[] = "Last-Modified: $last_modified";
+                $headers[] = "ETag: $etag";
+            } else {
+                header( "Last-Modified: $last_modified" );
+                header( "ETag: $etag" );
+            }
         }
         if ( $length ) {
-            header( 'Content-Length: ' . $length );
+//            if ( preg_match( '/IIS/', $_SERVER[ 'SERVER_SOFTWARE' ] ) ) {
+            if ( $this->config( 'SendHTTPHeaderMethod' ) == 'echo' ) {
+               $headers[] = "Content-Length: $length";
+            } else {
+               header( "Content-Length: $length" );
+            }
         }
+        if ( isset( $headers ) ) {
+            echo implode( "\n", $headers ) . "\n\n";
+        }
+        return;
     }
 
     function redirect ( $url ) {
@@ -3276,7 +3304,7 @@ class DynamicMTML {
                         }
                     }
                     if (! $perms ) {
-                        $perms = 777;
+                        $perms = 755;
                     }
                 }
                 mkdir( $path, octdec( $perms ), TRUE );
