@@ -1,6 +1,6 @@
 package PowerCMS::Util;
 use strict;
-our $powercms_util_version = '3.0';
+our $powercms_util_version = '3.1';
 use Exporter;
 use base qw/Exporter/;
 our @EXPORT_OK = qw(
@@ -330,7 +330,10 @@ sub upload {
     my $limit = $app->config( 'CGIMaxUpload' ) || 20480000;
     $app->validate_magic() or return 0;
     if ( $blog ) {
-        return 0 unless $app->can_do( 'save_asset' );
+#        return 0 unless $app->can_do( 'save_asset' );
+        unless ( $app->mode eq 'do_signup' ) {
+            return 0 unless $app->can_do( 'save_asset' );
+        }
     } else {
         my $uploadable_mode = $app->config( 'UploadableMode' );
         unless ( ref ( $uploadable_mode ) eq 'ARRAY' ) {
@@ -377,19 +380,22 @@ sub upload {
         my $size = ( -s $file );
         $upload_total = $upload_total + $size;
         if ( $limit < $upload_total ) {
-            return ( undef, 1 ); # Upload file size over CGIMaxUpload;
+            return wantarray ? ( undef, 1 ) : undef; # Upload file size over CGIMaxUpload;
         }
     }
     for my $file ( @files ) {
         my $orig_filename = file_basename( $file );
+        $orig_filename = decode_url( $orig_filename );
         my $basename = $orig_filename;
-        $basename =~ s/%2E/\./g;
-        $basename = encode_url( $basename );
-        $basename =~ s!\\!/!g;    ## Change backslashes to forward slashes
-        $basename =~ s!^.*/!!;    ## Get rid of full directory paths
+        $basename =~ s/%2[Ee]/\./g;
         if ( $basename =~ m!\.\.|\0|\|! ) {
-            return ( undef, 1 );
+            return wantarray ? ( undef, 1 ) : undef;
         }
+        $basename = $orig_filename;
+#        $basename = encode_url( $basename );
+        $basename =~ tr{\\}{/};    ## Change backslashes to forward slashes
+        $basename =~ s!^.*/!!;    ## Get rid of full directory paths
+        $basename = encode_url( $basename );
         $basename
             = Encode::is_utf8( $basename )
             ? $basename
@@ -399,25 +405,33 @@ sub upload {
             my @deny_exts = map {
                 if   ( $_ =~ m/^\./ ) {qr/$_/i}
                 else                  {qr/\.$_/i}
-            } split '\s?,\s?', $deny_exts;
+            } split '\s*,\s*', $deny_exts;
             my @ret = File::Basename::fileparse( $basename, @deny_exts );
             if ( $ret[2] ) {
-                return ( undef, 1 );
+                return wantarray ? ( undef, 1 ) : undef;
             }
         }
         if ( my $allow_exts = $app->config( 'AssetFileExtensions' ) ) {
             my @allow_exts = map {
                 if   ( $_ =~ m/^\./ ) {qr/$_/i}
                 else                  {qr/\.$_/i}
-            } split '\s?,\s?', $allow_exts;
+            } split '\s*,\s*', $allow_exts;
             my @ret = File::Basename::fileparse( $basename, @allow_exts );
             unless ( $ret[2] ) {
-                return ( undef, 1 );
+                return wantarray ? ( undef, 1 ) : undef;
             }
         }
         $orig_filename = $basename;
-        $orig_filename = encode_url( $orig_filename ) if $force_decode_filename;
+        $orig_filename = decode_url( $orig_filename ) if $force_decode_filename;
         my $file_label = file_label( $orig_filename );
+        if ( $app->mode =~ /^(?:edit_profile|do_signup)$/ ) {  # FIXME: adhoc
+            if ( MT::I18N::is_utf8( $file_label ) ) {
+                $file_label = Encode::decode_utf8( $file_label );
+            }
+            if ( $no_decode ) {
+                $orig_filename = Encode::decode_utf8( $orig_filename );
+            }
+        }
         if (! $no_decode ) {
             $orig_filename = set_upload_filename( $orig_filename );
         }
@@ -427,7 +441,7 @@ sub upload {
         }
         $dir =~ s!/$!! unless $dir eq '/';
         if (! is_writable( $dir, $blog ) ) {
-            return ( undef, 1 );
+            return wantarray ? ( undef, 1 ) : undef;
         }
         unless ( $fmgr->exists( $dir ) ) {
             $fmgr->mkpath( $dir ) or return MT->trans_error( "Error making path '[_1]': [_2]",
@@ -1545,7 +1559,9 @@ sub set_upload_filename {
         require Digest::MD5;
         $file = Digest::MD5::md5_hex( $file );
         $file = substr ( $file, 0, 255 - $ext_len );
-        $file .= '.' . $extension;
+        if ( $extension ) {
+            $file .= '.' . $extension;
+        }
     }
     return $file;
 }
@@ -1565,11 +1581,17 @@ sub uniq_filename {
     return $file unless ( -f $file );
     my $file_extension = file_extension( $file );
     my $base = $file;
-    $base =~ s/(.{1,})\.$file_extension$/$1/;
+#    $base =~ s/(.{1,})\.$file_extension$/$1/;
+    if ( $file_extension ) {
+        $base =~ s/(.{1,})\.$file_extension$/$1/;
+    }
     $base = $1 if ( $base =~ /(^.*)_[0-9]{1,}$/ );
     my $i = 0;
     do { $i++;
-         $file = $base . '_' . $i . '.' . $file_extension;
+         $file = $base . '_' . $i;
+         if ( $file_extension ) {
+            $file .= '.' . $file_extension;
+         }
        } while ( -e $file );
     return $file;
 }
@@ -1664,8 +1686,10 @@ sub get_agent {
     # Agent Smartphone Keitai Mobile // TODO::Mobile Safari Apple(Mac)
     my $wants = shift;
     my $like  = shift;
+    my $exclude = shift;
     $wants = 'Agent' unless $wants;
     $wants = lc( $wants );
+    $exclude = lc( $exclude ) if $exclude;
     my $agent = $app->get_header( 'User-Agent' );
     if ( $like ) {
         if ( $agent =~ /$like/i ) {
@@ -1695,6 +1719,33 @@ sub get_agent {
                 return $smartphone{ $key };
             } else {
                 if ( $wants ne 'keitai' ) {
+                    if ( $wants eq 'tablet' ) {
+                        if ( $smartphone{ $key } eq 'iPad' ) {
+                            return 1;
+                        } elsif ( $smartphone{ $key } eq 'Android' ) {
+                            if ( $agent !~ /\sMobile\s/i ) {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        } else {
+                            return 0;
+                        }
+                    } else {
+                        if ( $exclude eq 'tablet' ) {
+                            if ( $smartphone{ $key } eq 'iPad' ) {
+                                return 0;
+                            } elsif ( $smartphone{ $key } eq 'Android' ) {
+                                if ( $agent =~ /\sMobile\s/i ) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            } else {
+                                return 1;
+                            }
+                        }
+                    }
                     return 1;
                 } else {
                     return 0;
@@ -1846,6 +1897,7 @@ sub is_writable    { goto &if_writable }
 
 sub file_extension {
     my ( $file, $nolc ) = @_;
+    $file = file_basename( $file );
     my $extension = '';
     if ( $file =~ /\.([^.]+)\z/ ) {
         $extension = $1;
@@ -1866,6 +1918,7 @@ sub file_label {
 
 sub file_basename {
     my $file = shift;
+    return unless $file;
     if ( !is_windows() && $file =~ m/\\/ ) { # Windows Style Path on Not-Win
         my $prev = File::Basename::fileparse_set_fstype( 'MSWin32' );
         $file = File::Basename::basename( $file );

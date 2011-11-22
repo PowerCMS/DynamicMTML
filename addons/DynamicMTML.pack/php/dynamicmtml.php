@@ -1795,9 +1795,9 @@ class DynamicMTML {
         return 0;
     }
 
-    function get_agent ( $wants = 'Agent', $like = NULL ) {
+    function get_agent ( $wants = 'Agent', $like = NULL, $exclude = NULL ) {
         require_once( 'dynamicmtml.util.php' );
-        return get_agent ( $wants, $like );
+        return get_agent ( $wants, $like, $exclude );
     }
 
     function get_param ( $param ) {

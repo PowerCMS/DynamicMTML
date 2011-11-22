@@ -13,7 +13,7 @@ function get_param ( $param ) {
     return $qurey;
 }
 
-function get_agent ( $wants = 'Agent', $like = NULL ) {
+function get_agent ( $wants = 'Agent', $like = NULL, $exclude = NULL ) {
     // Agent Smartphone Keitai Mobile // TODO::Mobile Safari Apple(Mac)
     global $app;
     $agent = $_SERVER[ 'HTTP_USER_AGENT' ];
@@ -27,6 +27,7 @@ function get_agent ( $wants = 'Agent', $like = NULL ) {
         }
     }
     $wants = strtolower( $wants );
+    $exclude = strtolower( $exclude );
     $smartphone = array (
         'Android'     => 'Android',
         'dream'       => 'Android',
@@ -49,7 +50,34 @@ function get_agent ( $wants = 'Agent', $like = NULL ) {
                 return $smartphone[ $key ];
             } else {
                 if ( $wants != 'keitai' ) {
-                    return 1;
+                    if ( $wants == 'tablet' ) {
+                        if ( $smartphone[ $key ] == 'iPad' ) {
+                            return 1;
+                        } else if ( $smartphone[ $key ] == 'Android' ) {
+                            if (! preg_match( "/\sMobile\s/i", $agent ) ) {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        } else {
+                            return 0;
+                        }
+                    } else { // SmartPhone
+                        if ( $exclude == 'tablet' ) {
+                            if ( $smartphone[ $key ] == 'iPad' ) {
+                                return 0;
+                            } else if ( $smartphone[ $key ] == 'Android' ) {
+                                if ( preg_match( "/\sMobile\s/i", $agent ) ) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            } else {
+                                return 1;
+                            }
+                        }
+                        return 1;
+                    }
                 } else {
                     return 0;
                 }

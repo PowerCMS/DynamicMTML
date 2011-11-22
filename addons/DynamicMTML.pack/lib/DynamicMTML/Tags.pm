@@ -462,7 +462,7 @@ sub _hdlr_user_agent {
     if ( $args->{ raw } ) {
         return $app->get_header( 'User-Agent' );
     }
-    return get_agent( $app, $args->{ wants }, $args->{ like } );
+    return get_agent( $app, $args->{ wants }, $args->{ like }, $args->{ exclude } );
 }
 
 sub _hdlr_if_login {
