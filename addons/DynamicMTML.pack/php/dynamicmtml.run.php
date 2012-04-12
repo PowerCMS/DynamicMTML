@@ -199,7 +199,7 @@
         } catch ( MTInitException $e ) {
             $app->run_callbacks( 'mt_init_exception', $mt, $ctx, $args, $e );
             if ( (! isset( $mt ) ) && $require_login ) {
-                // for Power CMS Professional
+                // for PowerCMS Professional
                 $app->service_unavailable();
             }
         }

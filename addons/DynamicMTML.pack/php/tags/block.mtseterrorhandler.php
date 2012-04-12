@@ -1,6 +1,10 @@
 <?php
 function smarty_block_mtseterrorhandler( $args, $content, &$ctx, &$repeat ) {
-    set_error_handler( 'error_handler_mtseterrorhandler' );
+    # ERROR LEVEL LIST: http://php.net/manual/ja/errorfunc.constants.php
+    $level = $ctx->mt->config( 'DynamicErrorHandlerLevel' )
+                ? $ctx->mt->config( 'DynamicErrorHandlerLevel' )
+                : E_ALL & ~E_NOTICE;
+    set_error_handler( 'error_handler_mtseterrorhandler', $level );
     return $content;
 }
 function error_handler_mtseterrorhandler( $code, $message, $errline, $errcontext ) {

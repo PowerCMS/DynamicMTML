@@ -44,7 +44,7 @@ sub _build_file {
     my $fi    = $args{ FileInfo };
     my $html  = $args{ Content };
     if ( defined $blog ) {
-        if ( $$html =~ /<\${0,1}mt/i ) {
+        if ( $$html && $$html =~ /<\${0,1}mt/i ) {
             require Digest::MD5;
             require File::Spec;
             my $path;

@@ -252,6 +252,8 @@ function smarty_block_mtsearchentries( $args, $content, &$ctx, &$repeat ) {
         $entry = $entries[ $counter ];
         if (! empty( $entry ) ) {
             array_push ( $app->entry_ids_published, $entry->id );
+            $ctx->stash( 'blog', $entry->blog() );
+            $ctx->stash( 'blog_id', $entry->blog_id );
             $ctx->stash( 'entry', $entry );
             $ctx->stash( '_entries_counter', $counter + 1 );
             $count = $counter + 1;

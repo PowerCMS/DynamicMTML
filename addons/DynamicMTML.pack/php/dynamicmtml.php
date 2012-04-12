@@ -1133,7 +1133,7 @@ class DynamicMTML {
                 }
             }
         }
-        $basename = basename( $file );
+        $basename = end( explode( DIRECTORY_SEPARATOR, $file ) );
         if ( preg_match( "/^\./", $basename ) ) {
             exit();
         }
@@ -1164,7 +1164,7 @@ class DynamicMTML {
 
     function get_mime_type ( $extension ) {
         $extension = preg_replace( '/^\./', '', $extension );
-        if ( $_SERVER[ 'HTTP_USER_AGENT' ] ) {
+        if ( isset( $_SERVER[ 'HTTP_USER_AGENT' ] ) ) {
             if ( preg_match( '/\ADoCoMo\/2\.0 /', $_SERVER[ 'HTTP_USER_AGENT' ] ) ) {
                 if ( $extension === 'html' ) {
                     return 'application/xhtml+xml';
@@ -1403,7 +1403,7 @@ class DynamicMTML {
                     $meta = array( 'author_id' => $author_id );
                     $session->data( $meta );
                     if ( $session->has_column( 'author_id' ) ) {
-                        // Power CMS for MT
+                        // PowerCMS
                         $session->author_id = $author_id;
                     }
                     $this->stash( 'user_cookie', 'mt_commenter' );
@@ -1999,7 +1999,7 @@ class DynamicMTML {
     }
 
     function path2index ( $path, $index = 'index.html' ) {
-        $basename = basename( $path );
+        $basename = end( explode( DIRECTORY_SEPARATOR, $path ) );
         $basename = preg_quote( $basename, '/' );
         $path = preg_replace( "/$basename\/{0,1}$/", $index, $path );
         return $path;
