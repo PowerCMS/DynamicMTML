@@ -472,7 +472,7 @@ class DynamicMTML {
         isset( $cfg[ 'pluginpath' ] ) or
             $cfg[ 'pluginpath' ] = array( $this->config( 'MTDir' ) . DIRECTORY_SEPARATOR . 'plugins' );
             $cfg[ 'pluginpath' ][] = $this->config( 'MTDir' ) . DIRECTORY_SEPARATOR . 'addons';
-        if ( strtoupper( substr( PHP_OS, 0,3 ) === 'WIN' ) ) {
+        if ( strtoupper( substr( PHP_OS, 0, 3 ) === 'WIN' ) ) {
             $path_sep = ';';
         } else {
             $path_sep = ':';
@@ -590,8 +590,8 @@ class DynamicMTML {
                                 }
                                 $plugins_dir_path[ $plugin_key ] = $plugin_base;
                                 $plugin_php_dir = $plugin_base . DIRECTORY_SEPARATOR . 'php';
-                                $config_php  = $plugin_php_dir . DIRECTORY_SEPARATOR . 'config.php';
-                                $config_yaml = $plugin_base . DIRECTORY_SEPARATOR . 'config.yaml';
+                                $config_php     = $plugin_php_dir . DIRECTORY_SEPARATOR . 'config.php';
+                                $config_yaml    = $plugin_base . DIRECTORY_SEPARATOR . 'config.yaml';
                                 if ( file_exists( $config_yaml ) ) {
                                     if ( $spyc ) {
                                         $config = Spyc::YAMLLoad( $config_yaml );
@@ -907,7 +907,7 @@ class DynamicMTML {
                                                 $run_task = TRUE;
                                             } catch ( Exception $e ) {
                                                 $task_error = $e->getMessage();
-                                            } 
+                                            }
                                         }
                                     }
                                 }
@@ -1089,7 +1089,7 @@ class DynamicMTML {
                 if ( file_exists( $file . $index ) ) {
                     $file = $file . $index;
                     break;
-                } elseif ( file_exists( urldecode( $file )  . $index ) ) {
+                } elseif ( file_exists( urldecode( $file ) . $index ) ) {
                     $file = urldecode( $file ) . $index;
                     break;
                 }
@@ -1133,8 +1133,9 @@ class DynamicMTML {
                 }
             }
         }
-        $basename = end( explode( DIRECTORY_SEPARATOR, $file ) );
-        if ( preg_match( "/^\./", $basename ) ) {
+        $basename = explode(DIRECTORY_SEPARATOR, $file);
+        $basename = end($basename);
+        if ($basename[0] === '.') {
             exit();
         }
         foreach ( explode( ',', $excludes ) as $extension ) {
@@ -1172,90 +1173,90 @@ class DynamicMTML {
             }
         }
         $mime_type = array (
-            'css'   =>  'text/css',
-            'html'  =>  'text/html',
-            'mtml'  =>  'text/html',
-            'xhtml' =>  'application/xhtml+xml',
-            'htm'   =>  'text/html',
-            'txt'   =>  'text/plain',
-            'rtx'   =>  'text/richtext',
-            'tsv'   =>  'text/tab-separated-values',
-            'csv'   =>  'text/csv',
-            'hdml'  =>  'text/x-hdml; charset=Shift_JIS',
-            'xml'   =>  'application/xml',
-            'rdf'   =>  'application/rss+xml',
-            'xsl'   =>  'text/xsl',
-            'mpeg'  =>  'video/mpeg',
-            'mpg'   =>  'video/mpeg',
-            'mpe'   =>  'video/mpeg',
-            'qt'    =>  'video/quicktime',
-            'avi'   =>  'video/x-msvideo',
-            'movie' =>  'video/x-sgi-movie',
-            'qt'    =>  'video/quicktime',
-            'ice'   =>  'x-conference/x-cooltalk',
-            'svr'   =>  'x-world/x-svr',
-            'vrml'  =>  'x-world/x-vrml',
-            'wrl'   =>  'x-world/x-vrml',
-            'vrt'   =>  'x-world/x-vrt',
-            'spl'   =>  'application/futuresplash',
-            'hqx'   =>  'application/mac-binhex40',
-            'doc'   =>  'application/msword',
-            'pdf'   =>  'application/pdf',
-            'ai'    =>  'application/postscript',
-            'eps'   =>  'application/postscript',
-            'ps'    =>  'application/postscript',
-            'ppt'   =>  'application/vnd.ms-powerpoint',
-            'rtf'   =>  'application/rtf',
-            'dcr'   =>  'application/x-director',
-            'dir'   =>  'application/x-director',
-            'dxr'   =>  'application/x-director',
-            'js'    =>  'application/javascript',
-            'dvi'   =>  'application/x-dvi',
-            'gtar'  =>  'application/x-gtar',
-            'gzip'  =>  'application/x-gzip',
-            'latex' =>  'application/x-latex',
-            'lzh'   =>  'application/x-lha',
-            'swf'   =>  'application/x-shockwave-flash',
-            'sit'   =>  'application/x-stuffit',
-            'tar'   =>  'application/x-tar',
-            'tcl'   =>  'application/x-tcl',
-            'tex'   =>  'application/x-texinfo',
-            'texinfo'=> 'application/x-texinfo',
-            'texi'  =>  'application/x-texi',
-            'src'   =>  'application/x-wais-source',
-            'zip'   =>  'application/zip',
-            'au'    =>  'audio/basic',
-            'snd'   =>  'audio/basic',
-            'midi'  =>  'audio/midi',
-            'mid'   =>  'audio/midi',
-            'kar'   =>  'audio/midi',
-            'mpga'  =>  'audio/mpeg',
-            'mp2'   =>  'audio/mpeg',
-            'mp3'   =>  'audio/mpeg',
-            'ra'    =>  'audio/x-pn-realaudio',
-            'ram'   =>  'audio/x-pn-realaudio',
-            'rm'    =>  'audio/x-pn-realaudio',
-            'rpm'   =>  'x-pn-realaudio-plugin',
-            'wav'   =>  'audio/x-wav',
-            'bmp'   =>  'image/bmp',
-            'gif'   =>  'image/gif',
-            'jpeg'  =>  'image/jpeg',
-            'jpg'   =>  'image/jpeg',
-            'jpe'   =>  'image/jpeg',
-            'png'   =>  'image/png',
-            'tiff'  =>  'image/tiff',
-            'tif'   =>  'image/tiff',
-            'pnm'   =>  'image/x-portable-anymap',
-            'ras'   =>  'image/x-cmu-raster',
-            'pnm'   =>  'image/x-portable-anymap',
-            'pbm'   =>  'image/x-portable-bitmap',
-            'pgm'   =>  'image/x-portable-graymap',
-            'ppm'   =>  'image/x-portable-pixmap',
-            'rgb'   =>  'image/x-rgb',
-            'xbm'   =>  'image/x-xbitmap',
-            'xls'   =>  'application/vnd.ms-excel',
-            'xpm'   =>  'image/x-pixmap',
-            'xwd'   =>  'image/x-xwindowdump',
+            'css'     => 'text/css',
+            'html'    => 'text/html',
+            'mtml'    => 'text/html',
+            'xhtml'   => 'application/xhtml+xml',
+            'htm'     => 'text/html',
+            'txt'     => 'text/plain',
+            'rtx'     => 'text/richtext',
+            'tsv'     => 'text/tab-separated-values',
+            'csv'     => 'text/csv',
+            'hdml'    => 'text/x-hdml; charset=Shift_JIS',
+            'xml'     => 'application/xml',
+            'rdf'     => 'application/rss+xml',
+            'xsl'     => 'text/xsl',
+            'mpeg'    => 'video/mpeg',
+            'mpg'     => 'video/mpeg',
+            'mpe'     => 'video/mpeg',
+            'qt'      => 'video/quicktime',
+            'avi'     => 'video/x-msvideo',
+            'movie'   => 'video/x-sgi-movie',
+            'qt'      => 'video/quicktime',
+            'ice'     => 'x-conference/x-cooltalk',
+            'svr'     => 'x-world/x-svr',
+            'vrml'    => 'x-world/x-vrml',
+            'wrl'     => 'x-world/x-vrml',
+            'vrt'     => 'x-world/x-vrt',
+            'spl'     => 'application/futuresplash',
+            'hqx'     => 'application/mac-binhex40',
+            'doc'     => 'application/msword',
+            'pdf'     => 'application/pdf',
+            'ai'      => 'application/postscript',
+            'eps'     => 'application/postscript',
+            'ps'      => 'application/postscript',
+            'ppt'     => 'application/vnd.ms-powerpoint',
+            'rtf'     => 'application/rtf',
+            'dcr'     => 'application/x-director',
+            'dir'     => 'application/x-director',
+            'dxr'     => 'application/x-director',
+            'js'      => 'application/javascript',
+            'dvi'     => 'application/x-dvi',
+            'gtar'    => 'application/x-gtar',
+            'gzip'    => 'application/x-gzip',
+            'latex'   => 'application/x-latex',
+            'lzh'     => 'application/x-lha',
+            'swf'     => 'application/x-shockwave-flash',
+            'sit'     => 'application/x-stuffit',
+            'tar'     => 'application/x-tar',
+            'tcl'     => 'application/x-tcl',
+            'tex'     => 'application/x-texinfo',
+            'texinfo' => 'application/x-texinfo',
+            'texi'    => 'application/x-texi',
+            'src'     => 'application/x-wais-source',
+            'zip'     => 'application/zip',
+            'au'      => 'audio/basic',
+            'snd'     => 'audio/basic',
+            'midi'    => 'audio/midi',
+            'mid'     => 'audio/midi',
+            'kar'     => 'audio/midi',
+            'mpga'    => 'audio/mpeg',
+            'mp2'     => 'audio/mpeg',
+            'mp3'     => 'audio/mpeg',
+            'ra'      => 'audio/x-pn-realaudio',
+            'ram'     => 'audio/x-pn-realaudio',
+            'rm'      => 'audio/x-pn-realaudio',
+            'rpm'     => 'x-pn-realaudio-plugin',
+            'wav'     => 'audio/x-wav',
+            'bmp'     => 'image/bmp',
+            'gif'     => 'image/gif',
+            'jpeg'    => 'image/jpeg',
+            'jpg'     => 'image/jpeg',
+            'jpe'     => 'image/jpeg',
+            'png'     => 'image/png',
+            'tiff'    => 'image/tiff',
+            'tif'     => 'image/tiff',
+            'pnm'     => 'image/x-portable-anymap',
+            'ras'     => 'image/x-cmu-raster',
+            'pnm'     => 'image/x-portable-anymap',
+            'pbm'     => 'image/x-portable-bitmap',
+            'pgm'     => 'image/x-portable-graymap',
+            'ppm'     => 'image/x-portable-pixmap',
+            'rgb'     => 'image/x-rgb',
+            'xbm'     => 'image/x-xbitmap',
+            'xls'     => 'application/vnd.ms-excel',
+            'xpm'     => 'image/x-pixmap',
+            'xwd'     => 'image/x-xwindowdump',
         );
         return isset( $mime_type[ $extension ] ) ? $mime_type[ $extension ] : 'text/plain';
     }
@@ -1271,10 +1272,10 @@ class DynamicMTML {
     function chomp_dir ( $dir ) {
         if ( DIRECTORY_SEPARATOR != '/' ) {
             $dir = preg_replace( '/\\$/', '', $dir );
-            $dir = strtr( $dir, '\\\\', '\\'  );
+            $dir = strtr( $dir, '\\\\', '\\' );
         } else {
             $dir = preg_replace( '/\/$/', '', $dir );
-            $dir = strtr( $dir, '//', '/'  );
+            $dir = strtr( $dir, '//', '/' );
         }
         return $dir;
     }
@@ -1552,7 +1553,7 @@ class DynamicMTML {
         require_once( 'class.mt_session.php' );
         $_session = new Session;
         $extras = array(
-                'order by' => '`session_start` DESC', 
+                'order by' => '`session_start` DESC',
                 'limit' => 1,
         );
         if ( (! $sessid ) || (! $name ) ) {
@@ -1586,7 +1587,7 @@ class DynamicMTML {
             $session = $session[0];
             $vars[ 'magic_token' ] = $session->id;
         }
-        
+
         $this->stash( 'session', $session );
         return $session;
     }
@@ -1625,7 +1626,7 @@ class DynamicMTML {
         } else {
             return NULL;
         }
-        return array ( 'name' =>  $name, 'sessid' => $sessid );
+        return array ( 'name' => $name, 'sessid' => $sessid );
     }
 
     function make_magic_token () {
@@ -2020,7 +2021,7 @@ class DynamicMTML {
         $etag = '"' . md5( $last_modified ) . '"';
         if ( $if_nonematch && ( $if_nonematch == $etag ) ) {
             $conditional = 1;
-        } 
+        }
         if ( $if_modified && ( $if_modified >= $ts ) ) {
             $conditional = 1;
         }
@@ -2206,7 +2207,7 @@ class DynamicMTML {
             $entry->week_number = $week_number;
         }
         if (! $entry->authored_on ) $entry->authored_on = $ts;
-        if (! $entry->created_on ) $entry->created_on  = $ts;
+        if (! $entry->created_on ) $entry->created_on = $ts;
         if (! $entry->allow_comments ) $entry->allow_comments = $blog->allow_comments_default;
         if (! $entry->allow_pings ) $entry->allow_pings = $blog->allow_pings_default;
         if (! $entry->convert_breaks ) $entry->convert_breaks = $blog->convert_paras;
@@ -2219,7 +2220,7 @@ class DynamicMTML {
                 $entry->status = 1;
             }
         }
-        $entry->modified_on  = $ts;
+        $entry->modified_on = $ts;
         $this->save( $entry );
         // if ( $id ) {
         //     $entry->Update();
@@ -2556,7 +2557,7 @@ class DynamicMTML {
             if ( $args[ 'with_index' ] && $path && preg_match( '/\/(#.*)*$/', $path ) ) {
                 $index = $ctx->mt->config( 'IndexBasename' );
                 $ext = $blog->blog_file_extension;
-                if ( $ext ) $ext = '.' . $ext; 
+                if ( $ext ) $ext = '.' . $ext;
                 $index .= $ext;
                 $path = preg_replace( '/\/(#.*)?$/', "/$index\$1", $path );
             }
@@ -2725,7 +2726,7 @@ class DynamicMTML {
         if ( preg_match ( '/Category/', $at ) ) {
             $ctx->stash( 'category', $category );
             $terms[ 'category_id' ] = $category->id;
-        } elseif ( preg_match ( '/Author/', $at ) )  {
+        } elseif ( preg_match ( '/Author/', $at ) ) {
             $ctx->stash( 'author', $author );
             $ctx->stash( 'archive_author', $author );
             $terms[ 'author_id' ] = $author->id;
@@ -2904,7 +2905,7 @@ class DynamicMTML {
         return $do;
     }
 
-    function rebuild_archives ( $params = array ( 
+    function rebuild_archives ( $params = array (
                                 'blog' => NULL,
                                 'recipe' => array( 'Index', 'Category', 'Monthly' ),
                                 'updated' => 1,
@@ -2995,7 +2996,7 @@ class DynamicMTML {
     }
 
     function rebuild_object ( $obj, $build_type = array( 1, 3, 4 ) ) {
-        $do = NULL;
+        $do  = NULL;
         $ctx = $this->ctx();
         $mt  = $this->mt();
         if (! $obj ) {
@@ -3708,8 +3709,8 @@ class DynamicMTML {
                     continue;
                 }
                 array_push( $set_cat_ids, $category->id );
-                $terms = array( 'blog_id'  => $entry->blog_id,
-                                'entry_id' => $entry->id,
+                $terms = array( 'blog_id'     => $entry->blog_id,
+                                'entry_id'    => $entry->id,
                                 'category_id' => $category->id );
                 $placement = $this->get_by_key( 'Placement', $terms );
                 $changed = FALSE;
@@ -3897,8 +3898,8 @@ class DynamicMTML {
         if ( isset( $tag ) ) {
             if ( $tag->id ) {
                 if ( $str != $tag->name ) {
-                    $n8d = $this->get_by_key( 'Tag', array( 'n8d_id' => $tag->id,
-                                                            'name'   => $str,
+                    $n8d = $this->get_by_key( 'Tag', array( 'n8d_id'     => $tag->id,
+                                                            'name'       => $str,
                                                             'is_private' => $private, ) );
                     if (! $n8d->id ) {
                         if (! $no_generate ) {
@@ -4021,7 +4022,7 @@ class DynamicMTML {
                             foreach ( $val as $op => $value ) {
                                 $val = $this->escape( $val );
                                 if ( $expression ) $expression .= " OR ";
-                                if ( in_array( $op ,$operators ) ) {
+                                if ( in_array( $op, $operators ) ) {
                                     // 'like', 'not_like', 'not_null', 'not', '>', '>=',
                                     // '<', '<=', '!='
                                     if ( $op === 'not' ) {
@@ -4160,13 +4161,13 @@ class DynamicMTML {
                                             foreach ( $val as $op => $value ) {
                                                 $val = $this->escape( $val );
                                                 $val = $this->__ts2db( $key, $val );
-                                                if ( in_array( $op ,$operators ) ) {
+                                                if ( in_array( $op, $operators ) ) {
                                                     if ( $op === 'not' ) {
                                                         $op = '!=';
                                                     }
                                                     if ( $op === 'not_null' ) {
                                                         $op = 'IS NOT NULL';
-                                                        $expression .=  $column . ".{$key} {$op} ";
+                                                        $expression .= "$column.{$key} {$op} ";
                                                     } else {
                                                         $op = strtoupper( $op );
                                                         // $op = preg_replace( '/_/', ' ', $op );
