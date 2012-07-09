@@ -1,8 +1,8 @@
 <?php
     $plugin_path = dirname( __File__ ) . DIRECTORY_SEPARATOR;
-    $mt_dir = dirname( dirname( dirname( $plugin_path ) ) );
     require_once( $plugin_path . 'dynamicmtml.util.php' );
     require_once( $plugin_path . 'dynamicmtml.php' );
+    if (! isset( $mt_dir ) ) $mt_dir = dirname( dirname( dirname( $plugin_path ) ) );
     require_once( $mt_dir . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'MTUtil.php' );
     if (! isset( $mt_config ) ) $mt_config = $mt_dir . DIRECTORY_SEPARATOR . 'mt-config.cgi';
     global $mt;

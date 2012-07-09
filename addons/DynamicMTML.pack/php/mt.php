@@ -2,8 +2,8 @@
 /***
  * Loading exception classes
  */
-$mt_root_dir = dirname( dirname( dirname( dirname( __FILE__ ) ) ) );
-require_once($mt_root_dir.DIRECTORY_SEPARATOR.'php'.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'class.exception.php');
+if (! isset( $mt_dir ) ) $mt_dir = dirname( dirname( dirname( dirname( __FILE__ ) ) ) );
+require_once($mt_dir.DIRECTORY_SEPARATOR.'php'.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'class.exception.php');
 //require_once('lib/class.exception.php');
 
 define('VERSION', '5.04');
@@ -55,9 +55,9 @@ class MT {
      */
     // Not private function
     function __construct($blog_id = null, $cfg_file = null) {
-        global $mt_root_dir;
-        $this->mt_dir = $mt_root_dir;
-        $this->php_dir = $mt_root_dir . DIRECTORY_SEPARATOR . 'php';
+        global $mt_dir;
+        $this->mt_dir = $mt_dir;
+        $this->php_dir = $mt_dir . DIRECTORY_SEPARATOR . 'php';
         error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING);
         try {
             $this->id = md5(uniqid('MT',true));
