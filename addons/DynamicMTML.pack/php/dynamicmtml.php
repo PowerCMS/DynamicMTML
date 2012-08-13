@@ -4373,7 +4373,7 @@ class DynamicMTML {
                     $can_edit = 1;
                 }
             }
-            if (! $this->can_do( $ctx, 'poblish_post' ) ) {
+            if (! $this->can_do( $ctx, 'publish_post' ) ) {
                 if ( $entry->status != 1 ) {
                     $can_edit = 0;
                 }
