@@ -4020,7 +4020,7 @@ class DynamicMTML {
                         $expression = '';
                         if ( __is_hash( $val ) ) {
                             foreach ( $val as $op => $value ) {
-                                $val = $this->escape( $val );
+                                $value = $this->escape( $value );
                                 if ( $expression ) $expression .= " OR ";
                                 if ( in_array( $op, $operators ) ) {
                                     // 'like', 'not_like', 'not_null', 'not', '>', '>=',
@@ -4159,8 +4159,8 @@ class DynamicMTML {
                                         if ( $expression ) $expression .= ' AND ';
                                         if ( is_array( $val ) && __is_hash( $val ) && ( count( $val ) === 1 ) ) {
                                             foreach ( $val as $op => $value ) {
-                                                $val = $this->escape( $val );
-                                                $val = $this->__ts2db( $key, $val );
+                                                $value = $this->escape( $value );
+                                                $value = $this->__ts2db( $key, $value );
                                                 if ( in_array( $op, $operators ) ) {
                                                     if ( $op === 'not' ) {
                                                         $op = '!=';
