@@ -76,11 +76,13 @@ class DynamicMTML {
         if ( isset( $ctx ) ) {
             $ctx->stash( 'bootstrapper', $this );
         }
-        $mt->db()->set_names( $mt );
-        $this->stash( 'db', $mt->db() );
-        $blog = $ctx->stash( 'blog' );
-        if (! isset( $blog ) ) {
-            $blog = $this->stash( 'blog' );
+        if (! $this->no_database ) {
+            $mt->db()->set_names( $mt );
+            $this->stash( 'db', $mt->db() );
+            $blog = $ctx->stash( 'blog' );
+            if (! isset( $blog ) ) {
+                $blog = $this->stash( 'blog' );
+            }
         }
         if (! isset( $blog ) ) {
             // if (! $blog_id ) {
@@ -94,7 +96,9 @@ class DynamicMTML {
                 //                             'sort' => 'id' ) );
                 // $blog_id = $blog->id;
             } else {
-                $blog = $mt->db()->fetch_blog( $blog_id );
+                if (! $this->no_database ) {
+                    $blog = $mt->db()->fetch_blog( $blog_id );
+                }
             }
         }
         $templates_c = NULL;
@@ -219,6 +223,9 @@ class DynamicMTML {
     }
 
     function blog ( $id = NULL ) {
+        if ( $this->no_database ) {
+            return NULL;
+        }
         $blog_id = $id;
         $mt = $this->mt();
         if (! $blog_id ) {
