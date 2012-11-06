@@ -199,7 +199,7 @@ class MT {
      * Retreives a handle to the database and assigns it to
      * the member variable 'db'.
      */
-    function db() {
+    function &db() {
         if (!isset($this->db)) {
             //require_once($this->php_dir.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR."mtdb.".$this->config('DBDriver').".php");
             require_once("mtdb.".$this->config('DBDriver').".php");

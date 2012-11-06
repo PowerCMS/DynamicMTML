@@ -63,9 +63,9 @@
     if ( isset( $entry_id ) && ( $entry_id )
         && ( $at == 'Individual' || $at == 'Page' ) ) {
         if ( $at == 'Individual' ) {
-            $entry =& $mt->db()->fetch_entry( $entry_id );
+            $entry = $mt->db()->fetch_entry( $entry_id );
         } elseif( $at == 'Page' ) {
-            $entry =& $mt->db()->fetch_page( $entry_id );
+            $entry = $mt->db()->fetch_page( $entry_id );
         }
         $ctx->stash( 'entry', $entry );
         $ctx->stash( 'current_timestamp', $entry->entry_authored_on );
