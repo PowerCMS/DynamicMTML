@@ -4,7 +4,7 @@ key:  dynamicmtml
 author_name: Alfasado Inc.
 author_link: http://alfasado.net/
 pack_link: https://github.com/movabletype/DynamicMTML
-version: 1.61
+version: 1.62
 schema_version: 1.02
 l10n_class: DynamicMTML::L10N
 init_request: >
