@@ -424,6 +424,12 @@ class DynamicMTML {
         if ( isset( $this->config[ $id ] ) ) {
             return $this->config[ $id ];
         }
+        if ( isset( $this->mt ) ) {
+            if ( $config = $this->mt->config( $id ) ) {
+                $this->config[ $id ] = $config;
+                return $config;
+            }
+        }
         $plugins_config = $this->stash( 'plugins_config' );
         if ( is_array( $plugins_config ) ) {
             foreach ( $plugins_config as $key => $val ) {
