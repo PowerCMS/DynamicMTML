@@ -58,9 +58,11 @@
         $app->mod_rewrite = 1;
     }
     $app->run_callbacks( 'init_app' );
-    $secure       = empty( $_SERVER[ 'HTTPS' ] ) ? '' : 's';
-    $base         = "http{$secure}://{$_SERVER[ 'HTTP_HOST' ]}";
-    $port         = (int) $_SERVER[ 'SERVER_PORT' ];
+    $secure = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off'
+              /* || isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443 */
+            ? 's' : '';
+    $base   = "http{$secure}://{$_SERVER[ 'HTTP_HOST' ]}";
+    $port   = (int) $_SERVER[ 'SERVER_PORT' ];
     if (! empty( $port ) && $port !== ( $secure === '' ? 80 : 443 ) ) $base .= ":$port";
     $request_uri = NULL;
     if ( isset( $_SERVER[ 'HTTP_X_REWRITE_URL' ] ) ) {
