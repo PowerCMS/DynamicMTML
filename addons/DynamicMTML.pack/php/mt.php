@@ -336,7 +336,8 @@ class MT {
         }
         if (isset($cfg['database'])){
             // If database.
-            $mtdb =& $this->db();
+            // $mtdb =& $this->db();
+            $mtdb = $this->db();
             $db_config = $mtdb->fetch_config();
             if ($db_config) {
                 $data = $db_config->data();
@@ -756,7 +757,8 @@ class MT {
     function fetch($tpl, $cid = null) {
         $ctx =& $this->context();
         $this->init_plugins();
-        $blog =& $ctx->stash('blog');
+        //$blog =& $ctx->stash('blog');
+        $blog = $ctx->stash('blog');
         if (!$blog) {
             $db =& $this->db();
             $ctx->mt->db =& $db;

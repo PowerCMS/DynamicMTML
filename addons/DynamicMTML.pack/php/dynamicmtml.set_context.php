@@ -26,7 +26,7 @@
     $ctx->stash( 'template_created_on', $tmpl->template_created_on );
     $page_layout = $blog->blog_page_layout;
     $columns = get_page_column( $page_layout );
-    $vars =& $ctx->__stash[ 'vars' ];
+    $vars = $ctx->__stash[ 'vars' ];
     $vars[ 'page_columns' ] = $columns;
     $vars[ 'page_layout' ] = $page_layout;
     if ( isset( $tmpl->template_identifier ) )
@@ -80,7 +80,7 @@
         $ctx->stash( 'current_timestamp', $entry->entry_authored_on );
     }
     if ( $at == 'Category' ) {
-        $vars =& $ctx->__stash[ 'vars' ];
+        $vars = $ctx->__stash[ 'vars' ];
         $vars[ 'archive_class' ]    = "category-archive";
         $vars[ 'category_archive' ] = 1;
         $vars[ 'archive_template' ] = 1;
