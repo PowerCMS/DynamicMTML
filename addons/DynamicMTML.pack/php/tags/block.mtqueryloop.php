@@ -7,7 +7,7 @@ function smarty_block_mtqueryloop( $args, $content, &$ctx, &$repeat ) {
     $glue = $args[ 'glue' ];
     if (! isset( $content ) ) {
         $ctx->localize( $localvars );
-        $ctx->stash( '__mtqueryloop_old_vars', $ctx->__stash[ 'vars' ] );
+        // $ctx->stash( '__mtqueryloop_old_vars', $ctx->__stash[ 'vars' ] );
         $counter = 0;
         $ctx->__stash[ 'vars' ][ '__counter__' ] = 0;
     } else {
@@ -41,7 +41,7 @@ function smarty_block_mtqueryloop( $args, $content, &$ctx, &$repeat ) {
         // if ( ( $glue ) && (! empty( $content ) ) ) {
         //      $content = $glue . $content;
         // }
-        $ctx->__stash[ 'vars' ] = $ctx->stash( '__mtqueryloop_old_vars' );
+        // $ctx->__stash[ 'vars' ] = $ctx->stash( '__mtqueryloop_old_vars' );
         $ctx->restore( $localvars );
         $repeat = false;
     }
