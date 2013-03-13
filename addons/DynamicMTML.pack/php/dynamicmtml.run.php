@@ -217,7 +217,10 @@
             if ( $driver == 'mysql' or $driver == 'postgres' ) {
                 $mt->db()->set_names( $mt );
             }
-            $blog = $mt->db()->fetch_blog( $blog_id );
+            $app->run_callbacks( 'init_db', $mt, $ctx, $args );
+            if (! $blog = $ctx->stash( 'blog' ) ) {
+                $blog = $mt->db()->fetch_blog( $blog_id );
+            }
             $ctx->stash( 'blog', $blog );
             $ctx->stash( 'blog_id', $blog_id );
             $app->stash( 'blog', $blog );

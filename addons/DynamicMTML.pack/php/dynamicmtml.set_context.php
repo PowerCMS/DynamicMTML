@@ -13,7 +13,10 @@
     } else {
         $ctx->stash( 'index_archive', false );
     }
-    $tmpl = $data->template();
+    if (! $tmpl = $ctx->stash( 'template' ) ) {
+        $tmpl = $data->template();
+        $ctx->stash( 'template', $tmpl );
+    }
     $ctx->stash( 'template', $tmpl );
     $tts = $tmpl->template_modified_on;
     if ( $tts ) {
@@ -43,12 +46,16 @@
         $archiver->template_params( $ctx );
     }
     if ( $cat ) {
-        $archive_category = $mt->db()->fetch_category( $cat );
+        if (! $archive_category = $ctx->stash( 'category' ) ) {
+            $archive_category = $mt->db()->fetch_category( $cat );
+        }
         $ctx->stash( 'category', $archive_category );
         $ctx->stash( 'archive_category', $archive_category );
     }
     if ( $auth ) {
-        $archive_author = $mt->db()->fetch_author( $auth );
+        if (! $archive_author = $ctx->stash( 'author' ) ) {
+            $archive_author = $mt->db()->fetch_author( $auth );
+        }
         $ctx->stash( 'author', $archive_author );
         $ctx->stash( 'archive_author', $archive_author );
     }
@@ -62,10 +69,12 @@
     }
     if ( isset( $entry_id ) && ( $entry_id )
         && ( $at == 'Individual' || $at == 'Page' ) ) {
-        if ( $at == 'Individual' ) {
-            $entry = $mt->db()->fetch_entry( $entry_id );
-        } elseif( $at == 'Page' ) {
-            $entry = $mt->db()->fetch_page( $entry_id );
+        if (! $entry = $ctx->stash( 'entry' ) ) {
+            if ( $at == 'Individual' ) {
+                $entry = $mt->db()->fetch_entry( $entry_id );
+            } elseif( $at == 'Page' ) {
+                $entry = $mt->db()->fetch_page( $entry_id );
+            }
         }
         $ctx->stash( 'entry', $entry );
         $ctx->stash( 'current_timestamp', $entry->entry_authored_on );
