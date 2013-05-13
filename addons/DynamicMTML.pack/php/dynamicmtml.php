@@ -3244,13 +3244,13 @@ class DynamicMTML {
 
     function delete ( $path ) {
         if (! file_exists( $path ) ) {
-            return 1;
+            return TRUE;
         }
         if ( is_link( $path ) ) {
-            return 1;
+            return TRUE;
         }
-        if ( unlink( $file ) ) {
-            TRUE;
+        if ( unlink( $path ) ) {
+            return TRUE;
         }
         return FALSE;
     }
