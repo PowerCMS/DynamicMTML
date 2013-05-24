@@ -20,22 +20,31 @@ init_request: >
 config_settings:
     DynamicForceCompile:
         default: 0
+        updatable: 1
     DisableCompilerWarnings:
         default: 0
+        updatable: 1
     UserSessionTimeoutNoCheck:
         default: 0
+        updatable: 1
     DynamicSiteBootstrapper:
         default: .mtview.php
+        updatable: 1
     DynamicIncludeStatic:
         default: 0
+        updatable: 1
     AllowMagicQuotesGPC:
         default: 0
+        updatable: 1
     DynamicPHPFirst:
         default: 0
+        updatable: 1
     PermCheckAtPreview:
         default: 0
+        updatable: 1
     AllowableTags:
         default: '<a><br><b><i><p><strong><em><img><ul><ol><li><blockquote><pre>'
+        updatable: 1
 object_types:
     blog:
         dynamic_mtml: boolean
