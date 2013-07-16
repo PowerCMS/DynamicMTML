@@ -6,7 +6,7 @@ DynamicMTML is the PHP extension framework for Movable Type. By using mod\_rewri
 
 ## Correlation diagram
 
-![DynamicMTML Correlation diagram](https://github.com/movabletype/DynamicMTML/raw/master/correlation_diagram.png)
+![DynamicMTML Correlation diagram](https://github.com/PowerCMS/DynamicMTML/raw/master/correlation_diagram.png)
 
 ## System Requirements
 
@@ -76,7 +76,7 @@ You can use callbacks from the plug-in during this process.
 
 ## Application Flow Chart
 
-![DynamicMTML Flow Chart](https://github.com/movabletype/DynamicMTML/raw/master/dynamicmtml.en.png)
+![DynamicMTML Flow Chart](https://github.com/PowerCMS/DynamicMTML/raw/master/dynamicmtml.en.png)
 
 ## Fail-safe for the database connection error
 
