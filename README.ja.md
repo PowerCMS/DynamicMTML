@@ -6,7 +6,7 @@ DynamicMTML は mod\_rewrite を利用してコンテンツへのリクエスト
 
 ## PHPクラスの相関図
 
-![DynamicMTML 相関図](https://github.com/movabletype/DynamicMTML/raw/master/correlation_diagram.png)
+![DynamicMTML 相関図](https://github.com/PowerCMS/DynamicMTML/raw/master/correlation_diagram.png)
 ## 動作環境
 
 + Movable Type5.04以降
@@ -67,7 +67,7 @@ mt-config.cgiに下記のディレクティブを指定することが出来ま�
 
 ## フローチャート
 
-![DynamicMTML フローチャート](https://github.com/movabletype/DynamicMTML/raw/master/dynamicmtml.ja.png)
+![DynamicMTML フローチャート](https://github.com/PowerCMS/DynamicMTML/raw/master/dynamicmtml.ja.png)
 
 ## データベースへの接続に失敗した時の処理の継続(フェイルセーフ)
 
