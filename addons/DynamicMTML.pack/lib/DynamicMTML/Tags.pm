@@ -671,12 +671,12 @@ sub _hdlr_dynamic_exclude_extension {
 
 sub _hdlr_current_archive_url {
     my ( $ctx, $args, $cond ) = @_;
-    return $ctx->stash( 'current_archive_url' );
+    return $ctx->stash( 'current_archive_url' ) || '';
 }
 
 sub _hdlr_current_archive_file {
     my ( $ctx, $args, $cond ) = @_;
-    return $ctx->stash( 'current_archive_file' );
+    return $ctx->stash( 'current_archive_file' ) || '';
 }
 
 sub _hdlr_author_language {
