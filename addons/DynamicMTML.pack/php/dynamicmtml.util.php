@@ -214,8 +214,7 @@ function regex_not_tag ( $phrase ) {
 function make_seo_basename ( $phrase, $length = NULL ) {
     $invalid  = preg_quote( '\'"|*`^><)(}{][,/! ', '/' );
     $phrase = preg_replace( "/[$invalid]/", '_', $phrase );
-    $phrase = preg_replace( '/^_*/', '', $phrase );
-    $phrase = preg_replace( '/_*$/', '', $phrase );
+    $phrase = trim( $phrase, '_' );
     if ( $length ) {
         if ( extension_loaded( 'mbstring' ) ) {
             $phrase = mb_substr( $phrase, 0, $length );
