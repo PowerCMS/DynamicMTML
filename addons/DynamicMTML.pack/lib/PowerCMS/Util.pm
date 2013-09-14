@@ -1,8 +1,8 @@
 package PowerCMS::Util;
 use strict;
-our $powercms_util_version = '3.1';
-use Exporter;
 use base qw/Exporter/;
+
+our $powercms_util_version = '3.3';
 our @EXPORT_OK = qw(
     build_tmpl save_asset upload convert_gif_png association_link create_entry
     make_entry write2file read_from_file move_file copy_item remove_item
@@ -31,7 +31,8 @@ our @EXPORT_OK = qw(
     referral_site referral_search_keyword referral_serch_keyword make_seo_basename
     encode_utf8_string_to_cp932_octets set_powercms_config get_powercms_config
     set_powercms_config_values reset_powercms_config_values charset_is_utf8
-    can_edit_entry allow_upload error_log
+    can_edit_entry allow_upload error_log encode_mime_header is_valid_extension is_valid_extention get_ole_extension
+    is_oracle trimj_to valid_url is_psgi is_fastcgi is_powered_cgi get_superuser
 );
 
 use File::Spec;
@@ -46,7 +47,7 @@ use MT::FileMgr;
 use MT::Request;
 use MT::Permission;
 use MT::Util qw( epoch2ts ts2epoch offset_time_list encode_url decode_url
-                 perl_sha1_digest_hex is_valid_email remove_html trim );
+                 perl_sha1_digest_hex is_valid_email remove_html trim is_valid_url );
 # use PowerCMS::Config qw( get_powercms_config set_powercms_config );
 
 sub powercms_util_version { $powercms_util_version }
@@ -94,7 +95,7 @@ sub icon_name {
 sub icon_class {
     my ( $asset_class, $ext ) = @_;
     my %icon_class_of = qw(file 1 video 1 audio 1);
-    return '' unless( $asset_class && exists( $icon_class_of{ $asset_class } ) );
+    return '' unless $asset_class && exists $icon_class_of{ $asset_class };
     my $name = icon_name( $ext );
     return "ic-${asset_class}-$name";
 }
@@ -125,8 +126,9 @@ sub build_tmpl {
         require MT::Template::Context;
         $ctx = MT::Template::Context->new;
     }
-    my $blog = $args->{ blog };
-    my $entry = $args->{ entry };
+    $app->run_callbacks( ( ref $app ) . '::powercms_pre_build_tmpl' . ( $args->{ callback_label } ? '.' . $args->{ callback_label } : '' ), $app, $tmpl, $args, $params );
+    my $blog     = $args->{ blog };
+    my $entry    = $args->{ entry };
     my $category = $args->{ category };
     if ( (! $blog ) && ( $entry ) ) {
         $blog = $entry->blog;
@@ -141,7 +143,7 @@ sub build_tmpl {
     $ctx->stash( 'blog_id', $blog->id ) if $blog;
     $ctx->stash( 'local_blog_id', $blog->id ) if $blog;
     $ctx->stash( 'entry', $entry );
-    $ctx->stash( 'page', $entry );
+#    $ctx->stash( 'page', $entry );
     $ctx->stash( 'category', $category );
     $ctx->stash( 'category_id', $category->id ) if $category;
     $ctx->stash( 'author', $author );
@@ -161,7 +163,7 @@ sub build_tmpl {
     for my $key ( keys %$params ) {
         $ctx->{ __stash }->{ vars }->{ $key } = $params->{ $key };
     }
-    if ( is_application( $app ) ) {
+    if ( is_application( $app ) && ref( $app ) ne 'MT::App::Upgrader' ) {
         $ctx->{ __stash }->{ vars }->{ magic_token } = $app->current_magic if $app->user;
     }
     my $build = MT::Builder->new;
@@ -181,14 +183,14 @@ sub build_tmpl {
         error_log( $app->translate( "Build error: [_1]", $build->errstr ), $blog ? $blog->id : undef );
         return;
     }
-    unless ( MT->version_number < 5 ) {
+    if ( MT->version_number >= 5 ) {
         $html = utf8_on( $html );
     }
     return $html;
 }
 
 sub save_asset {
-    my ( $app, $blog, $params, $cb ) = @_;
+    my ( $app, $blog, $params, $run_callbacks ) = @_;
 #    my %params = ( file => $file,
 #                   author => $author,
 #                   label => $label,
@@ -204,26 +206,24 @@ sub save_asset {
     unless ( $fmgr->exists( $file_path ) ) {
         return undef;
     }
-    my $file = $file_path;
+    my $file   = $file_path;
     my $author = $params->{ author };
-    my $parent = $params->{ parent };
-    $parent = $params->{ parant } unless $parent; # compatible
-    $author = current_user( $app ) unless ( defined $author );
-    my $label = $params->{ label };
+    $author = current_user( $app ) unless defined $author;
+    my $parent      = $params->{ parent } || $params->{ parant }; # Backcompat
+    my $label       = $params->{ label };
     my $description = $params->{ description };
-    my $obj = $params->{ object };
-    my $tags = $params->{ tags };
-    my $basename = File::Basename::basename( $file_path );
-    my $file_ext = file_extension( $file_path );
+    my $obj         = $params->{ object };
+    my $tags        = $params->{ tags };
+    my $basename  = File::Basename::basename( $file_path );
+    my $file_ext  = file_extension( $file_path );
     my $mime_type = mime_type( $file_path );
-    my $class = 'file'; my $is_image;
+    my $class     = 'file';
     require MT::Asset;
     my $asset_pkg = MT::Asset->handler_for_file( $basename );
     my $asset;
     if ( $asset_pkg eq 'MT::Asset::Image' ) {
         $asset_pkg->isa( $asset_pkg );
         $class = 'image';
-        $is_image = 1;
     }
     if ( $asset_pkg eq 'MT::Asset::Audio' ) {
         $asset_pkg->isa( $asset_pkg );
@@ -243,7 +243,7 @@ sub save_asset {
         $author = MT::Author->load( undef, { limit => 1 } ) unless ( defined $author );
     }
     my $url = $file_path;
-    $url =~ s!\\!/!g if if_windows();
+    $url =~ tr!\\!/! if if_windows();
     $url = path2url( $url, $blog, 1 );
     $url = path2relative( $url, $blog, 1 );
     $file_path = path2relative( $file_path, $blog, 1 );
@@ -254,9 +254,9 @@ sub save_asset {
         $asset = $asset_pkg->new();
         $asset->created_on( current_ts( $blog ) ); # for posting from mobile
     } else {
-        $original = $asset->clone();
+        $original = $asset->clone(); # FIXME
     }
-    $original = $asset->clone();
+    $original = $asset->clone(); # FIXME
     $asset->blog_id( $blog_id );
     $asset->url( $url );
     $asset->file_path( $file_path );
@@ -282,14 +282,14 @@ sub save_asset {
     if ( $description ) {
         $asset->description( $description );
     }
-    if ( $cb ) {
+    if ( $run_callbacks ) {
         $app->run_callbacks( 'cms_pre_save.asset', $app, $asset, $original )
           || return $app->errtrans( "Saving [_1] failed: [_2]", 'asset',
             $app->errstr );
     }
     $asset->set_tags( @$tags );
     $asset->save or die $asset->errstr;
-    if ( $cb ) {
+    if ( $run_callbacks ) {
         $app->run_callbacks( 'cms_post_save.asset', $app, $asset, $original );
     } else {
         $app->log(
@@ -321,7 +321,7 @@ sub save_asset {
             }
         }
     }
-    my $res = upload_callback( $app, $blog, $asset, $id ) if $cb;
+    my $res = upload_callback( $app, $blog, $asset, $id ) if $run_callbacks;
     return $asset;
 }
 
@@ -329,22 +329,24 @@ sub upload {
     my ( $app, $blog, $name, $dir, $params ) = @_;
     my $limit = $app->config( 'CGIMaxUpload' ) || 20480000;
     $app->validate_magic() or return 0;
-    if ( $blog ) {
-#        return 0 unless $app->can_do( 'save_asset' );
-        unless ( $app->mode eq 'do_signup' ) {
-            return 0 unless $app->can_do( 'save_asset' );
-        }
-    } else {
-        my $uploadable_mode = $app->config( 'UploadableMode' );
-        unless ( ref ( $uploadable_mode ) eq 'ARRAY' ) {
-            if ( $uploadable_mode =~ /,/ ) {
-                $uploadable_mode = [ split( /\s*,\s*/, $uploadable_mode ) ];
-            } else {
-                $uploadable_mode = [ $uploadable_mode ];
+    if ( is_cms() || $params->{ permission_check } ) {
+        if ( $blog ) {
+    #        return 0 unless $app->can_do( 'save_asset' );
+            unless ( $app->mode eq 'do_signup' ) {
+                return 0 unless $app->can_do( 'upload' );
             }
+        } else {
+            my $uploadable_mode = $app->config( 'UploadableMode' );
+            unless ( ref( $uploadable_mode ) eq 'ARRAY' ) {
+                if ( $uploadable_mode =~ /,/ ) {
+                    $uploadable_mode = [ split( /\s*,\s*/, $uploadable_mode ) ];
+                } else {
+                    $uploadable_mode = [ $uploadable_mode ];
+                }
+            }
+            my $mode = $app->mode;
+            return 0 unless grep { $_ eq $mode } @$uploadable_mode;
         }
-        my $mode = $app->mode;
-        return 0 unless grep { $_ eq $mode } @$uploadable_mode;
     }
 #    my %params = ( object => $obj,
 #                   author => $author,
@@ -357,12 +359,12 @@ sub upload {
 #                   );
 #    my $upload = upload( $app, $blog, $name, $dir, \%params );
 
-    my $obj = $params->{ object };
-    my $rename = $params->{ 'rename' };
-    my $label = $params->{ label };
-    my $format_LF = $params->{ format_LF };
-    my $singler = $params->{ singler };
-    my $no_asset = $params->{ no_asset };
+    my $obj         = $params->{ object };
+    my $rename      = $params->{ 'rename' };
+    my $label       = $params->{ label };
+    my $format_lf   = $params->{ format_LF };
+    my $singler     = $params->{ singler };
+    my $no_asset    = $params->{ no_asset };
     my $description = $params->{ description };
     my $force_decode_filename = $params->{ force_decode_filename };
     my $no_decode = $app->config( 'NoDecodeFilename' );
@@ -393,14 +395,14 @@ sub upload {
         }
         $basename = $orig_filename;
 #        $basename = encode_url( $basename );
-        $basename =~ tr{\\}{/};    ## Change backslashes to forward slashes
-        $basename =~ s!^.*/!!;    ## Get rid of full directory paths
+        $basename =~ tr{\\}{/}; ## Change backslashes to forward slashes
+        $basename =~ s!^.*/!!;  ## Get rid of full directory paths
         $basename = encode_url( $basename );
         $basename
             = Encode::is_utf8( $basename )
             ? $basename
             : Encode::decode( $app->charset,
-            File::Basename::basename( $basename ) );
+                File::Basename::basename( $basename ) );
         if ( my $deny_exts = $app->config->DeniedAssetFileExtensions ) {
             my @deny_exts = map {
                 if   ( $_ =~ m/^\./ ) {qr/$_/i}
@@ -424,7 +426,7 @@ sub upload {
         $orig_filename = $basename;
         $orig_filename = decode_url( $orig_filename ) if $force_decode_filename;
         my $file_label = file_label( $orig_filename );
-        if ( $app->mode =~ /^(?:edit_profile|do_signup)$/ ) {  # FIXME: adhoc
+        if ( $app->mode =~ /^(?:edit_profile|do_signup)$/ ) { # FIXME: ad-hoc
             if ( MT::I18N::is_utf8( $file_label ) ) {
                 $file_label = Encode::decode_utf8( $file_label );
             }
@@ -447,23 +449,23 @@ sub upload {
             $fmgr->mkpath( $dir ) or return MT->trans_error( "Error making path '[_1]': [_2]",
                                     $out, $fmgr->errstr );
         }
-        my $temp = "$out.new";
+        my $temp  = "$out.new";
         my $umask = $app->config( 'UploadUmask' );
-        my $old = umask( oct $umask );
-        open ( my $fh, ">$temp" ) or die "Can't open $temp!";
+        my $old   = umask( oct $umask );
+        open( my $fh, ">$temp" ) or die "Can't open $temp!";
         if ( is_image( $file ) ) {
             require MT::Image;
             if (! MT::Image::is_valid_image( $fh ) ) {
-                close ( $fh );
+                close( $fh );
                 next;
             }
         }
-        binmode ( $fh );
-        while( read ( $file, my $buffer, 1024 ) ) {
-            $buffer = format_LF( $buffer ) if $format_LF;
+        binmode( $fh );
+        while ( read( $file, my $buffer, 1024 ) ) {
+            $buffer = format_LF( $buffer ) if $format_lf;
             print $fh $buffer;
         }
-        close ( $fh );
+        close( $fh );
         $fmgr->rename( $temp, $out );
         umask( $old );
         my $user = $params->{ author };
@@ -472,7 +474,7 @@ sub upload {
             if ( $singler ) {
                 return $out;
             }
-            push ( @assets, $out );
+            push( @assets, $out );
         } else {
             if ( ( $user ) && ( $blog ) ) {
                 my %params = ( file => $out,
@@ -485,7 +487,7 @@ sub upload {
                 if ( $singler ) {
                     return $asset;
                 }
-                push ( @assets, $asset ) if defined $asset;
+                push( @assets, $asset ) if defined $asset;
             }
         }
     }
@@ -496,9 +498,10 @@ sub convert_gif_png {
     my $image = shift;
     # TODO::Save Asset
     my $new_file = $image;
-    if ( file_extension( $image ) eq 'gif' ) {
+    my $ext      = file_extension($image);
+    if ($ext eq 'gif') {
         $new_file =~ s/\.gif$/.png/i;
-    } elsif ( file_extension( $image ) eq 'png' ) {
+    } elsif ($ext eq 'png') {
         $new_file =~ s/\.png$/.gif/i;
     } else {
         return;
@@ -524,14 +527,14 @@ sub association_link {
         if ( $assoc ) {
             my $log = MT::Log->new;
             my $msg = { message => $app->translate(
-                        '[_1] registered to the blog \'[_2]\'',
+                        "[_1] registered to the blog '[_2]'",
                         $author->name,
                         $blog->name
                     ),
                     level    => MT::Log::INFO(),
                     class    => 'author',
                     category => 'new',
-                    blog_id => $blog->id,
+                    blog_id  => $blog->id,
             };
             if ( ref $app =~ /^MT::App::/ ) {
                 $msg->{ ip } = $app->remote_ip;
@@ -548,7 +551,7 @@ sub association_link {
 }
 
 sub create_entry {
-    my ( $app, $blog, $args, $params, $cb ) = @_;
+    my ( $app, $blog, $args, $params, $run_callbacks ) = @_;
 #     my @categories = MT::Category->load( { foo => 'bar' } );
 #     my @tags = ( 'foo', 'bar' );
 #     %args = ( title => 'foo',
@@ -564,7 +567,7 @@ sub create_entry {
 #                 no_save => 1,
 #                 background => 1,
 #              );
-#     my $entry = create_entry( $app, $blog, \%args, \%params[, $cb] );
+#     my $entry = create_entry( $app, $blog, \%args, \%params[, $run_callbacks] );
     require MT::Entry;
     my $entry; my $is_new; my $original;
     if ( $args->{ id } ) {
@@ -576,7 +579,7 @@ sub create_entry {
     } else {
         $original = $entry->clone_all();
     }
-    $entry->blog_id ( $blog->id );
+    $entry->blog_id( $blog->id );
     my $clumns = $entry->column_names;
     my $fields;
     my $professional = 0;
@@ -646,7 +649,7 @@ sub create_entry {
             $entry->atom_id( $entry->make_atom_id() );
         }
     }
-    if ( $cb ) {
+    if ( $run_callbacks ) {
         $app->run_callbacks( 'cms_pre_save.' . $entry->class, $app, $entry, $original );
     }
     if ( $params->{ no_save } ) {
@@ -662,7 +665,7 @@ sub create_entry {
                                                  is_primary => 1,
                                              } );
         $place->save or die $place->errstr;
-        push ( @saved_cats, $args->{ category_id } );
+        push( @saved_cats, $args->{ category_id } );
     }
     if ( $args->{ categories } ) {
         my $categories = $args->{ categories };
@@ -678,7 +681,7 @@ sub create_entry {
                                                      is_primary => $is_primary,
                                                  } );
             $place->save or die $place->errstr;
-            push ( @saved_cats, $category->id );
+            push( @saved_cats, $category->id );
             $i++;
         }
     }
@@ -696,24 +699,19 @@ sub create_entry {
         CustomFields::BackupRestore::_update_meta( $entry, $fields );
     }
     $entry->clear_cache();
-    if ( $cb ) {
+    if ( $run_callbacks ) {
         $app->run_callbacks( 'cms_post_save.' . $entry->class, $app, $entry, $original );
     }
     if ( $params->{ rebuildme } ) {
         my $dependencies = $params->{ dependencies };
         if ( $entry->status == MT::Entry::RELEASE() ) {
+            my $rebuild_sub = sub {
+                $app->rebuild_entry( Entry => $entry->id, BuildDependencies => $dependencies );
+            };
             if ( $params->{ background } ) {
-                force_background_task(
-                    sub { $app->rebuild_entry( Entry => $entry->id,
-                                               BuildDependencies => $dependencies );
-                    }
-                );
+                force_background_task($rebuild_sub);
             } else {
-                MT::Util::start_background_task(
-                    sub { $app->rebuild_entry( Entry => $entry->id,
-                                               BuildDependencies => $dependencies );
-                    }
-                );
+                MT::Util::start_background_task($rebuild_sub);
             }
         }
     }
@@ -787,7 +785,7 @@ sub copy_item {
         $fmgr->mkpath( $dir ) or return MT->trans_error( "Error making path '[_1]': [_2]",
                                 $to, $fmgr->errstr );
     }
-    if ( File::Copy::Recursive::rcopy ( $from, $to ) ) {
+    if ( File::Copy::Recursive::rcopy( $from, $to ) ) {
         return 1;
     }
     return 0;
@@ -835,10 +833,10 @@ sub path2relative {
     my $archive_path = archive_path( $blog );
     my $site_path = site_path( $blog, $exclude_archive_path );
     if ( is_windows() ) {
-        $path =~ s!\\!/!g;
-        $static_file_path =~ s!\\!/!g;
-        $archive_path =~ s!\\!/!g;
-        $site_path =~ s!\\!/!g;
+        $path             =~ tr!\\!/!;
+        $static_file_path =~ tr!\\!/!;
+        $archive_path     =~ tr!\\!/!;
+        $site_path        =~ tr!\\!/!;
     }
     $static_file_path = quotemeta( $static_file_path );
     $archive_path = quotemeta( $archive_path );
@@ -861,7 +859,7 @@ sub path2url {
     my $site_url = site_url( $blog );
     $path =~ s/^$site_path/$site_url/;
     if ( is_windows() ) {
-        $path =~ s!\\!/!g;
+        $path =~ tr!\\!/!;
     }
     return $path;
 }
@@ -884,14 +882,14 @@ sub path2url {
 #     }
 #     return $path;
 # }
-# 
+#
 # sub path2url {
 #     my ( $path, $blog, $exclude_archive_path ) = @_;
-#     my $site_path = quotemeta ( site_path( $blog, $exclude_archive_path ) );
+#     my $site_path = quotemeta( site_path( $blog, $exclude_archive_path ) );
 #     my $site_url = site_url( $blog );
 #     $path =~ s/^$site_path/$site_url/;
 #     if ( is_windows() ) {
-#         $path =~ s!/!\\!g;
+#         $path =~ tr!/!\\!;
 #     }
 #     return $path;
 # }
@@ -903,11 +901,11 @@ sub relative2url {
 
 sub url2path {
     my ( $url, $blog ) = @_;
-    my $site_url = quotemeta ( site_url( $blog ) );
+    my $site_url = quotemeta( site_url( $blog ) );
     my $site_path = site_path( $blog );
     $url =~ s/^$site_url/$site_path/;
     if ( is_windows() ) {
-        $url =~ s!/!\\!g;
+        $url =~ tr!/!\\!;
     }
     return $url;
 }
@@ -998,6 +996,9 @@ sub prev_date {
 
 sub valid_ts {
     my $ts = shift;
+    if ( ( ref $ts ) eq 'ARRAY' ) {
+        $ts = @$ts[0];
+    }
     return 0 unless ( $ts =~ m/^[0-9]{14}$/ );
     my $year = substr( $ts, 0, 4 );
     my $month = substr( $ts, 4, 2 );
@@ -1024,11 +1025,19 @@ sub valid_ts {
 }
 
 sub valid_phone_number { # TODO: L10N
-    shift =~ /\A(?:0\d{1,4}-?\d{1,4}-?\d{3,5}|\+[1-9][-\d]+\d)\z/ ? 1 : 0; # TODO
+    my $str = shift;
+    if ( ( ref $str ) eq 'ARRAY' ) {
+        $str = @$str[0];
+    }
+    $str =~ /\A(?:0\d{1,4}-?\d{1,4}-?\d{3,5}|\+[1-9][-\d]+\d)\z/ ? 1 : 0; # TODO
 }
 
 sub valid_postal_code { # TODO: L10N
-    shift =~ /\A[0-9]{3}-?[0-9]{4}\z/ ? 1 : 0;
+    my $str = shift;
+    if ( ( ref $str ) eq 'ARRAY' ) {
+        $str = @$str[0];
+    }
+    $str =~ /\A[0-9]{3}-?[0-9]{4}\z/ ? 1 : 0;
 }
 
 sub month2int {
@@ -1079,7 +1088,7 @@ sub send_multipart_mail {
 sub mk_multipart_data {
     my ( $args ) = @_;
     my $org_body = $args->{ Body };
-    my $attaches  = $args->{ Attaches };
+    my $attaches = $args->{ Attaches };
     my $ent_args = $args->{ 'MIME::Entity::build' } || {};
     return unless ( ref $org_body eq 'ARRAY' );
     require MIME::Entity;
@@ -1175,9 +1184,10 @@ sub send_mail {
     $body = $args->{ body },
     $cc = $args->{ cc },
     $bcc = $args->{ bcc },
+    my @mailto = split( /,/, $to );
     my %head;
     %head = (
-        To => $to,
+        To => \@mailto,
         From => $from,
         Subject => $subject,
         ( ref $cc eq 'ARRAY' ? ( Cc => $cc ) : () ),
@@ -1220,25 +1230,25 @@ sub get_mail {
              : $charset;
     my $tempdir = $app->config( 'TempDir' );
     my @emails;
-    for my $id ( sort ( keys %$messages ) ) {
+    for my $id ( sort( keys %$messages ) ) {
         mkdir( $tempdir, 0755 ) unless ( -d $tempdir );
         my $message = $pop3->get( $id );
         my $parser = new MIME::Parser;
-        my $workdir = tempdir ( DIR => $tempdir );
+        my $workdir = tempdir( DIR => $tempdir );
         $parser->output_dir( $workdir );
         my $entity = $parser->parse_data( $message );
         # for multipart
         my @parts = $entity->parts;
         my %parsed_files;
         my $i = 0;
-        for my $part ( @parts ){
+        for my $part ( @parts ) {
             my $type = $part->mime_type;
             my $bhandle = $part->bodyhandle;
             my $file_path = $bhandle->{ MB_Path };
             my $attach = $entity->parts( $i )->head->as_string;
             my @attach_file = split( /\n/, $attach );
             my $attach_file = '';
-            foreach ( @attach_file ){
+            foreach ( @attach_file ) {
                 $attach_file .= $_;
             }
             if ( $attach_file ) {
@@ -1255,8 +1265,10 @@ sub get_mail {
         my $to = $header->get( 'to' );
         my $subject = $header->get( 'Subject' );
         $subject = encode( $charset, decode( 'MIME-Header', $subject ) );
-        unless ( MT->version_number < 5 ) {
-            $subject = utf8_on( $subject );
+        if ( $charset eq 'utf8' ) {
+            if ( MT->version_number >= 5 ) {
+                $subject = utf8_on( $subject );
+            }
         }
         $from = encode( $charset, decode( 'MIME-Header', $from ) );
         $from =~ s/\n+//g;
@@ -1270,9 +1282,9 @@ sub get_mail {
             for my $file ( @files ) {
                 if ( $file !~ /^\./ ) {
                     if ( $file =~ /^msg-[0-9]{1,}-[0-9]{1,}\.txt/ ) {
-                        $body .= read_from_file( File::Spec->catfile ( $workdir, $file ) );
+                        $body .= read_from_file( File::Spec->catfile( $workdir, $file ) );
                     } else {
-                        push ( @f, File::Spec->catfile ( $workdir, $file ) );
+                        push( @f, File::Spec->catfile( $workdir, $file ) );
                     }
                 }
             }
@@ -1281,15 +1293,17 @@ sub get_mail {
             $body = $body->as_string;
         }
         $body = encode( $charset, decode( 'iso-2022-jp', $body ) );
-        unless ( MT->version_number < 5 ) {
-            $body = utf8_on( $body );
+        if ( $charset eq 'utf8' ) {
+            if ( MT->version_number >= 5 ) {
+                $body = utf8_on( $body );
+            }
         }
         my $mail = { from => $from,
                      subject => $subject,
-                     body    => $body,
-                     files   => \@f,
+                     body => $body,
+                     files => \@f,
                      directory => $workdir,
-                     parsed_files => \%parsed_files,  
+                     parsed_files => \%parsed_files,
                    };
         push( @emails, $mail );
         $pop3->delete( $id ) if $delete;
@@ -1299,7 +1313,7 @@ sub get_mail {
 }
 
 sub make_zip_archive {
-    my ( $directory, $out, $files ) = @_;
+    my ( $directory, $out, $files, $encoding ) = @_;
     eval { require Archive::Zip } || return undef;
     my $archiver = Archive::Zip->new();
     my $fmgr = MT::FileMgr->new( 'Local' ) or die MT::FileMgr->errstr;
@@ -1310,19 +1324,20 @@ sub make_zip_archive {
     }
     if (-f $directory ) {
         my $basename = File::Basename::basename( $directory );
-        $archiver->addFile( $directory, $basename );
+        $archiver->addFile( utf8_on( $directory ), $basename );
         return $archiver->writeToFileNamed( $out );
     }
     $directory =~ s!/$!!;
     unless ( $files ) {
         @$files = get_children_filenames( $directory );
     }
-    $directory = quotemeta( $directory );
+    $encoding ||= 'utf-8'; # TODO
+    my $re = qr{^(?:\Q$directory\E)?[/\\]*};
     for my $file ( @$files ) {
+        $file = Encode::encode($encoding, $file)
+            if Encode::is_utf8($file);
         my $new = $file;
-        $new =~ s/^$directory//;
-        $new =~ s!^/!!;
-        $new =~ s!^\\!!;
+        $new =~ s/$re//;
         $archiver->addFile( $file, $new );
     }
     return $archiver->writeToFileNamed( $out );
@@ -1348,8 +1363,8 @@ sub get_user {
             eval { ( $sess, $user ) = $app->get_commenter_session() };
             unless ( defined $user ) {
                 if ( $app->param( 'sessid' ) ) {
-                    my $sess = MT::Session->load ( { id => $app->param( 'sessid' ),
-                                                     kind => 'US' } );
+                    my $sess = MT::Session->load( { id => $app->param( 'sessid' ),
+                                                    kind => 'US' } );
                     if ( defined $sess ) {
                        my $sess_timeout = $app->config->UserSessionTimeout;
                        if ( ( time - $sess->start ) < $sess_timeout ) {
@@ -1393,9 +1408,9 @@ sub get_content {
     eval { $remote_ip = $app->remote_ip };
     my $agent;
     if ( $remote_ip ) {
-        $agent = "Mozilla/5.0 (Power CMS for MT X_FORWARDED_FOR:$remote_ip)";
+        $agent = "Mozilla/5.0 (PowerCMS X_FORWARDED_FOR:$remote_ip)";
     } else {
-        $agent = 'Mozilla/5.0 (Power CMS for MT)';
+        $agent = 'Mozilla/5.0 (PowerCMS)';
     }
     my $ua = MT->new_ua( { agent => $agent } ) or return undef;
     my $req = HTTP::Request->new( GET => $uri );
@@ -1409,8 +1424,8 @@ sub get_content {
         if ( $file ) {
             write2file( $file, $content ) or return undef;
         }
-        unless ( MT->version_number < 5 ) {
-            $content = utf8_on( $content ) if $utf8;
+        if ( $utf8 && MT->version_number >= 5 ) {
+            $content = utf8_on( $content );
         }
         return $content;
     }
@@ -1426,13 +1441,13 @@ sub get_feed {
     require MT::Feeds::Lite;
     my $lite  = MT::Feeds::Lite->fetch( $uri ) or return '';
     my $title = $lite->find_title( $lite->feed );
-    my $link  = $lite->find_link ( $lite->feed );
+    my $link  = $lite->find_link( $lite->feed );
     my $entries = $lite->entries;
     my $count = scalar @$entries;
     if ( $utf8 ) {
         $title = to_utf8( $title );
         $link  = to_utf8( $link );
-        unless ( MT->version_number < 5 ) {
+        if ( MT->version_number >= 5 ) {
             $title = utf8_on( $title );
             $link  = utf8_on( $link );
         }
@@ -1497,9 +1512,9 @@ sub regex_replace {
 sub csv_new {
     my $csv = do {
     eval { require Text::CSV_XS };
-    unless ( $@ ) { Text::CSV_XS->new ( { binary => 1 } ); } else
-    { eval { require Text::CSV };
-        return undef if $@; Text::CSV->new ( { binary => 1 } ); } };
+    unless ( $@ ) { Text::CSV_XS->new( { binary => 1 } ); }
+    else { eval { require Text::CSV };
+        return undef if $@; Text::CSV->new( { binary => 1 } ); } };
     return $csv;
 }
 
@@ -1527,11 +1542,13 @@ sub ftp_put {
                                    $app, \$ftp, \$cwd, \$file, \$mode, \$params );
     $mode = 'binary' unless $mode;
     $ftp->$mode;
+    my $pwd = $ftp->pwd();
     $ftp->cwd( $cwd ) or return undef;
     my $ftp_put = $ftp->put( $file );
     if ( $ftp_put ) {
         $app->run_callbacks( 'post_ftp_put', $app, $ftp, $cwd, $file, $mode, $params );
     }
+    $ftp->cwd( $pwd );
     return $ftp_put;
 }
 
@@ -1551,14 +1568,14 @@ sub set_upload_filename {
     $file = File::Basename::basename( $file );
     my $ctext = encode_url( $file );
     if ( $ctext ne $file ) {
-        unless ( MT->version_number < 5 ) {
+        if ( MT->version_number >= 5 ) {
             $file = utf8_off( $file );
         }
         my $extension = file_extension( $file );
-        my $ext_len = length( $extension ) + 1;
+        my $ext_len   = length( $extension ) + 1;
         require Digest::MD5;
         $file = Digest::MD5::md5_hex( $file );
-        $file = substr ( $file, 0, 255 - $ext_len );
+        $file = substr( $file, 0, 255 - $ext_len );
         if ( $extension ) {
             $file .= '.' . $extension;
         }
@@ -1568,19 +1585,16 @@ sub set_upload_filename {
 
 sub uniq_filename {
     my $file = shift;
-    require File::Basename;
-    my $no_decode = MT->config( 'NoDecodeFilename' );
+    #require File::Basename;
     my $dir = File::Basename::dirname( $file );
-    my $tilda = quotemeta( '%7E' );
-    $file =~ s/$tilda//g;
-    if ( $no_decode ) {
-        $file = File::Spec->catfile( $dir, file_basename( $file ) );
-    } else {
-        $file = File::Spec->catfile( $dir, set_upload_filename( $file ) );
-    }
+    $file =~ s/%7[Ee]//g;
+    my $no_decode = MT->config( 'NoDecodeFilename' );
+    $file = $no_decode ? file_basename($file)
+                       : set_upload_filename($file);
+    $file = File::Spec->catfile($dir, $file);
     return $file unless ( -f $file );
     my $file_extension = file_extension( $file );
-    my $base = $file;
+    my $base           = $file;
 #    $base =~ s/(.{1,})\.$file_extension$/$1/;
     if ( $file_extension ) {
         $base =~ s/(.{1,})\.$file_extension$/$1/;
@@ -1609,7 +1623,7 @@ sub get_children_filenames {
             }
             my $regex = eval { qr/$pattern/ };
             if ( defined $regex ) {
-                my $command = 'File::Find::find ( sub { push ( @wantedFiles, $File::Find::name ) if ( /' . $pattern. '/ ) && -f ; }, $directory );';
+                my $command = 'File::Find::find( sub { push( @wantedFiles, $File::Find::name ) if ( /' . $pattern. '/ ) && -f; }, $directory );';
                 eval $command;
                 if ( $@ ) {
                     return undef;
@@ -1619,14 +1633,14 @@ sub get_children_filenames {
             }
         }
     } else {
-        File::Find::find ( sub { push ( @wantedFiles, $File::Find::name ) unless (/^\./) || ! -f ; }, $directory );
+        File::Find::find( sub { push( @wantedFiles, $File::Find::name ) unless (/^\./) || ! -f; }, $directory );
     }
     return @wantedFiles;
 }
 
 sub get_children_files     { goto &get_children_filenames }
-sub get_childlen_files     { goto &get_children_filenames }
-sub get_childlen_filenames { goto &get_children_filenames }
+sub get_childlen_files     { goto &get_children_filenames } # Backcompat
+sub get_childlen_filenames { goto &get_children_filenames } # Backcompat
 
 sub get_permissions {
     my $app = MT->instance();
@@ -1636,7 +1650,7 @@ sub get_permissions {
     my $perms;
     $perms = $r->cache( 'powercms_get_permissions' );
     return $perms if $perms;
-    require MT::Permission;
+    #require MT::Permission;
     @$perms = MT::Permission->load( { author_id => $app->user->id } );
     $r->cache( 'powercms_get_permissions', $perms );
     return $perms;
@@ -1659,10 +1673,10 @@ sub get_array_uniq {
 }
 
 sub ceil {
-   my $var = shift;
-   my $a = 0;
-   $a = 1 if ( $var > 0 and $var != int ( $var ) );
-   return int ( $var + $a );
+    my $var = shift;
+    my $a = 0;
+    $a = 1 if ( $var > 0 and $var != int( $var ) );
+    return int( $var + $a );
 }
 
 sub floor {
@@ -1686,7 +1700,7 @@ sub get_agent {
     # Agent Smartphone Keitai Mobile // TODO::Mobile Safari Apple(Mac)
     my $wants = shift;
     my $like  = shift;
-    my $exclude = shift;
+    my $exclude = shift || '';
     $wants = 'Agent' unless $wants;
     $wants = lc( $wants );
     $exclude = lc( $exclude ) if $exclude;
@@ -1699,19 +1713,18 @@ sub get_agent {
         }
     }
     my %smartphone = (
-        'Android'     => 'Android',
-        'dream'       => 'Android',
-        'CUPCAKE'     => 'Android',
-        'blackberry'  => 'BlackBerry',
-        'iPhone'      => 'iPhone',
-        'iPod'        => 'iPhone',
-        'iPad'        => 'iPad',
-        'incognito'   => 'Palm',
-        'webOS'       => 'Palm',
-        'incognito'   => 'iPhone',
-        'webmate'     => 'iPhone',
-        'Opera\sMini' => 'Opera Mini',
-        'Windows\sPhone' => 'Windows Phone',
+        'Android'       => 'Android',
+        'dream'         => 'Android',
+        'CUPCAKE'       => 'Android',
+        'blackberry'    => 'BlackBerry',
+        'iPhone'        => 'iPhone',
+        'iPod'          => 'iPhone',
+        'iPad'          => 'iPad',
+        'webOS'         => 'Palm',
+        'incognito'     => 'iPhone',
+        'webmate'       => 'iPhone',
+        'Opera Mini'    => 'Opera Mini',
+        'Windows Phone' => 'Windows Phone',
     );
     for my $key ( keys %smartphone ) {
         if ( $agent =~ /$key/ ) {
@@ -1865,11 +1878,11 @@ sub if_writable {
     my ( $path, $blog ) = @_;
     my $app = MT->instance();
     $path = File::Spec->canonpath( $path );
-    my $tempdir = quotemeta( $app->config( 'TempDir' ) );
-    my $importdir = quotemeta( $app->config( 'ImportPath' ) );
-    my $powercms_files_dir = quotemeta( powercms_files_dir() );
-    my $support_dir = quotemeta( support_dir() );
-    if ( $path =~ /\A(?:$tempdir|$importdir|$powercms_files_dir|$support_dir)/ ) {
+    my $tempdir = quotemeta( chomp_dir( $app->config( 'TempDir' ) ) );
+    my $importdir = quotemeta( chomp_dir( $app->config( 'ImportPath' ) ) );
+    my $powercms_files_dir = quotemeta( chomp_dir( powercms_files_dir() ) );
+    my $support_dir = quotemeta( chomp_dir( support_dir() ) );
+    if ( $path =~ /\A(?:$tempdir|$importdir|$powercms_files_dir|$support_dir)/i ) {
         return 1;
     }
     if ( defined $blog ) {
@@ -1917,9 +1930,9 @@ sub file_label {
 }
 
 sub file_basename {
-    my $file = shift;
-    return unless $file;
-    if ( !is_windows() && $file =~ m/\\/ ) { # Windows Style Path on Not-Win
+    my $file = shift
+        or return;
+    if ( !is_windows() && $file =~ /\\/ ) { # Windows Style Path on Not-Win
         my $prev = File::Basename::fileparse_set_fstype( 'MSWin32' );
         $file = File::Basename::basename( $file );
         File::Basename::fileparse_set_fstype( $prev );
@@ -2029,11 +2042,25 @@ sub mime_type {
 
 sub valid_email {
     my $email = shift;
+    if ( ( ref $email ) eq 'ARRAY' ) {
+        $email = @$email[0];
+    }
     return 0 unless is_valid_email( $email );
-    if ( $email =~ /^[^@]+@[^.]+\../ ) {
+    if ( $email =~ /^[^\@]+\@[^.]+\../ ) {
         return 1;
     }
     return 0;
+}
+
+sub valid_url {
+    my $url = shift;
+    if ( ( ref $url ) eq 'ARRAY' ) {
+        $url = @$url[0];
+    }
+    if ( $url !~ m!^https{0,1}://! ) {
+        return 0;
+    }
+    return is_valid_url( $url );
 }
 
 sub get_mobile_id {
@@ -2053,7 +2080,7 @@ sub get_mobile_id {
             $mobile_id = $x_up_subno;
         }
     } elsif ( ( $ua eq 'SoftBank' ) || ( $ua eq 'Vodafone' ) ) {
-        # Softbank
+        # SoftBank
         my $x_jphone_uid = $app->get_header( 'X_JPHONE_UID' );
         if ( $x_jphone_uid ) {
             $mobile_id = $x_jphone_uid;
@@ -2071,12 +2098,12 @@ sub valid_ip {
     # valid_ip( $app->remote_ip, \@ip_table )
     $table = format_LF( $table );
     return 1 if ( grep( /^$remote_ip$/, @$table ) );
-    my $ip_table = join ( "\n", @$table );
+    my $ip_table = join( "\n", @$table );
     if ( $remote_ip =~ /(^[0-9]{1,}\.[0-9]{1,}\.[0-9]{1,}\.)([0-9]{1,}$)/ ) {
         my @bits = qw/ 0 126 62 30 14 6 2 /;
         my $check = quotemeta( $1 );
         my $last = $2;
-        if ( $ip_table =~ /$check([0-9]{1,})\/([0-9]{1,})/ ) {
+        if ( $ip_table =~ m!$check([0-9]{1,})/([0-9]{1,})! ) {
             my $begin = $1;
             my $bit = $2;
             if ( ( $begin eq '0' ) && ( $bit eq '24' ) ) {
@@ -2234,7 +2261,7 @@ sub powercms_files_dir {
             my $do = _create_powercms_subdir( $powercms_files );
             return chomp_dir( $powercms_files );
         }
-        chmod ( 0755, $powercms_files );
+        chmod( 0755, $powercms_files );
         my $do = _create_powercms_subdir( $powercms_files );
         return chomp_dir( $powercms_files ) if (-w $powercms_files );
     }
@@ -2243,7 +2270,7 @@ sub powercms_files_dir {
         $fmgr->mkpath( $powercms_files );
         if (-d $powercms_files ) {
             unless (-w $powercms_files ) {
-                chmod ( 0755, $powercms_files );
+                chmod( 0755, $powercms_files );
             }
         }
     }
@@ -2272,12 +2299,12 @@ sub _create_powercms_subdir {
                 unless (-e $directory ) {
                     if ( make_dir( $directory ) ) {
                         unless (-w $directory ) {
-                            chmod ( 0755, $directory );
+                            chmod( 0755, $directory );
                         }
                     }
                 } else {
                     unless (-w $directory ) {
-                        chmod ( 0755, $directory );
+                        chmod( 0755, $directory );
                     }
                 }
                 return 0 unless (-w $directory );
@@ -2379,7 +2406,7 @@ sub register_templates_to {
     my ( $blog_id, $component, $templates ) = @_;
     return unless ( ref $templates eq 'HASH' );
     $blog_id ||= 0;
-    return unless ( $blog_id =~ m/^\d+$/ );
+    return unless $blog_id =~ m/^(?:0|[1-9]\d*)$/;
     my $ret = 1;
     for my $ident ( keys( %$templates ) ) {
         my $v = $templates->{ $ident };
@@ -2429,7 +2456,7 @@ sub load_registered_template_for {
     my ( $blog_id, $component, $ident, $templates ) = @_;
     return unless ( ref $templates eq 'HASH' );
     $blog_id ||= 0;
-    return unless ( $blog_id =~ m/^\d+$/ );
+    return unless $blog_id =~ m/^(?:0|[1-9]\d*)$/;
     my $v = $templates->{ $ident };
     return unless ref $v eq 'HASH';
     $v = { %$v };
@@ -2445,8 +2472,9 @@ sub load_registered_template_for {
 
 sub force_background_task {
     my $app = MT->instance();
-    my $fource = $app->config->FourceBackgroundTasks;
-    if ( $fource ) {
+    my $force = $app->config->FourceBackgroundTasks ||
+                $app->config->ForceBackgroundTasks;
+    if ( $force ) {
         my $default = $app->config->LaunchBackgroundTasks;
         $app->config( 'LaunchBackgroundTasks', 1 );
         my $res = MT::Util::start_background_task( @_ );
@@ -2460,13 +2488,13 @@ sub get_weblogs {
     my $blog = shift;
     my @blogs;
     if ( MT->version_number < 5 ) {
-        push ( @blogs, $blog );
+        push( @blogs, $blog );
         return @blogs;
     }
-    push ( @blogs, $blog );
+    push( @blogs, $blog );
     if ( $blog->class eq 'website' ) {
         my $weblogs = $blog->blogs || [];
-        push ( @blogs, @$weblogs );
+        push( @blogs, @$weblogs );
     }
     return @blogs;
 }
@@ -2475,12 +2503,12 @@ sub get_blog_ids {
     my $blog = shift;
     my @blog_ids;
     if ( MT->version_number < 5 ) {
-        push ( @blog_ids, $blog->id );
+        push( @blog_ids, $blog->id );
         return @blog_ids;
     }
-    push ( @blog_ids, $blog->id );
+    push( @blog_ids, $blog->id );
     if ( $blog->class eq 'blog' ) {
-        push ( @blog_ids, $blog->parent_id ) if $blog->parent_id;
+        push( @blog_ids, $blog->parent_id ) if $blog->parent_id;
     }
     return @blog_ids;
 }
@@ -2491,7 +2519,7 @@ sub listing_blog_ids {
     if ( $blog->class eq 'website' ) {
         $blog_ids = get_weblog_ids( $blog );
     } else {
-        push ( @$blog_ids, $blog->id );
+        push( @$blog_ids, $blog->id );
     }
     return $blog_ids;
 }
@@ -2531,16 +2559,16 @@ sub get_weblog_ids {
         @$weblogs = get_weblogs( $website );
     }
     for my $blog ( @$weblogs ) {
-        push ( @$blog_ids, $blog->id );
+        push( @$blog_ids, $blog->id );
     }
     if ( $website ) {
         $r->cache( 'powercms_get_weblog_ids_blog:' . $website->id, $blog_ids );
-        # $plugin->set_config_value( 'get_weblog_ids_cache', join ( ',', @$blog_ids ), 'blog:'. $website->id );
-        set_powercms_config( 'powercms', 'get_weblog_ids_cache', join ( ',', @$blog_ids ), $website );
+        # $plugin->set_config_value( 'get_weblog_ids_cache', join( ',', @$blog_ids ), 'blog:'. $website->id );
+        set_powercms_config( 'powercms', 'get_weblog_ids_cache', join( ',', @$blog_ids ), $website );
     } else {
         $r->cache( 'powercms_get_weblog_ids_system', $blog_ids );
-        # $plugin->set_config_value( 'get_weblog_ids_cache', join ( ',', @$blog_ids ) );
-        set_powercms_config( 'powercms', 'get_weblog_ids_cache', join ( ',', @$blog_ids ) );
+        # $plugin->set_config_value( 'get_weblog_ids_cache', join( ',', @$blog_ids ) );
+        set_powercms_config( 'powercms', 'get_weblog_ids_cache', join( ',', @$blog_ids ) );
     }
 #     if ( wantarray ) {
 #         return @$blog_ids;
@@ -2550,7 +2578,7 @@ sub get_weblog_ids {
 
 sub include_exclude_blogs {
     my ( $ctx, $args ) = @_;
-    unless ( $args->{ blog_id } || $args->{ include_blogs } || $args->{ exclude_blogs } ) {
+    unless ( $args->{ blog_id } || $args->{ blog_ids } || $args->{ include_blogs } || $args->{ exclude_blogs } ) {
         $args->{ include_blogs } = $ctx->stash( 'include_blogs' );
         $args->{ exclude_blogs } = $ctx->stash( 'exclude_blogs' );
         $args->{ blog_ids } = $ctx->stash( 'blog_ids' );
@@ -2574,54 +2602,48 @@ sub include_blogs {
         return undef;
     } elsif ( $include_blogs eq 'children' ) {
         my $children = $blog->blogs;
-        push ( @blog_ids, $blog->id );
+        push( @blog_ids, $blog->id );
         for my $child ( @$children ) {
-            push ( @blog_ids, $child->id );
+            push( @blog_ids, $child->id );
         }
     } elsif ( $include_blogs eq 'siblings' ) {
         my $website = $blog->website;
         if ( $website ) {
             my $children = $website->blogs;
             my @blog_ids;
-            push ( @blog_ids, $website->id );
+            push( @blog_ids, $website->id );
             for my $child ( @$children ) {
-                push ( @blog_ids, $child->id );
+                push( @blog_ids, $child->id );
             }
         } else {
-            push ( @blog_ids, $blog->id );
+            push( @blog_ids, $blog->id );
         }
     } else {
         if ( $include_blogs ) {
             @blog_ids = split( /\s*,\s*/, $include_blogs );
-            # push ( @blog_ids, $blog->id );
+            # push( @blog_ids, $blog->id );
         } else {
             if ( $blog->class eq 'website' ) {
                 my @children = $blog->blogs;
-                push ( @blog_ids, $blog->id );
+                push( @blog_ids, $blog->id );
                 for my $child( @children ) {
-                    push ( @blog_ids, $child->id );
+                    push( @blog_ids, $child->id );
                 }
             }
         }
     }
     if ( wantarray ) {
         return @blog_ids;
-    } else {
-        return \@blog_ids;
     }
+    return \@blog_ids;
 }
 
 sub flush_weblog_ids {
     my $website = shift;
-    return unless $website;
-    my $plugin = MT->component( 'PowerCMS' );
-    return unless $plugin;
-    $website = $website->website if $website->class eq 'blog';
     if ( $website ) {
-        # $plugin->set_config_value( 'get_weblog_ids_cache', '', 'blog:'. $website->id );
+        $website = $website->website if $website->is_blog;
         set_powercms_config( 'powercms', 'get_weblog_ids_cache', '', $website );
     } else {
-        # $plugin->set_config_value( 'get_weblog_ids_cache', '' );
         set_powercms_config( 'powercms', 'get_weblog_ids_cache', '' );
     }
 }
@@ -2630,13 +2652,13 @@ sub get_blogs {
     my $blog = shift;
     my @blogs;
     if ( MT->version_number < 5 ) {
-        push ( @blogs, $blog );
+        push( @blogs, $blog );
         return @blogs;
     }
-    push ( @blogs, $blog );
+    push( @blogs, $blog );
     if ( $blog->class eq 'blog' ) {
         my $website = $blog->website;
-        push ( @blogs, $website ) if $website;
+        push( @blogs, $website ) if $website;
     }
     return @blogs;
 }
@@ -2663,7 +2685,7 @@ sub first_website {
 
 sub str2array {
     my ( $str, $separator, $remove_space ) = @_;
-    return unless $str;
+    return unless defined $str && length $str;
     $separator ||= ',';
     my @items = split( $separator, $str );
     if ( $remove_space ) {
@@ -2677,41 +2699,33 @@ sub str2array {
 
 sub log2text {
     my ( $msg, $out ) = @_;
-    open  ( my $fh, ">> $out" ) || die "Can't open $out!";
+    open( my $fh, '>>', $out )
+        or die "Can't open $out!";
     print $fh "$msg\n";
-    close ( $fh );
+    close( $fh );
 }
 
 sub get_config_inheritance {
     my ( $plugin, $key, $blog ) = @_;
-    my $get_from;
+    my $get_from = 'system';
     if ( $blog ) {
         $get_from = 'blog:' . $blog->id;
-    } else {
-        $get_from = 'system';
     }
     my $plugin_data = $plugin->get_config_value( $key, $get_from );
     if ( (! $plugin_data ) && $blog ) {
         my $website;
-        if ( MT->version_number < 5 ) {
+        if ( MT->version_number < 5 || !$blog->is_blog ) {
             $get_from = 'system';
+        } elsif ( $website = $blog->website ) {
+            $get_from = 'blog:' . $website->id;
         } else {
-            if (! $blog->is_blog ) {
-                $get_from = 'system';
-            } else {
-                if ( $website = $blog->website ) {
-                    if ( $website ) {
-                        $get_from = 'blog:' . $website->id;
-                    } else {
-                        $website = $blog;
-                        $get_from = 'blog:' . $blog->id;
-                    }
-                }
-            }
+            $website  = $blog;
+            $get_from = 'blog:' . $blog->id;
         }
         $plugin_data = $plugin->get_config_value( $key, $get_from );
         if ( (! $plugin_data ) && $website ) {
-            $plugin_data = $plugin->get_config_value( $key, 'system' );
+            $get_from = 'system';
+            $plugin_data = $plugin->get_config_value( $key, $get_from );
         }
     }
     return $plugin_data;
@@ -2740,117 +2754,105 @@ sub get_asset_from_text {
     my @assets;
     my $match = '<[^>]+\s(src|href|action)\s*=\s*\"';
     for my $url ( $text =~ m!$match(.{1,}?)"!g ) {
-        if ( $url =~ /^http/ ) {
+        if ( $url =~ m{^https?://} ) {
             my $file_path = path2relative( $url, $blog );
             my $asset = MT::Asset->load( { blog_id => $blog->id, class => '*',
                                            file_path => $file_path } );
-            push ( @assets, $asset ) if $asset;
+            push( @assets, $asset ) if $asset;
         }
     }
     if ( wantarray ) {
         return @assets;
-    } else {
-        return \@assets;
     }
+    return \@assets;
 }
 
 sub convert2thumbnail {
     my ( $blog, $text, $type, $embed, $link,
          $dimension, $convert_gif_png ) = @_;
-    my $test = $text;
-    my $site_url = site_url( $blog );
-    my $site_path = site_path( $blog );
-    my $search_path = quotemeta( $site_url );
+    my $site_url    = site_url( $blog );
+    my $site_path   = site_path( $blog );
+    my $re_site_path = $site_url =~ m{\A((?i:https?)://[^/]+)(.*)}s
+                     ? qr{\A(?:\Q$1\E)?\Q$2\E/*}
+                     : qr{\A\Q$site_url\E/*};
+    my $test        = $text;
+    $dimension = lc($dimension || 'width');
+    $type      = lc($type || 'auto');
     require MT::Asset;
-    require File::Basename;
-    if (! $dimension ) {
-        $dimension = 'width';
-    } else {
-        $dimension = lc( $dimension );
-    }
-    if (! $type ) {
-        $type = 'auto';
-    } else {
-        $type = lc( $type );
-    }
-    for my $img ( $text =~ m/(<img.*?>)/isg ) {
-        my $src = $1 if ( $img =~ /src\s*="(.*?)"/is );
-        if ( $src ) {
-            my $path = $src;
-            my $size;
-            my $scope = $dimension;
-            my $width = $1 if ( $img =~ /width\s*="(.*?)"/is );
-            my $height = $1 if ( $img =~ /height\s*="(.*?)"/is );
-            next if ( (! $width ) || (! $height ) );
-            if ( $dimension eq 'auto' ) {
-                if ( $width < $height ) {
-                    $scope = 'height';
-                } else {
-                    $scope = 'width';
-                }
-            }
-            if ( $scope eq 'height' ) {
-                $size = $height;
+    #require File::Basename;
+    for my $img ( $text =~ m/(<(?i:img)\s[^>]+>)/g ) {
+        next unless $img =~ /\s(?i:src)\s*=\s*(["']?)([^"'\s]+)\1/;
+        my $src  = $2;
+        my $path = MT::Util::decode_url( $src );
+        my $size;
+        my $scope = $dimension;
+        next unless $img =~ /\s(?i:width)\s*=\s*(["']?)([^"'\s]*)\1/;
+        my $width = $2;
+        next unless $img =~ /\s(?i:height)\s*=\s*(["']?)([^"'\s]*)\1/;
+        my $height = $2;
+        if ( $dimension eq 'auto' ) {
+            if ( $width < $height ) {
+                $scope = 'height';
             } else {
-                $size = $width;
+                $scope = 'width';
             }
-            my $scope_tc = ucfirst( $scope );
-            next if ( $embed >= $size );
-            if ( $path =~ m!^/! ) {
-                $path = $site_url . $path;
-            }
-            $path =~ s/^$search_path//;
-            $path = File::Spec->catfile( $site_path, $path );
-            if ( -f $path ) {
-                $path =~ s!\\\\!\\!g;
-                $path =~ s!//!/!g;
-                my $basename = File::Basename::basename( $path );
-                my $asset_pkg = MT::Asset->handler_for_file( $basename );
-                if ( $asset_pkg eq 'MT::Asset::Image' ) {
-                    my $orig_update = ( stat( $path ) )[9];
-                    require MT::Asset::Image;
-                    $asset_pkg->isa( $asset_pkg );
-                    my $file_path = path2relative( $path, $blog );
-                    my $asset = $asset_pkg->load( { blog_id => $blog->id,
-                                                    file_path => $file_path } );
-                    next unless defined $asset;
-                    my $orig = quotemeta( $img );
-                    my %param = ( $scope_tc => $embed, Path => undef, convert_gif_png => $convert_gif_png );
-                    my ( $thumb, $w, $h ) = create_thumbnail( $blog, $asset, %param );
-                    # my $thumb_new = _convert_gif_png( $thumb );
-                    my $url = path2url( $thumb, $blog );
-                    $img =~ s/(src\s*=").*?(")/$1$url$2/;
-                    $img =~ s/(width\s*=").*?(")/$1$w$2/;
-                    $img =~ s/(height\s*=").*?(")/$1$h$2/;
-                    my $no_link = $img;
-                    if ( $link ) {
-                        my $link_path;
-                        if ( $link >= $size ) {
-                            $link_path = $src;
-                        } else {
-                            my %link_param = ( $scope_tc => $link, Path => undef, convert_gif_png => $convert_gif_png );
-                            my ( $link_thumb, $link_w, $link_h ) = create_thumbnail( $blog, $asset, %link_param );
-                            # _convert_gif_png( $link_thumb );
-                            $link_path = path2url( $link_thumb, $blog );
-                        }
-                        $img = '<a href="' . $link_path . '">' . $img . '</a>';
+        }
+        if ( $scope eq 'height' ) {
+            $size = $height;
+        } else {
+            $size = $width;
+        }
+        my $scope_tc = ucfirst( $scope );
+        next if ( $embed >= $size );
+        $path =~ s/$re_site_path//;
+        $path = File::Spec->catfile( $site_path, $path );
+        if ( -f $path ) {
+            $path =~ s/\\\\/\\/g;
+            $path =~ s!//!/!g;
+            my $basename  = File::Basename::basename( $path );
+            my $asset_pkg = MT::Asset->handler_for_file( $basename );
+            if ( $asset_pkg eq 'MT::Asset::Image' ) {
+                require MT::Asset::Image;
+                $asset_pkg->isa( $asset_pkg );
+                my $file_path = path2relative( $path, $blog );
+                my $asset = $asset_pkg->load( { blog_id   => $blog->id,
+                                                file_path => $file_path } );
+                next unless defined $asset;
+                my $orig = quotemeta( $img );
+                my %param = ( $scope_tc => $embed, Path => undef, convert_gif_png => $convert_gif_png );
+                my ( $thumb, $w, $h ) = create_thumbnail( $blog, $asset, %param );
+                # my $thumb_new = _convert_gif_png( $thumb );
+                my $url = path2url( $thumb, $blog );
+                $img =~ s/(\ssrc\s*=\s*(["']?))[^"'\s]+\2/$1$url$2/;
+                $img =~ s/(\swidth\s*=\s*(["']?))[^"'\s]*\2/$1$w$2/;
+                $img =~ s/(\sheight\s*=\s*(["']?))[^"'\s]*\2/$1$h$2/;
+                my $no_link = $img;
+                if ( $link ) {
+                    my $link_path;
+                    if ( $link >= $size ) {
+                        $link_path = $src;
+                    } else {
+                        my %link_param = ( $scope_tc => $link, Path => undef, convert_gif_png => $convert_gif_png );
+                        my ( $link_thumb, $link_w, $link_h ) = create_thumbnail( $blog, $asset, %link_param );
+                        # _convert_gif_png( $link_thumb );
+                        $link_path = path2url( $link_thumb, $blog );
                     }
-                    $test =~ s/$orig/$img/g;
-                    my $check = quotemeta( $img );
-                    for my $anchor( $test =~ m/(<a[^>]*>(.*?)<\/a>)/isg ) {
-                        if ( $anchor =~ /$check/ ) {
-                            my $count = $anchor;
-                            $count = $count =~ s/<a//g;
-                            if ( $count > 1 ) {
-                                $img = $no_link;
-                                $anchor = quotemeta( $anchor );
-                                $test =~ s/$anchor//;
-                                last;
-                            }
-                        }
-                    }
-                    $text =~ s/$orig/$img/g;
+                    $img = '<a href="' . $link_path . '">' . $img . '</a>';
                 }
+                $test =~ s/$orig/$img/g;
+                my $check = quotemeta( $img );
+                for my $anchor ( $test =~ m{(<[Aa](?:\s[^>]*|)>(.*?)</[Aa]\s*>)}sg ) {
+                    next unless $anchor =~ /$check/;
+                    my $count = $anchor;
+                    $count = $count =~ s/<[Aa][\s>]//g;
+                    if ( $count > 1 ) {
+                        $img = $no_link;
+                        $anchor = quotemeta( $anchor );
+                        $test =~ s/$anchor//;
+                        last;
+                    }
+                }
+                $text =~ s/$orig/$img/g;
             }
         }
     }
@@ -2902,13 +2904,13 @@ sub program_is_contained {
     for my $program ( $code =~ m/<\?(.{3})/isg ) {
         return 1 if ( $program ne 'xml' );
     }
-    if ( $code =~ /<\%/ || $code =~ /\%>/ ) {
+    if ( $code =~ /<%/ || $code =~ /%>/ ) {
         return 1;
     }
     for my $program ( $code =~ m/<script(.*?)>/isg ) {
-        if ( $program =~ /language\s*=\s*\"php"/ ) {
+        if ( $program =~ /language\s*=\s*"php"/ ) {
             return 1;
-        } elsif ( $program =~ /type\s*=\s*\"text\/php"/ ) {
+        } elsif ( $program =~ /type\s*=\s*"text\/php"/ ) {
             return 1;
         }
     }
@@ -2917,9 +2919,9 @@ sub program_is_contained {
 
 sub referral_site {
     my $app = MT->instance();
-    my $referer = $app->get_header( 'REFERER' );
-    return '' unless $referer;
-    if ( $referer =~ m!(^https{0,1}://.*?/)! ) {
+    my $referer = $app->get_header( 'REFERER' )
+        or return '';
+    if ( $referer =~ m{^((?i:https?)://[^/]+/)} ) {
         return $1;
     }
     return '';
@@ -2932,11 +2934,11 @@ sub referral_search_keyword {
     $referer = decode_url( $referer );
     $referer = remove_html( $referer );
     $referer = to_utf8( $referer );
-    my $query;
-    if ( $referer =~ m!(^https{0,1}://.*?)/.*?\?(.*$)! ) {
-        my $request = $1;
-        my $param = '&' . $2;
-        if ( ( $request =~ /\.google\./ ) || ( $request =~ /\.bing\./ ) || ( $request =~ /\.msn\./ ) ) {
+    my $query = '';
+    if ( $referer =~ m{^((?i:https?)://[^/]+)/[^?]*\?(.*)$} ) {
+        my $request = lc $1;
+        my $param   = "&$2";
+        if ( $request =~ /\.(?:bing|google|msn)\./ ) {
             if ( $param =~ /&q=([^&]*)/ ) {
                 $query = $1;
             }
@@ -2944,18 +2946,16 @@ sub referral_search_keyword {
             if ( $param =~ /&p=([^&]*)/ ) {
                 $query = $1;
             }
-        } elsif ( $request =~ /\.goo\./ ) {
+        } elsif ( $request =~ /\.goo\.ne\.jp$/ ) {
             if ( $param =~ /&MT=([^&]*)/ ) {
                 $query = $1;
             }
-        } else {
-            if ( my $blog = $app->blog ) {
-                my $site_url = site_url( $blog );
-                my $search = quotemeta( $request );
-                if ( $site_url =~ /^$search/ ) {
-                    if ( $param =~ /&query=([^&]*)/ ) {
-                        $query = $1;
-                    }
+        } elsif ( my $blog = $app->blog ) {
+            my $site_url = site_url( $blog );
+            my $search   = quotemeta( $request );
+            if ( $site_url =~ /^$search/ ) {
+                if ( $param =~ /&query=([^&]*)/ ) {
+                    $query = $1;
                 }
             }
         }
@@ -2963,12 +2963,12 @@ sub referral_search_keyword {
     $query = trim( $query );
     return undef unless $query;
     if ( wantarray ) {
-        my @keywords = split( /[\s|\+]+/, $query );
+        my @keywords = split( /[\s+]+/, $query );
         return @keywords;
     }
     return $query;
 }
-sub referral_serch_keyword { goto &referral_search_keyword }
+sub referral_serch_keyword { goto &referral_search_keyword } # Backcompat
 
 sub make_seo_basename {
     my ( $text, $length ) = @_;
@@ -3012,7 +3012,7 @@ sub permitted_blog_ids {
             return wantarray ? @blog_ids : \@blog_ids;
         }
     }
-    require MT::Permission;
+    #require MT::Permission;
     my $iter = MT->model( 'permission' )->load_iter( { author_id => $user->id,
                                                        ( @blog_ids ? ( blog_id => \@blog_ids ) : ( blog_id => { not => 0 } ) ),
                                                      }
@@ -3037,7 +3037,7 @@ sub permitted_blog_ids {
 sub powercms_config_param {
     my ( $cb, $app, $param, $tmpl ) = @_;
     my $plugin = MT->component( 'PowerCMS' );
-    require File::Spec;
+    #require File::Spec;
     my $powercms_config_templates = MT->registry( 'powercms_config_template' );
     my @templates = keys( %$powercms_config_templates );
     my %init_configs;
@@ -3046,7 +3046,7 @@ sub powercms_config_param {
     }
     my @configs;
     foreach my $key ( sort { $init_configs{ $b } <=> $init_configs{ $a } } keys %init_configs ) {
-        push ( @configs, $powercms_config_templates->{ $key } );
+        push( @configs, $powercms_config_templates->{ $key } );
     }
     my $blog = $app->blog;
     my $scope = 'system';
@@ -3153,7 +3153,7 @@ sub __save_config {
     my ( $plugin_key, $configs, $blog ) = @_;
     if ( $blog ) {
         if (! ref $blog ) {
-            if ( $blog =~ /^\d+$/ ) {
+            if ( $blog =~ /^[1-9]\d*$/ ) {
                 require MT::Blog;
                 $blog = MT::Blog->load( $blog );
                 return unless $blog;
@@ -3187,14 +3187,14 @@ sub read_powercms_config {
     my $blog = shift;
     if ( $blog ) {
         if (! ref $blog ) {
-            if ( $blog =~ /^\d+$/ ) {
+            if ( $blog =~ /^[1-9]\d*$/ ) {
                 require MT::Blog;
                 $blog = MT::Blog->load( $blog );
                 return () unless $blog;
             }
         }
     }
-    require MT::Request;
+    #require MT::Request;
     my $r = MT::Request->instance;
     my $data;
     my $params = ();
@@ -3232,7 +3232,7 @@ sub set_powercms_config {
     my ( $plugin_key, $key, $value, $blog ) = @_;
     if ( $blog && ( $blog ne 'system' ) ) {
         if (! ref $blog ) {
-            if ( $blog =~ /^\d+$/ ) {
+            if ( $blog =~ /^[1-9]\d*$/ ) {
                 require MT::Blog;
                 $blog = MT::Blog->load( $blog );
                 return unless $blog;
@@ -3252,14 +3252,14 @@ sub get_powercms_config {
     my ( $plugin_key, $key, $blog ) = @_;
     if ( $blog ) {
         if (! ref $blog ) {
-            if ( $blog =~ /^\d+$/ ) {
+            if ( $blog =~ /^[1-9]\d*$/ ) {
                 require MT::Blog;
                 $blog = MT::Blog->load( $blog );
                 return unless $blog;
             }
         }
     }
-    require MT::Request;
+    #require MT::Request;
     my $r = MT::Request->instance;
     my $params = ();
     if (! $blog ) {
@@ -3273,9 +3273,15 @@ sub get_powercms_config {
             if ( $key eq 'get_weblog_ids_cache' ) { # FIXME: adhoc...
                 $params = {};
             } else {
+                if ( $r->cache( 'NoPowerCMSConfig' ) ) {
+                    return get_default( $plugin_key, $key );
+                }
                 my $cfg_class = MT->model( 'powercmsconfig' ) or return;
-                my $config = $cfg_class->load()
-                    or return get_default( $plugin_key, $key ); # not set yet.
+                my $config = $cfg_class->load();
+                if (! $config ) {
+                    $r->cache( 'NoPowerCMSConfig', 1 );
+                    return get_default( $plugin_key, $key ); # not set yet.
+                }
                 my $data = $config->data;
                 require MT::Serialize;
                 $data = MT::Serialize->unserialize( $data );
@@ -3299,11 +3305,11 @@ sub get_powercms_config {
         }
     }
     my $settings = $params->{ $plugin_key };
-    if (!  $settings ) {
+    if (! $settings ) {
         return get_default( $plugin_key, $key );
     }
-    my $value = $settings->{ $key };
-    if (!  $value ) {
+    my $value = defined( $settings->{ $key } ) ? $settings->{ $key } : '';
+    if ( defined $value && $value eq '' ) {
         return get_default( $plugin_key, $key );
     }
     return $value;
@@ -3320,8 +3326,8 @@ sub get_default {
 }
 
 sub charset_is_utf8 {
-    my $charset = MT->config->PublishCharset;
-    if ( $charset =~ m/utf-?8/i ) {
+    my $charset = lc(MT->config->PublishCharset);
+    if ( $charset =~ /^utf-?8$/ ) {
         return 1;
     }
     return 0;
@@ -3370,16 +3376,14 @@ sub allow_upload {
             return 0;
         }
     }
-    if ( -f $file ) {
-        if ( is_image( $file ) ) {
-            open( my $fh, "<$file" );
-            require MT::Image;
-            if (! MT::Image::is_valid_image( $fh ) ) {
-                close ( $fh );
-                return 0;
-            }
-            close( $fh );
+    if ( -f $file && is_image( $file ) ) {
+        open( my $fh, '<', $file );
+        require MT::Image;
+        unless ( MT::Image::is_valid_image( $fh ) ) {
+            close( $fh ); # FIXME
+            return 0;
         }
+        close( $fh );
     }
     return 1;
 }
@@ -3404,6 +3408,182 @@ sub decode_mime_header {
         }
         return decode( 'MIME-Header', $str );
     }
+}
+
+sub encode_mime_header {
+    my ( $str ) = @_;
+    if ( $str ) {
+        return encode( 'MIME-Header', $str );
+    }
+}
+
+sub is_valid_extention { goto &is_valid_extension } # Backcompat
+sub is_valid_extension {
+    my ( $path ) = @_;
+    return 0 unless $path && -f $path;
+    eval { require File::Extension::Validate } || return 0;
+    my $file_extension = file_extension($path); # Returns lower case.
+    my $suggest;
+    if ( $file_extension =~ /^(?:doc|xls|ppt)x$/ ) {
+        $suggest = lc get_ole_extension( $path );
+        if ( $file_extension eq $suggest ) {
+            return 1;
+        }
+    } elsif ( File::Extension::Validate->validate( $path ) ) {
+        if ( $file_extension !~ /^(?:doc|xls|ppt)x?$/ ) {
+            return 1;
+        }
+        $suggest = lc get_ole_extension( $path );
+        if ( $file_extension eq $suggest ||
+             $file_extension eq "${suggest}x" ) {
+            return 1;
+        }
+    } elsif ( $file_extension eq 'txt' && -T $path ) {
+        return 1;
+    } else {
+        $suggest = File::Extension::Validate->suggest( $path );
+    }
+    return wantarray ? ( 0, $suggest ) : 0;
+}
+
+sub get_ole_extension {
+    my ( $path ) = @_;
+    return 0 unless $path;
+    return 0 unless -f $path;
+    my $file_extension = file_extension( $path );
+    if ( $file_extension =~ /^(?:doc|xls|ppt)x$/ ) {
+        return _get_ole_extension_x( $path );
+    }
+    eval { require OLE::Storage_Lite } || return 0;
+    my $oOl = OLE::Storage_Lite->new( $path );
+    my $oPps = $oOl->getPpsTree();
+    return _get_ole_extension( $oPps );
+}
+
+sub _get_ole_extension_x {
+    my ( $path ) = @_;
+    my $fmgr = MT::FileMgr->new( 'Local' ) or die MT::FileMgr->errstr;
+    my $renamed = $path;
+    my $tempdir;
+    if ( $renamed =~ /^(.*)\..*?$/ ) {
+        $renamed = "$1.zip";
+        $tempdir = $1;
+        make_dir( $tempdir );
+        unless ( -w $tempdir ) {
+            chmod( 0755, $tempdir );
+        }
+    }
+    if ( copy_item( $path, $renamed ) ) {
+        eval { require Archive::Zip } || return undef;
+        my $zip = Archive::Zip->new( $renamed );
+        my @members = $zip->members();
+        foreach ( @members ) {
+            my $name = $_->fileName();
+            if ( $name =~ /\[Content_Types\]\.xml/i ) {
+                my $xml_file_path = File::Spec->catfile( $tempdir, $name );
+                $zip->extractMemberWithoutPaths( $name, $xml_file_path );
+                my $content = read_from_file( $xml_file_path );
+                if ( $content =~ m{.*?<Override PartName="/([^/]+)/.*} ) {
+                    my $t = $1;
+                    my %exts_set = (
+                        'word' => 'docx',
+                        'xl'   => 'xlsx',
+                        'ppt'  => 'pptx',
+                    );
+                    $fmgr->delete( $renamed );
+                    remove_item( $tempdir );
+                    return $exts_set{ $t };
+                }
+            }
+        }
+    }
+}
+
+sub _get_ole_extension {
+    my ( $oPps ) = @_;
+    eval { require OLE::Storage_Lite } || return;
+    my $sName = OLE::Storage_Lite::Ucs2Asc( $oPps->{ Name } );
+    $sName =~ s/\W/ /g;
+    my $res;
+    if ( $sName eq 'WordDocument' ) {
+        $res = 'doc';
+    } elsif ( $sName eq 'Workbook' || $sName eq 'Book' ) {
+        $res = 'xls';
+    } elsif ( $sName eq 'PowerPoint Document' ) {
+        $res = 'ppt';
+    } elsif ( $sName eq 'VisioDocument' ) {
+        $res = 'vnd';
+    } else {
+        for my $iItem ( @{ $oPps->{ Child } } ) {
+            if ( $res = _get_ole_extension( $iItem ) ) {
+                last;
+            }
+        }
+    }
+    return $res;
+}
+
+sub is_oracle {
+    return lc( MT->config( 'ObjectDriver' ) ) =~ /oracle/ ? 1 : 0;
+}
+
+sub trimj_to {
+    my ( $text, $trim_witdth, $ellipsis ) = @_;
+    if (! $ellipsis ) {
+        $ellipsis = '';
+    }
+    if (! $text ) {
+        return $ellipsis;
+    }
+    $trim_witdth = $trim_witdth * 2;
+    my @strs = split( //, $text );
+    my $length = 0;
+    my $out = '';
+    for my $str ( @strs ) {
+        $out .= $str;
+        if ( bytes::length( $str ) > 1 ) {
+            $length += 2;
+        } else {
+            $length += 1;
+        }
+        if ( $length >= $trim_witdth ) {
+            last;
+        }
+    }
+    if ( $out ne $text ) {
+        $out .= $ellipsis;
+    }
+    return $out;
+}
+
+sub is_psgi {
+    return MT->config->PIDFilePath ? 1 : 0;
+}
+
+sub is_fastcgi {
+    return $ENV{FAST_CGI} ? 1 : 0;
+}
+
+sub is_powered_cgi {
+    return ( is_psgi() || is_fastcgi() ) ? 1 : 0;
+}
+
+sub get_superuser {
+    my ( %terms, %args );
+    $terms{ type } = MT::Author::AUTHOR();
+    $terms{ status } = MT::Author::ACTIVE();
+    $args{ 'sort' } = 'id';
+    $args{ direction } = 'ascend';
+    $args{ limit } = 1;
+    $args{ 'join' } = MT->model( 'permission' )->join_on( 'author_id',
+                                                          { blog_id => 0,
+                                                            permissions => { like => "\%'administer\%" },
+                                                          }, {
+                                                            unique => 1,
+                                                          },
+                                                        );
+    
+    return MT->model( 'author' )->load( \%terms, \%args );
 }
 
 1;
