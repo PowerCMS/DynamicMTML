@@ -2,19 +2,32 @@
 /***
  * Loading exception classes
  */
-if (! isset( $mt_dir ) ) $mt_dir = dirname( dirname( dirname( dirname( __FILE__ ) ) ) );
-require_once($mt_dir.DIRECTORY_SEPARATOR.'php'.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'class.exception.php');
-//require_once('lib/class.exception.php');
+if (! isset( $mt_dir ) ) $mt_dir = dirname( dirname( dirname( dirname( __FILE__ ) ) ) ); //
+require_once($mt_dir.DIRECTORY_SEPARATOR.'php'.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'class.exception.php'); //
+//require_once('lib/class.exception.php'); //
 
-define('VERSION', '5.04');
-define('VERSION_ID', '5.04');
-define('PRODUCT_VERSION', '5.04');
+define('VERSION', '6.0');
+define('PRODUCT_VERSION', '6.0');
 
 $PRODUCT_NAME = 'Movable Type';
 if($PRODUCT_NAME == '__PRODUCT' . '_NAME__')
     $PRODUCT_NAME = 'Movable Type';
-
 define('PRODUCT_NAME', $PRODUCT_NAME);
+
+$RELEASE_NUMBER = '0';
+if ( $RELEASE_NUMBER == '__RELEASE_' . 'NUMBER__' )
+    $RELEASE_NUMBER = 0;
+define('RELEASE_NUMBER', $RELEASE_NUMBER);
+
+$PRODUCT_VERSION_ID = '6.0rc1';
+if ( $PRODUCT_VERSION_ID == '__PRODUCT_' . 'VERSION_ID__' )
+    $PRODUCT_VERSION_ID = PRODUCT_VERSION;
+$VERSION_STRING;
+if ( $RELEASE_NUMBER > 0 )
+    $VERSION_STRING = $PRODUCT_VERSION_ID . "." . $RELEASE_NUMBER;
+else
+    $VERSION_STRING = $PRODUCT_VERSION_ID;
+define('VERSION_ID', $PRODUCT_VERSION_ID);
 
 global $Lexicon;
 $Lexicon = array();
@@ -29,8 +42,8 @@ class MT {
         'xml' => 'text/xml',
     );
     protected $blog_id;
-    //protected $db;
-    var $db;
+    //protected $db; //
+    var $db; //
     protected $config;
     protected $debugging = false;
     protected $caching = false;
@@ -41,8 +54,8 @@ class MT {
     protected $request;
     protected $http_error;
     protected $cfg_file;
-    protected $mt_dir;
-    protected $php_dir;
+    protected $mt_dir; //
+    protected $php_dir; //
     private  $cache_driver = null;
     private static $_instance = null;
 
@@ -53,11 +66,12 @@ class MT {
      *
      * $mt = MT::get_instance();
      */
-    // Not private function
-    function __construct($blog_id = null, $cfg_file = null) {
-        global $mt_dir;
-        $this->mt_dir = $mt_dir;
-        $this->php_dir = $mt_dir . DIRECTORY_SEPARATOR . 'php';
+    // private function __construct($blog_id = null, $cfg_file = null) { //
+    // Not private function // D
+    function __construct($blog_id = null, $cfg_file = null) { //
+        global $mt_dir; //
+        $this->mt_dir = $mt_dir; //
+        $this->php_dir = $mt_dir . DIRECTORY_SEPARATOR . 'php'; //
         error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING);
         try {
             $this->id = md5(uniqid('MT',true));
@@ -100,8 +114,8 @@ class MT {
         }
 
         if (!file_exists($cfg_file)) {
-            // $mtdir = dirname(dirname(__FILE__));
-            $mtdir = $this->mt_dir;
+            // $mtdir = dirname(dirname(__FILE__)); //
+            $mtdir = $this->mt_dir; //
             $cfg_file = $mtdir . DIRECTORY_SEPARATOR . "mt-config.cgi";
         }
 
@@ -121,8 +135,8 @@ class MT {
     }
 
     function init_addons() {
-        // $mtdir = dirname(dirname(__FILE__));
-        $mtdir = $this->mt_dir;
+        // $mtdir = dirname(dirname(__FILE__)); //
+        $mtdir = $this->mt_dir; //
         $path = $mtdir . DIRECTORY_SEPARATOR . "addons";
         if (is_dir($path)) {
             $ctx =& $this->context();
@@ -201,7 +215,6 @@ class MT {
      */
     function &db() {
         if (!isset($this->db)) {
-            //require_once($this->php_dir.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR."mtdb.".$this->config('DBDriver').".php");
             require_once("mtdb.".$this->config('DBDriver').".php");
             $mtdbclass = 'MTDatabase'.$this->config('DBDriver');
             $this->db = new $mtdbclass($this->config('DBUser'),
@@ -248,7 +261,7 @@ class MT {
         $this->cfg_file = $file;
 
         $cfg = array();
-        $type_array = array('pluginpath', 'alttemplate', 'outboundtrackbackdomains', 'memcachedservers');
+        $type_array = array('pluginpath', 'alttemplate', 'outboundtrackbackdomains', 'memcachedservers', 'userpasswordvalidation');
         $type_hash  = array('commenterregistration');
         if ($fp = file($file)) {
             foreach ($fp as $line) {
@@ -271,12 +284,13 @@ class MT {
                 }
             }
         } else {
-            // die("Unable to open configuration file $file");
+            // die("Unable to open configuration file $file"); //
         }
+
         // setup directory locations
         // location of mt.php
-        $cfg['phpdir'] = realpath(dirname(__FILE__));
-        $cfg['phpdir'] = realpath($this->php_dir);
+        // $cfg['phpdir'] = realpath(dirname(__FILE__)); //
+        $cfg['phpdir'] = realpath($this->php_dir); //
         // path to MT directory
         $cfg['mtdir'] = realpath(dirname($file));
         // path to handlers
@@ -286,14 +300,12 @@ class MT {
         $driver = preg_replace('/^DB[ID]::/', '', $driver);
         $driver or $driver = 'mysql';
         $cfg['dbdriver'] = strtolower($driver);
-        // No database, continue,
-        if (strlen($cfg['database'])) {
-            if (strlen($cfg['dbuser'])<1) {
-                if (($cfg['dbdriver'] != 'sqlite') && ($cfg['dbdriver'] != 'mssqlserver') && ($cfg['dbdriver'] != 'umssqlserver')) {
-                    die("Unable to read database or username");
-                }
+        if ((strlen($cfg['database'])<1 || strlen($cfg['dbuser'])<1)) {
+            if (($cfg['dbdriver'] != 'sqlite') && ($cfg['dbdriver'] != 'mssqlserver') && ($cfg['dbdriver'] != 'umssqlserver')) {
+                die("Unable to read database or username");
             }
         }
+
         if ( !empty( $cfg['debugmode'] ) && intval($cfg['debugmode']) > 0 ) {
             $this->debugging = true;
         }
@@ -327,27 +339,36 @@ class MT {
             $cfg['phpdir'] . DIRECTORY_SEPARATOR . "extlib" . DIRECTORY_SEPARATOR . "FirePHPCore" . $path_sep .
             ini_get('include_path')
         );
+
+        // assign i18n defaults:
+        $lang = strtolower($cfg['defaultlanguage']);
+        if (! @include_once("i18n_$lang.php")) {
+            include_once("i18n_en_us.php");
+        }
+        foreach ($GLOBALS['i18n_default_settings'] as $k => $v) {
+            if (! isset($cfg[$k])) {
+                $cfg[$k] = $v;
+            }
+        }
     }
 
     function configure_from_db() {
         $cfg =& $this->config;
-        if (isset($cfg['allowconnectotherdb'])){
-            return 1;
-        }
-        if (isset($cfg['database'])){
-            // If database.
-            // $mtdb =& $this->db();
-            $mtdb = $this->db();
-            $db_config = $mtdb->fetch_config();
-            if ($db_config) {
-                $data = $db_config->data();
-                foreach ($data as $key => $value) {
-                    $cfg[$key] = $value;
-                }
-                if ($cfg['dbdriver'] == 'mysql' or $cfg['dbdriver'] == 'postgres') {
-                    $mtdb->set_names($this);
-                }
+        if (isset($cfg['allowconnectotherdb'])){ //
+            return 1; //
+        } //
+        $mtdb =& $this->db();
+        $db_config = $mtdb->fetch_config();
+        if ($db_config) {
+            $data = $db_config->data();
+            foreach ($data as $key => $value) {
+                $cfg[$key] = $value;
             }
+            $mtdb->set_names($this);
+        }
+
+        if ( !empty( $cfg['debugmode'] ) && intval($cfg['debugmode']) > 0 ) {
+            $this->debugging = true;
         }
     }
 
@@ -360,8 +381,6 @@ class MT {
             $cfg['cgipath'] .= '/'; 
         isset($cfg['staticwebpath']) or
             $cfg['staticwebpath'] = $cfg['cgipath'] . 'mt-static/';
-        isset($cfg['publishcharset']) or
-            $cfg['publishcharset'] = 'utf-8';
         isset($cfg['trackbackscript']) or
             $cfg['trackbackscript'] = 'mt-tb.cgi';
         isset($cfg['adminscript']) or
@@ -402,8 +421,6 @@ class MT {
             $cfg['userpicthumbnailsize'] = '100';
         isset($cfg['pluginpath']) or
             $cfg['pluginpath'] = array($this->config('MTDir') . DIRECTORY_SEPARATOR . 'plugins');
-        isset($cfg['timeoffset']) or
-            $cfg['timeoffset'] = '0';
         isset($cfg['includesdir']) or
             $cfg['includesdir'] = 'includes_c';
         isset($cfg['searchmaxresults']) or
@@ -585,11 +602,13 @@ class MT {
 
         $cache_id = $blog_id.';'.$fi_path;
         if (!$ctx->is_cached('mt:'.$tpl_id, $cache_id)) {
-            if (isset($at) && ($at != 'Category') && ($at != 'Tag')) { //Tag Archive
+            // if (isset($at) && ($at != 'Category')) { //
+            // Tag Archive Support //
+            if (isset($at) && ($at != 'Category') && ($at != 'Tag')) { //
                 require_once("archive_lib.php");
                 try {
                     $archiver = ArchiverFactory::get_archiver($at);
-                } catch (Execption $e) {
+                } catch (Exception $e) {
                     // 404
                     $this->http_errr = 404;
                     header("HTTP/1.1 404 Not Found");
@@ -598,21 +617,21 @@ class MT {
                 $archiver->template_params($ctx);
             }
             if ($cat) {
-                // Folder Archive Support
                 $archive_category = $mtdb->fetch_category($cat);
-                if (! $archive_category) {
-                    $archive_category = $mtdb->fetch_folder($cat);
-                }
+                // Folder Archive Support //
+                if (! $archive_category) { //
+                    $archive_category = $mtdb->fetch_folder($cat); //
+                } //
                 $ctx->stash('category', $archive_category);
                 $ctx->stash('archive_category', $archive_category);
             }
-            if ( $data->has_column( 'tag_id' ) ) {
-                // Tag Archive Support
-                $tag = $data->fileinfo_tag_id;
-                $archive_tag = $mtdb->fetch_tag($tag);
-                $ctx->stash('tag', $archive_tag);
-                $ctx->stash('Tag', $archive_tag);
-            }
+            if ( $data->has_column( 'tag_id' ) ) { //
+                // Tag Archive Support //
+                $tag = $data->fileinfo_tag_id; //
+                $archive_tag = $mtdb->fetch_tag($tag); //
+                $ctx->stash('tag', $archive_tag); //
+                $ctx->stash('Tag', $archive_tag); //
+            } //
             if ($auth) {
                 $archive_author = $mtdb->fetch_author($auth);
                 $ctx->stash('author', $archive_author);
@@ -629,9 +648,9 @@ class MT {
     
             if (isset($entry_id) && ($entry_id) && ($at == 'Individual' || $at == 'Page')) {
                 if ($at == 'Individual') {
-                    $entry =& $mtdb->fetch_entry($entry_id);
+                    $entry = $mtdb->fetch_entry($entry_id);
                 } elseif($at == 'Page') {
-                    $entry =& $mtdb->fetch_page($entry_id);
+                    $entry = $mtdb->fetch_page($entry_id);
                 }
                 $ctx->stash('entry', $entry);
                 $ctx->stash('current_timestamp', $entry->entry_authored_on);
@@ -646,6 +665,8 @@ class MT {
                 $vars['module_category_archives'] = 1;
             }
         }
+
+        $this->set_canonical_url($ctx, $blog, $data);
 
         $output = $ctx->fetch('mt:'.$tpl_id, $cache_id);
 
@@ -688,6 +709,22 @@ class MT {
         restore_error_handler();
     }
 
+    function set_canonical_url($ctx, $blog, $fileinfo) {
+        if (preg_match('#(\A[^:]*://[^/]*)#', $blog->site_url(), $m)) {
+            $url = $m[1] . $fileinfo->url;
+        }
+        else {
+            $url = $fileinfo->url;
+        }
+        $ctx->stash('current_mapping_url', $url);
+
+        $templatemap = $fileinfo->templatemap();
+        if ($templatemap && ! $templatemap->is_preferred) {
+            $url = $ctx->tag('archivelink', array());
+            $ctx->stash('preferred_mapping_url', $url);
+        }
+    }
+
     function resolve_url($path, $build_type = 3) {
         $data = $this->db->resolve_url($path, $this->blog_id, $build_type);
         if ( isset($data)
@@ -700,7 +737,6 @@ class MT {
             } else {
                 $entry = $this->db->fetch_entry($data->fileinfo_entry_id);
             }
-            require_once('function.mtentrystatus.php');
             if (!isset($entry) || $entry->entry_status != 2)
                 return;
         }
@@ -745,7 +781,7 @@ class MT {
         if (!$blog) {
             $db =& $this->db();
             $ctx->mt->db =& $db;
-            $blog =& $db->fetch_blog($this->blog_id);
+            $blog = $db->fetch_blog($this->blog_id);
             $ctx->stash('blog', $blog);
             $ctx->stash('blog_id', $this->blog_id);
             $ctx->stash('local_blog_id', $this->blog_id);
@@ -757,12 +793,12 @@ class MT {
     function fetch($tpl, $cid = null) {
         $ctx =& $this->context();
         $this->init_plugins();
-        //$blog =& $ctx->stash('blog');
-        $blog = $ctx->stash('blog');
+        // $blog =& $ctx->stash('blog'); //
+        $blog = $ctx->stash('blog'); //
         if (!$blog) {
             $db =& $this->db();
             $ctx->mt->db =& $db;
-            $blog =& $db->fetch_blog($this->blog_id);
+            $blog = $db->fetch_blog($this->blog_id);
             $ctx->stash('blog', $blog);
             $ctx->stash('blog_id', $this->blog_id);
             $ctx->stash('local_blog_id', $this->blog_id);
@@ -914,51 +950,5 @@ class MT {
     }
 }
 
-// function is_valid_email($addr) {
-//     if (preg_match('/[ |\t|\r|\n]*\"?([^\"]+\"?@[^ <>\t]+\.[^ <>\t][^ <>\t]+)[ |\t|\r|\n]*/', $addr, $matches)) {
-//         return $matches[1];
-//     } else {
-//         return 0;
-//     }
-// }
-// 
-// $spam_protect_map = array(':' => '&#58;', '@' => '&#64;', '.' => '&#46;');
-// function spam_protect($str) {
-//     global $spam_protect_map;
-//     return strtr($str, $spam_protect_map);
-// }
-// 
-// function offset_time($ts, $blog = null, $dir = null) {
-//     if (isset($blog)) {
-//         if (!is_array($blog)) {
-//             global $mt;
-//             $blog = $mt->db()->fetch_blog($blog->id);
-//         }
-//         $offset = $blog->blog_server_offset;
-//     } else {
-//         global $mt;
-//         $offset = $mt->config('TimeOffset');
-//     }
-//     intval($offset) or $offset = 0;
-//     $tsa = localtime($ts);
-// 
-//     if ($tsa[8]) {  // daylight savings offset
-//         $offset++;
-//     }
-//     if ($dir == '-') {
-//         $offset *= -1;
-//     }
-//     $ts += $offset * 3600;
-//     return $ts;
-// }
-// 
-// function translate_phrase_param($str, $params = null) {
-//     if (is_array($params) && (strpos($str, '[_') !== false)) {
-//         for ($i = 1; $i <= count($params); $i++) {
-//             $str = preg_replace("/\\[_$i\\]/", $params[$i-1], $str);
-//         }
-//     }
-//     return $str;
-// }
-
+// Moved to lib/mt_util.php //
 ?>
