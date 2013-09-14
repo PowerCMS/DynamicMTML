@@ -7,7 +7,7 @@ class DynamicMTML_pack extends MTPlugin {
         'key'  => 'dynamicmtml',
         'author_name' => 'Alfasado Inc.',
         'author_link' => 'http://alfasado.net/',
-        'version' => '1.5.2',
+        'version' => '1.6.4',
         'description' => 'DynamicMTML is PHP extension for Movable Type.',
         'config_settings' => array( // mt-config.cgi
             'DynamicForceCompile' => array( 'default' => 0 ),
@@ -17,6 +17,7 @@ class DynamicMTML_pack extends MTPlugin {
             'DynamicIncludeStatic' => array( 'default' => 0 ),
             'AllowMagicQuotesGPC' => array( 'default' => 0 ),
             'DynamicPHPFirst' => array( 'default' => 0 ),
+            'DynamicAllowPHPinTemplate' => array( 'default' => 1 ),
         ),
         'settings' => array( // PluginSettings
             'example_setting' => array( 'default' => 1 ),
@@ -76,7 +77,8 @@ class DynamicMTML_pack extends MTPlugin {
             'modifier' => array( 'trimwhitespace' => 'trimwhitespace',
                                  'highlightingsearchword' => 'highlightingsearchword',
                                  'make_seo_basename' => 'make_seo_basename',
-                                 'intval' => 'intval' ),
+                                 'intval' => 'intval',
+                                 'strip_php' => 'strip_php', ),
         ),
         'tasks' => array( // Tasks
             'FuturePost' => array( 'label' => 'Publish Scheduled Entries',
@@ -461,6 +463,11 @@ class DynamicMTML_pack extends MTPlugin {
     function intval ( $text, $arg ) {
         require_once( $this->tags_dir() . 'modifier.intval.php' );
         return smarty_modifier_intval( $text, $arg );
+    }
+
+    function strip_php ( $text, $arg ) {
+        require_once( $this->tags_dir() . 'modifier.strip_php.php' );
+        return smarty_modifier_strip_php( $text, $arg );
     }
 
 }

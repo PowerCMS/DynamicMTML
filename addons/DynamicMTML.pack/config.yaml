@@ -4,7 +4,7 @@ key:  dynamicmtml
 author_name: Alfasado Inc.
 author_link: http://alfasado.net/
 pack_link: https://github.com/movabletype/DynamicMTML
-version: 1.63
+version: 1.64
 schema_version: 1.02
 l10n_class: DynamicMTML::L10N
 init_request: >
@@ -44,6 +44,9 @@ config_settings:
         updatable: 1
     AllowableTags:
         default: '<a><br><b><i><p><strong><em><img><ul><ol><li><blockquote><pre>'
+        updatable: 1
+    DynamicAllowPHPinTemplate:
+        default: 1
         updatable: 1
 object_types:
     blog:
@@ -155,3 +158,4 @@ tags:
         make_seo_basename: $dynamicmtml::DynamicMTML::Tags::_filter_make_seo_basename
         intval: $dynamicmtml::DynamicMTML::Tags::_filter_intval
         trimwhitespace: $dynamicmtml::DynamicMTML::Tags::_filter_trimwhitespace
+        strip_php: $dynamicmtml::DynamicMTML::Tags::_filter_strip_php

@@ -903,20 +903,26 @@ sub _filter_intval {
     return $text + 0;
 }
 
+sub _filter_strip_php {
+    my ( $text, $arg, $ctx ) = @_;
+    $text =~ s/<(\?|\%)\=?(php)?.*(\%|\?)>//sg;
+    return $text;
+}
+
 sub _hdlr_powercms_files_dir {
     return MT->config->PowerCMSFilesDir || powercms_files_dir();
 }
 
 sub _hdlr_strip_tags {
     my($ctx, $args, $cond) = @_;
-    my $text = &_hdlr_pass_tokens(@_);
-    return $text if index($text || '', '<') == -1;
-    my $allowable_tags = defined $args->{allowable_tags}
-                       ? $args->{allowable_tags}
-                       : $ctx->{config}->AllowableTags;
+    my $text = &_hdlr_pass_tokens( @_ );
+    return $text if index( $text || '', '<' ) == -1;
+    my $allowable_tags = defined $args->{ allowable_tags }
+                       ? $args->{ allowable_tags }
+                       : $ctx->{ config }->AllowableTags;
                          #|| '<a><br><b><i><p><strong><em><img><ul><ol><li><blockquote><pre>';
     require HTML::StripTags;
-    HTML::StripTags::strip_tags($text, $allowable_tags);
+    HTML::StripTags::strip_tags( $text, $allowable_tags );
 }
 
 sub _hdlr_error {
