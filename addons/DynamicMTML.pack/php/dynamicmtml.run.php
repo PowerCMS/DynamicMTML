@@ -115,7 +115,7 @@
     $data         = NULL;
     $dynamicmtml  = FALSE;
     $is_secure    = NULL; if ( $secure ) { $is_secure = 1; }
-    if (! isset( $extension ) ) $extension = '.html';
+    if (! isset( $extension ) ) $extension = 'html';
     if (! isset( $use_cache ) ) $use_cache = 0;
     if (! isset( $conditional ) ) $conditional = 0;
     if (! isset( $indexes ) ) $indexes = 'index.html';
