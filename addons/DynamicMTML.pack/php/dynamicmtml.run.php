@@ -257,8 +257,7 @@
     // ========================================
     // Search Cache
     // ========================================
-    $cache = $app->stash( 'cache' );
-    if (! $cache ) $cache = $app->cache_filename( $blog_id, $file, $param );
+    $cache = $app->cache_filename( $blog_id, $file, $param );
     $app->stash( 'cache', $cache );
     $args[ 'cache' ] = $cache;
     if ( $use_cache && file_exists( $cache ) ) {
@@ -313,9 +312,6 @@
                 } else {
                     $text = file_get_contents( $file );
                 }
-            }
-            if (! $app->config( 'DynamicAllowPHPinTemplate' ) ) {
-                $text = $app->strip_php( $text );
             }
             $app->stash( 'text', $text );
             // require_once( $plugin_path . 'resource.var.php' );

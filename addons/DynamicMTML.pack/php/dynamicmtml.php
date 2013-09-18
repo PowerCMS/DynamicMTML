@@ -4420,30 +4420,6 @@ class DynamicMTML {
         return $ts;
     }
 
-    function strip_php( $source ) {
-        $tokens = token_get_all( $source );
-        $res = '';
-        $inphp = FALSE;
-        foreach ( $tokens as $token ) {
-            if ( is_string( $token ) ) {
-                $token = array( '', $token );
-            }
-            list( $id, $str ) = $token;
-            if (! $inphp ) {
-                if ( $id === T_OPEN_TAG or $id == T_OPEN_TAG_WITH_ECHO ) {
-                    $inphp = TRUE;
-                } else {
-                    $res .= $str;
-                }
-            } else {
-                if ( $id === T_CLOSE_TAG ) {
-                    $inphp = FALSE;
-                }
-            }
-        }
-        return $res;
-    }
-
     function non_dynamic_mtml ( $content ) {
         $regex = '<\${0,1}mt:{0,1}DynamicMTML.*?>.*?<\/\${0,1}mt:{0,1}DynamicMTML.*?>';
         $content = preg_replace( "/$regex/is", '', $content );
