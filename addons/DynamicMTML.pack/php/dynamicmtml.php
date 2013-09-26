@@ -2755,7 +2755,7 @@ class DynamicMTML {
             require_once( 'archive_lib.php' );
             try {
                 $archiver = ArchiverFactory::get_archiver( $at );
-            } catch ( Execption $e ) {
+            } catch ( Exception $e ) {
                 return NULL;
             }
             $archiver->template_params( $ctx );
@@ -3587,7 +3587,7 @@ class DynamicMTML {
             require_once( 'archive_lib.php' );
             try {
                 $archiver = ArchiverFactory::get_archiver( $at );
-            } catch ( Execption $e ) {
+            } catch ( Exception $e ) {
                 $mt->http_errr = 404;
                 header( 'HTTP/1.1 404 Not Found' );
                 return $ctx->error(
