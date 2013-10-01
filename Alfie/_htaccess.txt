@@ -1,19 +1,20 @@
-Options -Indexes +SymLinksIfOwnerMatch
+Options -Indexes
 DirectoryIndex /alfie.php
-<IfModule mod_rewrite.c>
+<IfModule rewrite_module>
+  Options +FollowSymLinks
   RewriteEngine On
   RewriteCond %{REQUEST_FILENAME} !-f [OR]
   RewriteCond %{REQUEST_FILENAME} -d [OR]
-  RewriteCond %{REQUEST_FILENAME} ^[^.]+$|\.(html|htm)$ [NC]
+  RewriteCond %{REQUEST_FILENAME} ^[^.]+$|\.html?$ [NC]
   RewriteRule ^ alfie.php [L]
 </IfModule>
-<IfModule !mod_rewrite.c>
+<IfModule !rewrite_module>
   Order Deny,Allow
   Deny from all 
-<FilesMatch (^(|[^.]+)|alfie.php?)$>
+<FilesMatch ^([^.]+|alfie\.php)$>
   Allow from all
 </FilesMatch>
   ErrorDocument 403 /alfie.php
   ErrorDocument 404 /alfie.php
 </IfModule>
-php_flag short_open_tag off
+php_flag short_open_tag Off
