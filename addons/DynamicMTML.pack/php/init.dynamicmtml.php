@@ -20,7 +20,7 @@
                         $class_name = get_class( $component );
                         if ( method_exists( $component, $meth ) ) {
                             if ( $kind == 'block' ) {
-                                if ( preg_match( '/^if/i', $tag ) ) {
+                                if (strncasecmp($tag, 'if', 2) === 0) {
                                     $app->ctx->add_conditional_tag( $tag, 'smarty_block_mtif_mtml_block' );
                                 } else {
                                     $app->ctx->add_container_tag( $tag, 'smarty_block_mt_mtml_block' );

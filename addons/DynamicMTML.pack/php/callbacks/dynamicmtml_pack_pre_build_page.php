@@ -1,15 +1,15 @@
 <?php
 function dynamicmtml_pack_pre_build_page ( $mt, &$ctx, &$args, &$content ) {
-    $app = $ctx->stash( 'bootstrapper' );
+    //$app = $ctx->stash( 'bootstrapper' );
 
 /*
     // Example 1: http://example.com/entry_1/ => http://example.com/entry_1/EntryTitle_or_CategoryLabel/
     // See also => dynamicmtml_pack_post_init.php
     $request = $app->stash( 'request' );
-    if ( preg_match( '!/$!', $request ) ) {
+    if (!empty($reqest) && $reqest[strlen($reqest) - 1] === '/') {
         $file = $app->stash( 'file' );
         $blog_id = $app->blog_id;
-        if ( file_exists( $file )  && preg_match( '!/index\.html$!', $file ) ) {
+        if (file_exists( $file ) && strrpos(strtolower($file), '/index.html') === strlen($file) - 11) {
             $fileinfo = $app->stash( 'fileinfo' );
             require_once( 'MTUtil.php' );
             if (! isset( $fileinfo ) ) {
