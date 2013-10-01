@@ -10,9 +10,9 @@ l10n_class: DynamicMTML::L10N
 init_request: >
     sub {
         my $app = MT->instance;
-        my $ua = $app->get_header( 'User-Agent' );
-        unless ( ref $app eq 'MT::App::CMS' ) {
-            if ( $ua =~ /\ADoCoMo\/2\.0 /i ) {
+        if ( ref $app ne 'MT::App::CMS' ) {
+            my $ua = $app->get_header('User-Agent') || '';
+            if ( $ua =~ m{\ADoCoMo/2\.0 } ) {
                 $app->{ response_content_type } = 'application/xhtml+xml';
             }
         }
