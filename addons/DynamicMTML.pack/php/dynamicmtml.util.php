@@ -355,10 +355,9 @@ function __cat_file ( $dir, $path = NULL ) {
         if (! is_array( $path ) ) {
             $path = rtrim( $path, DIRECTORY_SEPARATOR );
             return $dir . DIRECTORY_SEPARATOR . $path;
-        } else {
-            foreach ( $path as $item ) {
-                $dir .= DIRECTORY_SEPARATOR . $item;
-            }
+        }
+        foreach ( $path as $item ) {
+            $dir .= DIRECTORY_SEPARATOR . $item;
         }
     }
     return $dir;
@@ -474,7 +473,7 @@ function convert2thumbnail ( $text, $type = 'auto', $embed_px,
             }
             if ( preg_match( "!^$search_path!", $path ) ) {
                 $path = preg_replace( "!^$search_path!", '', $path );
-                $path = preg_replace( "!/!", DIRECTORY_SEPARATOR, $path );
+                $path = str_replace('/', DIRECTORY_SEPARATOR, $path);
                 $path = $site_path . $path;
                 if (! file_exists( $path ) ) { continue; }
                 $mtime = filemtime( $path );

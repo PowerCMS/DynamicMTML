@@ -1856,8 +1856,7 @@ BuildPage callbacks are invoked just after a page has been built, but before the
     function pluginname_init_request () {
         global $mt_config;
         global $mt_dir;
-        $new_config = $mt_dir . DIRECTORY_SEPARATOR .
-                                        'mt-alt-config.cgi';
+        $new_config = "$mt_dir/mt-alt-config.cgi";
         if ( file_exists ( $new_config ) ) {
             $mt_config = $new_config;
         }
@@ -1874,13 +1873,11 @@ BuildPage callbacks are invoked just after a page has been built, but before the
     function pluginname_init_request () {
         global $mt_dir;
         global $app;
-        $perlbuilder = $mt_dir . DIRECTORY_SEPARATOR .
-            'tools' . DIRECTORY_SEPARATOR . 'rebuild-from-fi';
+        $perlbuilder = "$mt_dir/tools/rebuild-from-fi";
         if ( file_exists( $perlbuilder ) ) {
             $app->stash( 'perlbuild', 1 );
         }
-        $perlbuilder = $mt_dir . DIRECTORY_SEPARATOR .
-            'tools' . DIRECTORY_SEPARATOR . 'build-template-file';
+        $perlbuilder = "$mt_dir/tools/build-template-file";
         if ( file_exists( $perlbuilder ) ) {
             $app->stash( 'perlbuild', 1 );
         }
@@ -1913,7 +1910,7 @@ BuildPage callbacks are invoked just after a page has been built, but before the
     function pluginname_mt_init_exception ( &$mt, &$ctx, &$args, $error ) {
         global $app;
         global $mt_dir;
-        $config = $mt_dir . DIRECTORY_SEPARATOR . 'mt-alt-config.cgi';
+        $config = "$mt_dir/mt-alt-config.cgi";
         if ( file_exists ( $config ) ) {
             global $mt_config;
             global $blog_id;

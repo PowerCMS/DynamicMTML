@@ -92,7 +92,7 @@
     }
     $mt_config = $mt->cfg_file;
     $static_path = $mt->config[ 'staticfilepath' ];
-    if (! preg_match( "/DIRECTORY_SEPARATOR$/", $static_path ) ) {
+    if (empty($static_path) || $static_path[strlen($static_path) - 1] !== DIRECTORY_SEPARATOR) {
         $static_path .= DIRECTORY_SEPARATOR;
     }
     $mt_dir = dirname( $mt_config );
@@ -109,10 +109,8 @@
     $powercms_files = $mt->config[ 'PowerCMSFilesDir' ];
     if (! $powercms_files ) {
         $powercms_files = $mt_dir . DIRECTORY_SEPARATOR . 'powercms_files' . DIRECTORY_SEPARATOR;
-    } else {
-        if (! preg_match( "/DIRECTORY_SEPARATOR$/", $powercms_files ) ) {
-            $powercms_files .= DIRECTORY_SEPARATOR;
-        }
+    } elseif (empty($powercms_files) || $powercms_files[strlen($powercms_files) - 1] !== DIRECTORY_SEPARATOR) {
+        $powercms_files .= DIRECTORY_SEPARATOR;
     }
     $cache_dir = $powercms_files . 'cache';
     $extension = $blog->file_extension;

@@ -18,11 +18,11 @@ function dynamicmtml_pack_init_request () {
     // Example2: Use Perl builder.
     global $mt_dir;
     global $app;
-    $perlbuilder = $mt_dir . DIRECTORY_SEPARATOR . 'tools' . DIRECTORY_SEPARATOR . 'rebuild-from-fi';
+    $perlbuilder = "$mt_dir/tools/rebuild-from-fi";
     if ( file_exists( $perlbuilder ) ) {
         $app->stash( 'perlbuild', 1 );
     }
-    $perlbuilder = $mt_dir . DIRECTORY_SEPARATOR . 'tools' . DIRECTORY_SEPARATOR . 'build-template-file';
+    $perlbuilder = "$mt_dir/tools/build-template-file";
     if ( file_exists( $perlbuilder ) ) {
         $app->stash( 'perlbuild', 1 );
     }

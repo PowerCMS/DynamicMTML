@@ -130,7 +130,7 @@ class DynamicMTML {
         if (! $powercms_files_dir = $mt->config( 'PowerCMSFilesDir' ) ) {
             $powercms_files_dir = dirname( $this->cfg_file ) . DIRECTORY_SEPARATOR . 'powercms_files';
         }
-        $powercms_files_dir = preg_replace( "/DIRECTORY_SEPARATOR$/", '', $powercms_files_dir );
+        $powercms_files_dir = rtrim($powercms_files_dir, DIRECTORY_SEPARATOR);
         if (! is_dir( $powercms_files_dir ) ) {
             mkdir( $powercms_files_dir, 0755 );
         }
@@ -974,7 +974,7 @@ class DynamicMTML {
         $ctx->compile_check = 1;
         $ctx->caching = FALSE;
         $ctx->plugins_dir[] = $mtlibdir;
-        $ctx->plugins_dir[] = $mtphpdir . DIRECTORY_SEPARATOR . "plugins";
+        $ctx->plugins_dir[] = $mtphpdir . DIRECTORY_SEPARATOR . 'plugins';
         if ( $this->debugging ) {
             $ctx->debugging_ctrl = 'URL';
             $ctx->debug_tpl = __cat_file( $mtphpdir, array( 'extlib', 'smarty', 'libs', 'debug.tpl' ) );
@@ -1088,13 +1088,13 @@ class DynamicMTML {
     }
 
     function adjust_file ( $file, $indexes, $original, $replace ) {
-        if ( DIRECTORY_SEPARATOR != '/' ) {
+        if ( DIRECTORY_SEPARATOR !== '/' ) {
             $file = str_replace( '\\\\', '\\', $file );
         } else {
             $file = str_replace( '//', '/', $file );
         }
         $file = strtr( $file, '../', '' );
-        if ( DIRECTORY_SEPARATOR != '/' ) {
+        if ( DIRECTORY_SEPARATOR !== '/' ) {
             $file = strtr( $file, '/', DIRECTORY_SEPARATOR );
         }
         if ( is_dir ( $file ) ) {
@@ -1115,14 +1115,14 @@ class DynamicMTML {
         if ( $original && $replace ) {
             $file = preg_replace( '/' . preg_quote( $original, '/' ) . '/', $replace, $file );
         }
-        if ( preg_match( '/' . preg_quote( DIRECTORY_SEPARATOR, '/' ) . '$/', $file ) ) {
+        if (!empty($file) && $file[strlen($file) - 1] === DIRECTORY_SEPARATOR) {
             $file = preg_replace( '/\/$/', '', $file );
             if ( is_dir ( $file ) ) {
                 $file = $file . DIRECTORY_SEPARATOR . 'index.html';
             }
         }
         $file = urldecode( $file );
-        if ( DIRECTORY_SEPARATOR != '/' ) {
+        if ( DIRECTORY_SEPARATOR !== '/' ) {
             $file = strtr( $file, '\\\\', '\\' );
         } else {
             $file = strtr( $file, '//', '/' );
@@ -1159,8 +1159,7 @@ class DynamicMTML {
     }
 
     function __add_slash ( $path, $add = TRUE ) {
-        $sep = preg_quote( DIRECTORY_SEPARATOR, '/' );
-        $path = preg_replace( "/$sep$/", '', $path );
+        $path = rtrim($path, DIRECTORY_SEPARATOR);
         if ( $add ) {
             $path .= DIRECTORY_SEPARATOR;
         }
@@ -1283,7 +1282,7 @@ class DynamicMTML {
     }
 
     function chomp_dir ( $dir ) {
-        if ( DIRECTORY_SEPARATOR != '/' ) {
+        if ( DIRECTORY_SEPARATOR !== '/' ) {
             $dir = preg_replace( '/\\$/', '', $dir );
             $dir = strtr( $dir, '\\\\', '\\' );
         } else {
@@ -2326,11 +2325,9 @@ class DynamicMTML {
             $site_path = $blog->site_path();
         }
         if (! $add_slash ) {
-            $site_path = preg_replace( "/DIRECTORY_SEPARATOR$/", '', $site_path );
-        } else {
-            if (! preg_match( "/DIRECTORY_SEPARATOR$/", $site_path ) ) {
-                $site_path .= DIRECTORY_SEPARATOR;
-            }
+            $site_path = rtrim($site_path, DIRECTORY_SEPARATOR);
+        } elseif (empty($site_path) || $site_path[strlen($site_path) - 1] !== DIRECTORY_SEPARATOR) {
+            $site_path .= DIRECTORY_SEPARATOR;
         }
         return $site_path;
     }
@@ -3049,7 +3046,7 @@ class DynamicMTML {
         if ( isset( $maps ) ) {
             require_once 'function.mtfiletemplate.php';
             $site_path = $blog->site_path();
-            if (! preg_match( "/DIRECTORY_SEPARATOR$/", $site_path ) ) {
+            if (empty($site_path) || $site_path[strlen($site_path) - 1] !== DIRECTORY_SEPARATOR) {
                 $site_path .= DIRECTORY_SEPARATOR;
             }
             $site_url = $this->site_url( $blog, 1 );

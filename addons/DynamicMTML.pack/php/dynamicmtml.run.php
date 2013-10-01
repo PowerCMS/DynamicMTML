@@ -1,9 +1,9 @@
 <?php
-    $plugin_path = dirname( __File__ ) . DIRECTORY_SEPARATOR;
+    $plugin_path = dirname( __FILE__ ) . '/';
     require_once( $plugin_path . 'dynamicmtml.util.php' );
     require_once( $plugin_path . 'dynamicmtml.php' );
     if (! isset( $mt_dir ) ) $mt_dir = dirname( dirname( dirname( $plugin_path ) ) );
-    require_once( $mt_dir . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'MTUtil.php' );
+    require_once  "$mt_dir/php/lib/MTUtil.php";
     if (! isset( $mt_config ) ) $mt_config = $mt_dir . DIRECTORY_SEPARATOR . 'mt-config.cgi';
     global $mt;
     global $ctx;
@@ -15,7 +15,7 @@
     if (! $app->config( 'Database' ) || (! isset( $blog_id ) ) ) {
         $no_database = TRUE;
         $app->stash( 'no_database', 1 );
-        // require_once( $mt_dir . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'dynamic_mt.php' );
+        // require_once "$mt_dir/php/dynamic_mt.php";
         require_once( $plugin_path . 'mt.php' );
         $mt = new MT();
     }
@@ -192,10 +192,10 @@
                    'extension' => $extension );
     $app->init( $args );
     $app->run_callbacks( 'pre_run', $mt, $ctx, $args );
-    require_once $mt_dir . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'lib' . DIRECTORY_SEPARATOR . 'class.exception.php';
+    require_once "$mt_dir/php/lib/class.exception.php";
     if (! $mt ) {
-        //require_once( $mt_dir . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'mt.php' );
-        require_once( 'mt.php' );
+        //require_once "$mt_dir/php/mt.php";
+        require_once 'mt.php';
         try {
             $mt = MT::get_instance( $blog_id, $mt_config );
         } catch ( MTInitException $e ) {
