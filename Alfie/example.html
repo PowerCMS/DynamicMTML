@@ -18,12 +18,12 @@
     $app = $this->stash( 'bootstrapper' );
     $vars =& $this->__stash[ 'vars' ];
     // echo $vars[ 'Alfie' ]; // => Welcome to Alfie!
-    $vars[ 'Alfie' ] = $app->translate( 'Power by Movable Type.' );
+    $vars[ 'Alfie' ] = $app->translate( 'Powered by Movable Type.' );
 ?>
 <mt:ignore>
 (This block is comment.)
 The PHP code is equal to:
-<$mt:trans phrase="Power by Movable Type." setvar="Alfie"$>
+<$mt:trans phrase="Powered by Movable Type." setvar="Alfie"$>
 </mt:ignore>
 
 <mt:queryvars>
