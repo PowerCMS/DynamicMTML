@@ -934,7 +934,7 @@ class WordPress extends MTPlugin {
             $at = strtolower( $at );
             if ( $start && (! $end ) ) {
                 if ( $at == 'monthly' ) {
-                    if (preg_match( '/^[0-9]{6}$/', $start ) ) {
+                    if ( preg_match( '/^[0-9]{6}$/', $start ) ) {
                         $start .= '01000000';
                     }
                     $ts = start_end_month( $start );
