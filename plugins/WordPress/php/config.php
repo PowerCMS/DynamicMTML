@@ -147,7 +147,7 @@ class WordPress extends MTPlugin {
         }
         $args[ 'name' ] = 'siteurl';
         $site_url = $this->wp_bloginfo( $args, $ctx );
-        if (! preg_match( '!/$!', $site_url ) ) {
+        if (empty($site_url) || $site_url[strlen($site_url) - 1] !== '/') {
             $site_url .= '/';
         }
         $ctx->stash( 'wp_site_url', $site_url );
@@ -295,9 +295,9 @@ class WordPress extends MTPlugin {
         }
         $this_tag = $ctx->this_tag();
         $status = NULL;
-        if ( preg_match( '/comment/', $this_tag ) ) {
+        if (strpos($this_tag, 'comment') !== false) {
             $status = $post->comment_status;
-        } elseif ( preg_match( '/ping/', $this_tag ) ) {
+        } elseif (strpos($this_tag, 'ping') !== false) {
             $status = $post->ping_status;
         }
         if ( $status == 'open' ) {
@@ -311,7 +311,7 @@ class WordPress extends MTPlugin {
         $localvars = array( '__wp_categories', '__wp_categories_count', 'wp_category',
                             '__wp_postcategories_old_vars' );
         $this_tag = $ctx->this_tag();
-        if ( preg_match( '/tags$/', $this_tag ) ) {
+        if (substr($this_tag, -4) === 'tags') {
             $args[ 'taxonomy' ] = 'post_tag';
         }
         $app = $this->app;
@@ -418,11 +418,11 @@ class WordPress extends MTPlugin {
     function wp_archivetitle ( $args, &$ctx ) {
         $archivetitle = $ctx->stash( 'wp_archivetitle' );
         $current_archivetype = $ctx->stash( '__wp_current_archivetype' );
-        if ( preg_match( '/ly$/', $current_archivetype ) ) {
-            if ( preg_match( '/^[0-9]{14}$/', $archivetitle ) ) {
-                $args[ 'ts' ] = $archivetitle;
+        if (!empty($current_archivetype) && !empty($archve_type)
+                && substr($current_archivetype, -2) === 'ly'
+                && preg_match('/^[0-9]{14}$/', $archivetitle)) {
+            $args[ 'ts' ] = $archivetitle;
                 return $ctx->_hdlr_date( $args, $ctx );
-            }
         }
         return $archivetitle;
     }
@@ -437,17 +437,17 @@ class WordPress extends MTPlugin {
             return '';
         }
         $this_tag = $ctx->this_tag();
-        if ( preg_match( '/^mtwpcategory/', $this_tag ) ) {
-            $tag = preg_replace( '/^mtwpcategory/', '', $this_tag );
-            if ( $tag == 'label' ) {
+        if (strncmp($this_tag, 'mtwpcategory', 12) === 0) {
+            $tag = substr($this_tag, 12);
+            if ($tag === 'label') {
                 $tag = 'name';
             }
-        } elseif ( preg_match( '/^mtwptag/', $this_tag ) ) {
-            $tag = preg_replace( '/^mtwptag/', '', $this_tag );
-        } elseif ( preg_match( '/^mtwpcat_/', $this_tag ) ) {
-            $tag = preg_replace( '/^mtwpcat_/', '', $this_tag );
+        } elseif (strncmp($this_tag, 'mtwptag', 7) === 0) {
+            $tag = substr($this_tag, 7);
+        } elseif (strncmp($this_tag, 'mtwpcat_', 8) === 0) {
+            $tag = substr($this_tag, 8);
         }
-        if ( $tag == 'nickname' ) {
+        if ($tag === 'nickname') {
             return $tag = 'slug';
         }
         return $category->$tag;
@@ -655,7 +655,7 @@ class WordPress extends MTPlugin {
             $ctx->localize( $localvars );
             $this_tag = $ctx->this_tag();
             $nextprev = 'next';
-            if ( preg_match( '/previous/', $this_tag ) ) {
+            if (strpos($this_tag, 'previous') !== false) {
                 $nextprev = 'previous';
             }
             $wp = $this->get_wp( $ctx );
@@ -683,21 +683,19 @@ class WordPress extends MTPlugin {
             return '';
         }
         $this_tag = $ctx->this_tag();
-        if ( preg_match( '/^mtwpthe_/', $this_tag ) ) {
-            $tag = preg_replace( '/^mtwpthe_/', '', $this_tag );
-        } elseif ( preg_match( '/^mtwpentry/', $this_tag ) ) {
-            $tag = preg_replace( '/^mtwpentry/', '', $this_tag );
-            if ( $tag == 'body' ) {
+        if (strncmp($this_tag, 'mtwpthe_', 8) === 0) {
+            $tag = substr($this_tag, 8);
+        } elseif (strncmp($this_tag, 'mtwpentry', 9) === 0) {
+            $tag = substr($this_tag, 9);
+            if ($tag === 'body') {
                 $tag = 'content';
-            }
-            if ( $tag == 'authordisplayname' ) {
+            } elseif ($tag === 'authordisplayname') {
                 $tag = 'author';
-            }
-            if ( $tag == 'commentcount' ) {
+            } elseif ($tag === 'commentcount') {
                 $tag = 'comment_count';
             }
         }
-        if ( $tag == 'authorid' ) {
+        if ($tag === 'authorid') {
             return $post->author;
         }
         if ( $post->has_column( $tag ) ) {
@@ -732,12 +730,12 @@ class WordPress extends MTPlugin {
             return '';
         }
         $this_tag = $ctx->this_tag();
-        if ( preg_match( '/^mtwpthe_/', $this_tag ) ) {
-            $tag = preg_replace( '/^mtwpthe_/', '', $this_tag );
-        } elseif ( preg_match( '/^mtwpentry/', $this_tag ) ) {
-            $tag = preg_replace( '/^mtwpentry/', '', $this_tag );
+        if (strncmp($this_tag, 'mtwpthe_', 8) === 0) {
+            $tag = substr($this_tag, 8);
+        } elseif (strncmp($this_tag, 'mtwpentry', 9) === 0) {
+            $tag = substr($this_tag, 9);
         }
-        if ( $tag == 'modifieddate' ) {
+        if ($tag === 'modifieddate') {
             $tag = 'modified';
         }
         if ( $post->has_column( $tag ) ) {
@@ -879,7 +877,7 @@ class WordPress extends MTPlugin {
             $current_ts = $first_ts;
             do {
                 $month = $app->db()->ts2db( $current_ts );
-                $month = preg_replace( '/^(([0-9][^0-9]*){6}).*$/', '$1', $month );
+                $month = preg_replace('/^((?:[0-9][^0-9]*){6}).*$/', '$1', $month);
                 $terms[ $sort ] = array( 'like' => $month . '%' );
                 if ( $load ) {
                     $entries = $app->load( 'Posts', $terms, $args, 'wantarray' );
@@ -903,7 +901,7 @@ class WordPress extends MTPlugin {
             $current_ts = $first_ts;
             do {
                 $year = $app->db()->ts2db( $current_ts );
-                $year = preg_replace( '/^(([0-9][^0-9]*){4}).*$/', '$1', $year );
+                $year = preg_replace('/^((?:[0-9][^0-9]*){4}).*$/', '$1', $year);
                 $terms[ $sort ] = array( 'like' => $year . '%' );
                 if ( $load ) {
                     $entries = $app->load( 'Posts', $terms, $args, 'wantarray' );
@@ -936,7 +934,7 @@ class WordPress extends MTPlugin {
             $at = strtolower( $at );
             if ( $start && (! $end ) ) {
                 if ( $at == 'monthly' ) {
-                    if ( preg_match( '/^[0-9]{6}$/', $start ) ) {
+                    if (preg_match( '/^[0-9]{6}$/', $start ) ) {
                         $start .= '01000000';
                     }
                     $ts = start_end_month( $start );
@@ -952,7 +950,7 @@ class WordPress extends MTPlugin {
                 }
             }
         }
-        if ( $start && (! preg_match( '/^[0-9]{14}$/', $start ) ) ) {
+        if ( $start && ! preg_match( '/^[0-9]{14}$/', $start ) ) {
             $start = NULL;
         }
         if ( $end && ! preg_match( '/^[0-9]{14}$/', $end ) ) {
