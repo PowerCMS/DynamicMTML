@@ -774,7 +774,7 @@ class DynamicMTML {
         $lock_name = "mt-tasks-{$mt_dir}.lock";
         $temp_dir = $this->config( 'TempDir' );
         if (! $temp_dir ) {
-            $temp_dir = __cat_dir( $this->powercms_files_dir, 'lock' ) ;
+            $temp_dir = __cat_dir( $this->powercms_files_dir, 'lock' );
         }
         $lock_file = __cat_file( $temp_dir, $lock_name );
         if ( file_exists( $lock_file ) ) {
@@ -1537,7 +1537,7 @@ class DynamicMTML {
     function add_lexicon ( $lang, $params = array() ) {
         $Lexicon_lang = 'Lexicon_' . $lang;
         global $$Lexicon_lang;
-        if ( is_array( $params ) ){
+        if ( is_array( $params ) ) {
             foreach ( $params as $key => $val ) {
                 ${$Lexicon_lang}[ $key ] = $val;
             }
@@ -1632,7 +1632,7 @@ class DynamicMTML {
                 $this->stash( 'user_cookie', 'mt_blog_user' );
             }
             $name = 'US';
-        } elseif( $cookie = $_REQUEST[ 'sessid' ] ) {
+        } elseif ( $cookie = $_REQUEST[ 'sessid' ] ) {
             $sessid = $cookie;
             $name = 'US';
             $this->stash( 'user_cookie', 'sessid' );
@@ -2308,7 +2308,7 @@ class DynamicMTML {
         $places = $entry->placement( FALSE );
         if ( empty( $places ) ) return NULL;
         $cats = array();
-        foreach( $places as $p ) {
+        foreach ( $places as $p ) {
             $cat = $p->category();
             $cats[] = $cat;
         }
@@ -3618,7 +3618,7 @@ class DynamicMTML {
             if ( $at === 'Individual' ) {
                 // $entry =& $mt->db()->fetch_entry( $entry_id );
                 $entry =& $this->load( 'Entry', $entry_id );
-            } elseif( $at === 'Page' ) {
+            } elseif ( $at === 'Page' ) {
                 // $entry =& $mt->db()->fetch_page( $entry_id );
                 $entry =& $this->load( 'Entry', $entry_id );
             }
@@ -3648,7 +3648,7 @@ class DynamicMTML {
         $orig_placements = $entry->placement();
         if (! $categories ) {
             if ( $orig_placements ) {
-                foreach( $orig_placements as $old_placenent ) {
+                foreach ( $orig_placements as $old_placenent ) {
                     $old_placenent->Delete();
                 }
             }
@@ -3757,7 +3757,7 @@ class DynamicMTML {
             }
         }
         if ( $orig_placements ) {
-            foreach( $orig_placements as $old_placenent ) {
+            foreach ( $orig_placements as $old_placenent ) {
                 if (! in_array( $old_placenent->id, $set_ids ) ) {
                     $old_placenent->Delete();
                 }
@@ -3880,7 +3880,7 @@ class DynamicMTML {
         $rs = $this->db()->SelectLimit( $sql );
         require_once( 'class.mt_tag.php' );
         $tags = array();
-        while(! $rs->EOF ) {
+        while (! $rs->EOF ) {
             $tag = new Tag;
             $tag->tag_id = $rs->Fields( 'tag_id' );
             $tag->tag_name = $rs->Fields( 'tag_name' );

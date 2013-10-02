@@ -72,7 +72,7 @@
         if (! $entry = $ctx->stash( 'entry' ) ) {
             if ( $at == 'Individual' ) {
                 $entry = $mt->db()->fetch_entry( $entry_id );
-            } elseif( $at == 'Page' ) {
+            } elseif ( $at == 'Page' ) {
                 $entry = $mt->db()->fetch_page( $entry_id );
             }
         }

@@ -232,7 +232,7 @@ class MT {
      */
     public function cache_driver() {
         if (isset($this->cache_driver)) return $this->cache_driver;
-    
+
         # Check for memcached enabled
         require_once("class.basecache.php");
         try {
@@ -354,7 +354,7 @@ class MT {
 
     function configure_from_db() {
         $cfg =& $this->config;
-        if (isset($cfg['allowconnectotherdb'])){ //
+        if (isset($cfg['allowconnectotherdb'])) { //
             return 1; //
         } //
         $mtdb =& $this->db();
@@ -378,7 +378,7 @@ class MT {
         isset($cfg['cgipath']) or
             $cfg['cgipath'] = '/cgi-bin/';
         if (substr($cfg['cgipath'], strlen($cfg['cgipath']) - 1, 1) != '/')
-            $cfg['cgipath'] .= '/'; 
+            $cfg['cgipath'] .= '/';
         isset($cfg['staticwebpath']) or
             $cfg['staticwebpath'] = $cfg['cgipath'] . 'mt-static/';
         isset($cfg['trackbackscript']) or
@@ -645,7 +645,7 @@ class MT {
                 }
                 $ctx->stash('current_archive_type', $at);
             }
-    
+
             if (isset($entry_id) && ($entry_id) && ($at == 'Individual' || $at == 'Page')) {
                 if ($at == 'Individual') {
                     $entry = $mtdb->fetch_entry($entry_id);
@@ -746,7 +746,7 @@ class MT {
     function doConditionalGet($last_modified) {
         // Thanks to Simon Willison...
         //   http://simon.incutio.com/archive/2003/04/23/conditionalGet
-        // A PHP implementation of conditional get, see 
+        // A PHP implementation of conditional get, see
         //   http://fishbowl.pastiche.org/archives/001132.html
         $etag = '"'.md5($last_modified).'"';
         // Send the headers
@@ -757,7 +757,7 @@ class MT {
             stripslashes($_SERVER['HTTP_IF_MODIFIED_SINCE']) :
             false;
         $if_none_match = isset($_SERVER['HTTP_IF_NONE_MATCH']) ?
-            stripslashes($_SERVER['HTTP_IF_NONE_MATCH']) : 
+            stripslashes($_SERVER['HTTP_IF_NONE_MATCH']) :
             false;
         if (!$if_modified_since && !$if_none_match) {
             return;
@@ -815,9 +815,9 @@ class MT {
             echo "</pre></div>\n\n";
         } else {
             // console view...
-            $stderr = fopen('php://stderr', 'w'); 
-            fwrite($stderr,implode("\n", $dump)); 
-            echo (implode("\n", $dump)); 
+            $stderr = fopen('php://stderr', 'w');
+            fwrite($stderr,implode("\n", $dump));
+            echo (implode("\n", $dump));
             fclose($stderr);
         }
     }

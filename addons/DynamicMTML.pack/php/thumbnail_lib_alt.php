@@ -137,7 +137,7 @@ class Thumbnail_alt {
         # Get source image information
         list($this->src_w, $this->src_h, $this->src_type, $this->src_attr) = getimagesize($src_file);
 
-        switch($this->src_type) {
+        switch ($this->src_type) {
         case 1: #GIF
             $this->src_img = @imagecreatefromgif($src_file);
             break;
@@ -217,7 +217,7 @@ class Thumbnail_alt {
         } else {
             $output = $this->src_type;
         }
-        switch($output) {
+        switch ($output) {
         case 1:
             $ext = '.gif';
             break;
@@ -285,7 +285,7 @@ class Thumbnail_alt {
 
         # Generate
         $dest_file = $this->dest_file();
-        if(!file_exists($dest_file)) {
+        if (!file_exists($dest_file)) {
             $dir_name = dirname($dest_file);
             if (!file_exists($dir_name))
                 mkpath($dir_name, 0755);
@@ -316,7 +316,7 @@ class Thumbnail_alt {
                     $thumb_w, $thumb_h, $target_w, $target_h);
 
             $output = $this->src_type;
-            
+
             // begin patch
             if ($this->dest_type != 'auto') {
                 $output = strtolower($this->dest_type) == 'gif' ? 1
@@ -333,7 +333,7 @@ class Thumbnail_alt {
             //       : $this->src_type;
             // }
 
-            switch($output) {
+            switch ($output) {
             case 1: #GIF
                 imagegif($this->dest_img, $dest_file);
                 break;

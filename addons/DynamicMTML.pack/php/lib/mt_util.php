@@ -51,13 +51,11 @@ function translate_phrase_param($str, $params = null) {
         while (preg_match("/\\[quant,_(\d+),([^\\],]*)(?:,([^\\],]*))?(?:,([^\\],]*))?\\]/", $str, $matches, PREG_OFFSET_CAPTURE, $start)) {
             $id = $matches[1][0];
             $num = $params[$id-1];
-            if ( ($num === 0) && (count($matches) > 4) ) { 
+            if ( ($num === 0) && (count($matches) > 4) ) {
                 $part = $matches[4][0];
-            } 
-            elseif ( $num === 1 ) {
+            } elseif ( $num === 1 ) {
                 $part = $num . ' ' . $matches[2][0];
-            }
-            else {
+            } else {
                 $part = $num . ' ' . ( count($matches) > 3 ? $matches[3][0] : ( $matches[2][0] . 's' ) );
             }
             $str = substr_replace($str, $part, $matches[0][1], strlen($matches[0][0]));

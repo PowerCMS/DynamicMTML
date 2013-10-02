@@ -146,7 +146,7 @@ class DynamicMTML_pack extends MTPlugin {
             $extra = array( 'sort' => 'authored_on',
                             'direction' => 'descend',
                             'start_val' => $ts );
-            $entries = $app->load( 'Entry', 
+            $entries = $app->load( 'Entry',
                                    array( 'class' => array( 'entry', 'page' ),
                                           'status' => 4,
                                           'blog_id' => $blog->id ), $extra );
@@ -376,7 +376,7 @@ class DynamicMTML_pack extends MTPlugin {
         require_once( $this->tags_dir() . 'function.mtml.php' );
         return smarty_function_mtml( $args, $ctx );
     }
-    
+
     function mtrand ( $args, &$ctx ) {
         require_once( $this->tags_dir() . 'function.mtrand.php' );
         return smarty_function_mtrand( $args, $ctx );
@@ -447,7 +447,7 @@ class DynamicMTML_pack extends MTPlugin {
         require_once( $this->tags_dir() . 'modifier.trimwhitespace.php' );
         return smarty_modifier_trimwhitespace( $text, $arg );
     }
-    
+
     function highlightingsearchword ( $text, $arg ) {
         require_once( $this->tags_dir() . 'modifier.highlightingsearchword.php' );
         return smarty_modifier_highlightingsearchword( $text, $arg );

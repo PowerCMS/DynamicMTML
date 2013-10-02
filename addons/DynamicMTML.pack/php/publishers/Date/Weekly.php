@@ -35,8 +35,7 @@
                 }
                 $current_ts = __get_next_week( $current_ts );
                 $ts_counter++;
-            }
-            while( $current_ts != __get_next_week( $last_ts ) );
+            } while ( $current_ts != __get_next_week( $last_ts ) );
         }
     } else {
         if ( $entry ) {

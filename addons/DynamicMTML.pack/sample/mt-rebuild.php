@@ -67,10 +67,10 @@
             $app->rebuild( $terms );
             $blog_end = mktime();
             $time = $blog_end - $blog_start;
-            echo $app->translate( 'Publish time: [_1] seconds(BlogID: [_2]).' , array( $time, $blog_id ) ) . "\n";
+            echo $app->translate( 'Publish time: [_1] seconds(BlogID: [_2]).', array( $time, $blog_id ) ) . "\n";
         }
     }
     $end = mktime();
     $time = $end - $start;
-    echo $app->translate( 'Publish time: [_1] seconds.' , $time ) . "\n";
+    echo $app->translate( 'Publish time: [_1] seconds.', $time ) . "\n";
 ?>

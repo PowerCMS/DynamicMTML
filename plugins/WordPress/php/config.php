@@ -132,7 +132,7 @@ class WordPress extends MTPlugin {
         if ( $option = $ctx->stash( "wp_option{$name}" ) ) {
         } else {
             $wp = $this->get_wp( $ctx );
-            $option = $app->load( 'Options' , array( 'name' => $name  ), array( 'limit' => 1 ) );
+            $option = $app->load( 'Options', array( 'name' => $name  ), array( 'limit' => 1 ) );
             $this->reset_mt( $ctx );
             $ctx->stash( "wp_option:{$name}", $option );
         }
@@ -892,7 +892,7 @@ class WordPress extends MTPlugin {
                     }
                 }
                 $current_ts = __get_next_month( $current_ts );
-            } while( $current_ts != __get_next_month( $last_ts ) );
+            } while ( $current_ts != __get_next_month( $last_ts ) );
         } elseif ( $at == 'yearly' ) {
             $first_ts = start_end_year( $first_ts );
             $first_ts = $first_ts[0];
@@ -916,7 +916,7 @@ class WordPress extends MTPlugin {
                     }
                 }
                 $current_ts = __get_next_year( $current_ts );
-            } while( $current_ts != __get_next_year( $last_ts ) );
+            } while ( $current_ts != __get_next_year( $last_ts ) );
         }
         $this->reset_mt( $ctx );
         $ctx->stash( "wp_archive_list:{$at}:{$type}:{$status}:{$sort}", $archive_list );

@@ -34,8 +34,7 @@
                 }
                 $current_ts = __get_next_month( $current_ts );
                 $ts_counter++;
-            }
-            while( $current_ts != __get_next_month( $last_ts ) );
+            } while ( $current_ts != __get_next_month( $last_ts ) );
         }
     } else {
         if ( $entry ) {

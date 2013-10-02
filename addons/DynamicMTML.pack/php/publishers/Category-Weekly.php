@@ -8,7 +8,7 @@
         $categories = array();
         include ( 'get_entry_categories.php' );
         if ( $categories ) {
-            foreach( $categories as $category ) {
+            foreach ( $categories as $category ) {
                 $category_id = $category->id;
                 $first_ts = NULL;
                 $last_ts  = NULL;
@@ -46,8 +46,7 @@
                                 array_push( $delete_start_ts, $current_ts );
                             }
                             $current_ts = __get_next_week( $current_ts );
-                        }
-                        while( $current_ts != __get_next_week( $last_ts ) );
+                        } while ( $current_ts != __get_next_week( $last_ts ) );
                     }
                 } else {
                     if ( $entry ) {

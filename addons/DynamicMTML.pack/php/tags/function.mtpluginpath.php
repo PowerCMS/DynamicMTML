@@ -13,7 +13,7 @@ function smarty_function_mtpluginpath ( $args, &$ctx ) {
             if ( isset( $plugins_directories[ $component ] ) ) {
                 $component_path = $plugins_directories[ $component ];
                 if ( is_array( $option ) ) {
-                    foreach( $option as $opt ) {
+                    foreach ( $option as $opt ) {
                         $component_path .= DIRECTORY_SEPARATOR . $opt;
                     }
                 }

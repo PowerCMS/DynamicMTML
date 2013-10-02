@@ -1,12 +1,12 @@
 <?php
 class MTPlugin extends DynamicMTML {
-    
+
     var $app;
 
     function app () {
         return $this->app;
     }
-    
+
     function get_config_obj ( $scope ) {
         $component = $this->key();
         $get_from = 'configuration';
@@ -37,7 +37,7 @@ class MTPlugin extends DynamicMTML {
                 $data->data = $this->db()->serialize( $plugin_data );
             }
         }
-        $this->stash( "plugin_config:{$get_from}:{$component}" , $data );
+        $this->stash( "plugin_config:{$get_from}:{$component}", $data );
         return $data;
     }
 
@@ -135,7 +135,7 @@ class MTPlugin extends DynamicMTML {
             if ( $blog_id ) {
                 $get_from .= ":blog:$blog_id";
             }
-            $this->stash( "plugin_config:{$get_from}:{$component}" , $data );
+            $this->stash( "plugin_config:{$get_from}:{$component}", $data );
             return 1;
         }
         return 0;
