@@ -119,12 +119,16 @@ class DynamicMTML {
             $cache = $self . DIRECTORY_SEPARATOR . 'cache';
         }
         if (! is_dir( $templates_c ) ) {
-            mkdir( $templates_c, 0755 );
+            if (! $this->stash( 'no_generate_directories' ) ) {
+                mkdir( $templates_c, 0755 );
+            }
         }
         $this->stash( 'templates_c', $templates_c );
         $cache = $self . DIRECTORY_SEPARATOR . 'cache';
         if (! is_dir( $cache ) ) {
-            mkdir( $cache, 0755 );
+            if (! $this->stash( 'no_generate_directories' ) ) {
+                mkdir( $cache, 0755 );
+            }
         }
         $powercms_files_dir = NULL;
         if (! $powercms_files_dir = $mt->config( 'PowerCMSFilesDir' ) ) {
@@ -132,12 +136,16 @@ class DynamicMTML {
         }
         $powercms_files_dir = preg_replace( "/DIRECTORY_SEPARATOR$/", '', $powercms_files_dir );
         if (! is_dir( $powercms_files_dir ) ) {
-            mkdir( $powercms_files_dir, 0755 );
+            if (! $this->stash( 'no_generate_directories' ) ) {
+                mkdir( $powercms_files_dir, 0755 );
+            }
         }
         $this->stash( 'powercms_files_dir', $powercms_files_dir );
         $powercms_cache = $powercms_files_dir . DIRECTORY_SEPARATOR . 'cache';
         if (! is_dir( $powercms_cache ) ) {
-            mkdir( $powercms_cache, 0755 );
+            if (! $this->stash( 'no_generate_directories' ) ) {
+                mkdir( $powercms_cache, 0755 );
+            }
         }
         $language = $mt->config( 'DefaultLanguage' );
         $l10n_dir = $this->stash( 'l10n_dir' );
@@ -894,7 +902,14 @@ class DynamicMTML {
                             } elseif ( $prefix === 'task_workers' ) {
                                 $class = isset ( $settings[ 'class' ] ) ?
                                          $class = $settings[ 'class' ] : $class = NULL;
-                                $jobs = $this->load( 'Ts_Job', array( 'name' => $class ) );
+                                if (! $class ) break;
+                                $func_map = $this->load( 'Ts_Func_Map', array( 'ts_funcmap_funcname' => $class ), array( 'limit' => 1 ) );
+                                if (! $func_map ) break;
+                                $func_id = $func_map->ts_funcmap_funcid;
+                                if (! $func_id ) break;
+                                $jobs = $this->load( 'Ts_Job', array( 'ts_job_funcid' => $func_id ),
+                                                               array( 'sort' => 'priority','direction' => 'ascend' ) );
+                                if (! count( $jobs ) ) break;
                                 if ( is_object ( $plugin ) ) {
                                     if ( $code && $jobs ) {
                                         try {
@@ -4012,6 +4027,9 @@ class DynamicMTML {
                 $key = $this->escape( $key );
                 if ( $_obj->has_column( $key ) ) {
                     $_prefix = $prefix;
+                    if ( preg_match( "/^${_prefix}/", $key ) ) {
+                        $key = preg_replace( "/^${_prefix}/", '', $key );
+                    }
                     if ( in_array( $key, $raw_columns ) ) $_prefix = '';
                     if ( $key === 'class' ) {
                         $set_class = 1;
