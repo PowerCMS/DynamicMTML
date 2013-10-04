@@ -134,7 +134,7 @@ class DynamicMTML {
         if (! $powercms_files_dir = $mt->config( 'PowerCMSFilesDir' ) ) {
             $powercms_files_dir = dirname( $this->cfg_file ) . DIRECTORY_SEPARATOR . 'powercms_files';
         }
-        $powercms_files_dir = preg_replace( "/DIRECTORY_SEPARATOR$/", '', $powercms_files_dir );
+        $powercms_files_dir = rtrim( $powercms_files_dir, DIRECTORY_SEPARATOR );
         if (! is_dir( $powercms_files_dir ) ) {
             if (! $this->stash( 'no_generate_directories' ) ) {
                 mkdir( $powercms_files_dir, 0755 );
@@ -1192,7 +1192,7 @@ class DynamicMTML {
     }
 
     function get_mime_type ( $extension ) {
-        $extension = preg_replace( '/^\./', '', $extension );
+        $extension = preg_replace( '/^\./', '', strtolower( $extension ) );
         if ( isset( $_SERVER[ 'HTTP_USER_AGENT' ] ) ) {
             if ( preg_match( '/\ADoCoMo\/2\.0 /', $_SERVER[ 'HTTP_USER_AGENT' ] ) ) {
                 if ( $extension === 'html' ) {
@@ -2341,11 +2341,10 @@ class DynamicMTML {
             $site_path = $blog->site_path();
         }
         if (! $add_slash ) {
-            $site_path = preg_replace( "/DIRECTORY_SEPARATOR$/", '', $site_path );
-        } else {
-            if (! preg_match( "/DIRECTORY_SEPARATOR$/", $site_path ) ) {
-                $site_path .= DIRECTORY_SEPARATOR;
-            }
+            $site_path = rtrim( $site_path, DIRECTORY_SEPARATOR );
+        } elseif ( empty( $site_path ) ||
+                  $site_path[ strlen( $site_path ) - 1 ] !== DIRECTORY_SEPARATOR ) {
+            $site_path .= DIRECTORY_SEPARATOR;
         }
         return $site_path;
     }
@@ -3064,7 +3063,8 @@ class DynamicMTML {
         if ( isset( $maps ) ) {
             require_once 'function.mtfiletemplate.php';
             $site_path = $blog->site_path();
-            if (! preg_match( "/DIRECTORY_SEPARATOR$/", $site_path ) ) {
+            if ( empty( $site_path ) ||
+                $site_path[ strlen( $site_path ) - 1 ] !== DIRECTORY_SEPARATOR ) {
                 $site_path .= DIRECTORY_SEPARATOR;
             }
             $site_url = $this->site_url( $blog, 1 );
