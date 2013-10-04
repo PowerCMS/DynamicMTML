@@ -3,8 +3,8 @@
  * Loading exception classes
  */
 if (! isset( $mt_dir ) ) $mt_dir = dirname( dirname( dirname( dirname( __FILE__ ) ) ) ); //
-require_once($mt_dir.DIRECTORY_SEPARATOR.'php'.DIRECTORY_SEPARATOR.'lib'.DIRECTORY_SEPARATOR.'class.exception.php'); //
-//require_once('lib/class.exception.php'); //
+require_once "$mt_dir/php/lib/class.exception.php"; //
+//require_once 'lib/class.exception.php'; //
 
 define('VERSION', '6.0');
 define('PRODUCT_VERSION', '6.0');

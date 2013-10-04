@@ -13,7 +13,7 @@ function dynamicmtml_pack_mt_init_exception ( &$mt, &$ctx, &$args, $error ) {
 /*
     //Example 2: Retry get_instance using mt-alt-config.cgi.
     global $mt_dir;
-    $config = $mt_dir . DIRECTORY_SEPARATOR . 'mt-alt-config.cgi';
+    $config = "$mt_dir/mt-alt-config.cgi";
     if ( file_exists ( $config ) ) {
         global $mt_config;
         global $blog_id;
