@@ -1233,7 +1233,7 @@ sub rebuild_file {
             category     => $category,
         );
 
-        rename(
+        $fmgr->rename(
             $finfo->file_path,    # is this just $file ?
             $finfo->file_path . '.static'
         );
@@ -1570,7 +1570,7 @@ sub rebuild_indexes {
                 template     => $tmpl,
             );
 
-            rename( $file, $file . ".static" );
+            $fmgr->rename( $file, $file . ".static" );
 
             ## If the FileInfo is set to static, flip it to virtual.
             if ( !$finfo->virtual ) {
