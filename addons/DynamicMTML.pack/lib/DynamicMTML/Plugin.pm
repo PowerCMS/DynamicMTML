@@ -44,6 +44,7 @@ sub _build_file {
     my $fi    = $args{ FileInfo };
     my $html  = $args{ Content };
     if ( defined $blog ) {
+        my $fmgr = $blog->file_mgr;
         if ( $$html && $$html =~ /<\${0,1}mt/i ) {
             require Digest::MD5;
             require File::Spec;
@@ -57,7 +58,7 @@ sub _build_file {
                     if ( -d $cache_dir ) {
                         my @caches = get_children_files( $cache_dir, "/$cache/" );
                         for my $cache ( @caches ) {
-                            unlink $cache;
+                            $fmgr->delete( $cache );
                         }
                     }
                 }
@@ -71,7 +72,7 @@ sub _build_file {
                     my $search = '_' . $path . '_';
                     my @template = get_children_files( $templates_c, "/$search/" );
                     for my $tmpl ( @template ) {
-                        unlink $tmpl;
+                        $fmgr->delete( $tmpl );
                     }
                 }
             }
@@ -89,6 +90,7 @@ sub _build_dynamic {
     my $fi    = $args{ FileInfo };
     if ( defined $blog ) {
         return 1 unless $blog->dynamic_cache;
+        my $fmgr = $blog->file_mgr;
         require Digest::MD5;
         require File::Spec;
         my $path = Digest::MD5::md5_hex( $file );
@@ -99,7 +101,7 @@ sub _build_dynamic {
         if ( -d $cache_dir ) {
             my @caches = get_children_files( $cache_dir, "/$cache/" );
             for my $cache ( @caches ) {
-                unlink $cache;
+                $fmgr->delete( $cache );
             }
         }
     }
@@ -108,6 +110,7 @@ sub _build_dynamic {
 
 sub _disable_dynamicmtml {
     my ( $cb, $app, $obj, $original ) = @_;
+    my $fmgr = MT::FileMgr->new( 'Local' ) or die MT::FileMgr->errstr;
     $obj->dynamic_cache( $app->param( 'dynamic_cache' ) );
     $obj->dynamic_conditional( $app->param( 'dynamic_conditional' ) );
     $obj->save or die $obj->errstr;
@@ -140,7 +143,7 @@ sub _disable_dynamicmtml {
                 $htaccess = build_tmpl( $app, $tmpl, \%args );
                 my $contents = read_from_file( $htaccess_out );
                 if (! $fmgr->content_is_updated( $contents, \$htaccess ) ) {
-                    if (! unlink $htaccess_out ) {
+                    if (! $fmgr->delete( $htaccess_out ) ) {
                         # $app->add_return_arg( no_remove_htaccess => 1 );
                         # But MT create a .htaccess.
                     }
@@ -170,11 +173,11 @@ sub _disable_dynamicmtml {
                 my $tmpl = read_from_file( $dynamicmtml );
                 $dynamicmtml = build_tmpl( $app, $tmpl, \%args );
                 if (! $fmgr->content_is_updated( $contents, \$dynamicmtml ) ) {
-                    unlink $dynamicmtml_out;
+                    $fmgr->delete( $dynamicmtml_out );
                 } else {
                     if ( $contents =~ s![\r\n]##\sDynamicMTML.*?/DynamicMTML\s##[\r\n]!!si ) {
                         if ( $contents eq '<?php?>' ) {
-                            unlink $dynamicmtml_out;
+                            $fmgr->delete( $dynamicmtml_out );
                         } else {
                             if (! write2file( $dynamicmtml_out, $contents ) ) {
                                 $app->add_return_arg( no_overwrite_mtview => 1 );
@@ -219,6 +222,7 @@ sub _disable_dynamicmtml {
 
 sub _post_save_blog {
     my ( $cb, $app, $obj, $original ) = @_;
+    my $fmgr = MT::FileMgr->new( 'Local' ) or die MT::FileMgr->errstr;
     my $blog = $app->blog;
     if ( $blog->id ne $obj->id ) { # is new
         $blog = $obj;
@@ -326,12 +330,10 @@ sub _post_save_blog {
             if (! $old_file || ( $mtview ne $old_file ) ) {
                 my $old_mtview = File::Spec->catdir( site_path( $blog ), $old_file );
                 if (-f $old_mtview ) {
-                    unlink $old_mtview;
+                    $fmgr->delete( $old_mtview );
                 }
             }
             my $dynamicmtml_out = File::Spec->catdir( site_path( $blog ), $mtview );
-            require MT::FileMgr;
-            my $fmgr = MT::FileMgr->new( 'Local' ) or die MT::FileMgr->errstr;
             if ( $fmgr->exists( $dynamicmtml_out ) ) {
                 if (! $fmgr->content_is_updated( $dynamicmtml_out, \$dynamicmtml ) ) {
                     return 1;
@@ -354,6 +356,7 @@ sub _post_save_blog {
 sub _post_save_template {
     my ( $cb, $app, $obj, $original ) = @_;
     if ( my $blog = $app->blog ) {
+        my $fmgr = $blog->file_mgr;
         my $type = $obj->type;
         if ( ( $type eq 'index' ) || ( $type eq 'archive' )
             || ( $type eq 'individual' ) || ( $type eq 'page' ) ) {
@@ -364,7 +367,7 @@ sub _post_save_template {
                 my $search = '_mtml_tpl_id_' . $obj->id . '\.php';
                 my @template = get_children_files( $templates_c, "/$search/" );
                 for my $tmpl ( @template ) {
-                    unlink $tmpl;
+                    $fmgr->delete( $tmpl );
                 }
             }
         }

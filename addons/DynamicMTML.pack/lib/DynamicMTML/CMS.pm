@@ -107,13 +107,14 @@ sub _flush_dynamic_cache {
         require MT::Blog;
         @blogs = MT::Blog->load( { class => '*', dynamic_cache => 1 } );
     }
+    my $fmgr = MT::FileMgr->new( 'Local' ) or die MT::FileMgr->errstr;
     for my $blog ( @blogs ) {
         next unless _dynamic_permission( $blog );
         my $search = 'blog_id_' . $blog->id;
         if ( -d $cache_dir ) {
             my @caches = get_children_files( $cache_dir, "/$search/" );
             for my $cache ( @caches ) {
-                unlink $cache;
+                $fmgr->delete( $cache );
                 $do = 1;
             }
         }
@@ -121,7 +122,7 @@ sub _flush_dynamic_cache {
         if ( -d $templates_c ) {
             my @template = get_children_files( $templates_c );
             for my $tmpl ( @template ) {
-                unlink $tmpl;
+                $fmgr->delete( $tmpl );
                 $do = 1;
             }
         }
