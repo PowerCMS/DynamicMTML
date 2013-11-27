@@ -493,11 +493,16 @@ sub _hdlr_plugin_path {
     if ( $component ) {
         my $component = MT->component( $component );
         if ( defined $component ) {
+            my $component_path = $component->path;
+            if ( $component_path =~ /^addons/ ) {
+                require Cwd;
+                $component_path = File::Spec->catdir( Cwd::getcwd(), $component_path );
+            }
             if ( @option ) {
                 require File::Spec;
-                return add_slash( File::Spec->catdir( $component->path, @option ) );
+                return add_slash( File::Spec->catdir( $component_path, @option ) );
             } else {
-                return add_slash( $component->path );
+                return add_slash( $component_path );
             }
         }
     }
